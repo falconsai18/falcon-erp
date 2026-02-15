@@ -47,6 +47,7 @@ export function ReportsPage() {
     const [inventoryData, setInventoryData] = useState<InventoryReport | null>(null)
     const [financialData, setFinancialData] = useState<FinancialReport | null>(null)
     const [productionData, setProductionData] = useState<ProductionReport | null>(null)
+    const [showExportMenu, setShowExportMenu] = useState(false)
 
     const loadReport = async (tab: ReportTab) => {
         try {
@@ -70,6 +71,54 @@ export function ReportsPage() {
         { key: 'production' as const, label: 'Production', icon: Factory, color: 'text-purple-400' },
     ]
 
+    const exportOptions: Record<string, { key: string; label: string }[]> = {
+        sales: [
+            { key: 'all', label: '📦 Export All Sales Reports' },
+            { key: 'sales_summary', label: '📊 Sales Summary' },
+            { key: 'top_products', label: '🏆 Top Products' },
+            { key: 'top_customers', label: '👥 Top Customers' },
+            { key: 'monthly_revenue', label: '📈 Monthly Revenue' },
+            { key: 'status_breakdown', label: '📋 Order Status Breakdown' },
+            { key: 'payment_breakdown', label: '💳 Payment Status Breakdown' },
+        ],
+        inventory: [
+            { key: 'all', label: '📦 Export All Inventory Reports' },
+            { key: 'inventory_summary', label: '📊 Inventory Summary' },
+            { key: 'low_stock', label: '⚠️ Low Stock Items' },
+            { key: 'expiring_items', label: '⏰ Expiring Items' },
+            { key: 'category_breakdown', label: '📂 Category Breakdown' },
+        ],
+        financial: [
+            { key: 'all', label: '📦 Export All Financial Reports' },
+            { key: 'financial_summary', label: '📊 Financial Summary' },
+            { key: 'invoice_aging', label: '📅 Invoice Aging' },
+            { key: 'monthly_income_expense', label: '📈 Monthly Income vs Expense' },
+        ],
+        production: [
+            { key: 'all', label: '📦 Export All Production Reports' },
+            { key: 'production_summary', label: '📊 Production Summary' },
+            { key: 'material_usage', label: '🧪 Material Usage' },
+        ],
+    }
+
+    useEffect(() => {
+        if (!showExportMenu) return
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement
+            if (!target.closest('.export-dropdown-container')) {
+                setShowExportMenu(false)
+            }
+        }
+        // Small delay to prevent immediate close on same click
+        const timer = setTimeout(() => {
+            document.addEventListener('click', handleClickOutside)
+        }, 10)
+        return () => {
+            clearTimeout(timer)
+            document.removeEventListener('click', handleClickOutside)
+        }
+    }, [showExportMenu])
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -79,17 +128,47 @@ export function ReportsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <Button variant="secondary" icon={<RefreshCw size={16} />} size="sm" onClick={() => loadReport(activeTab)}>Refresh</Button>
-                    <Button variant="secondary" icon={<Download size={16} />} size="sm" onClick={async () => {
-                        try {
-                            const { exportReportData } = await import('@/services/exportService')
-                            const currentData = activeTab === 'sales' ? salesData
-                                : activeTab === 'inventory' ? inventoryData
+                    <div className="relative export-dropdown-container">
+                      <Button variant="secondary" icon={<Download size={16} />} size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setShowExportMenu(!showExportMenu)
+                        }}>
+                        Export CSV ▾
+                      </Button>
+                      {showExportMenu && (
+                        <div className="absolute right-0 top-full mt-1 w-64 glass-card border border-dark-300/50 rounded-lg shadow-xl z-50 py-1 max-h-80 overflow-y-auto">
+                          {(exportOptions[activeTab] || []).map((opt) => (
+                            <button
+                              key={opt.key}
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                try {
+                                  setShowExportMenu(false)
+                                  const { exportSingleReport } = await import('@/services/exportService')
+                                  const currentData = activeTab === 'sales' ? salesData
+                                    : activeTab === 'inventory' ? inventoryData
                                     : activeTab === 'financial' ? financialData
-                                        : productionData
-                            await exportReportData(activeTab, currentData)
-                            toast.success('Report exported!')
-                        } catch (err: any) { toast.error(err.message) }
-                    }}>Export CSV</Button>
+                                    : productionData
+                                  await exportSingleReport(activeTab, opt.key, currentData)
+                                  toast.success(`${opt.label.replace(/^[^\s]+\s/, '')} exported!`)
+                                } catch (err: any) {
+                                  toast.error(err.message)
+                                }
+                              }}
+                              className={cn(
+                                'w-full text-left px-4 py-2.5 text-sm transition-colors',
+                                opt.key === 'all'
+                                  ? 'text-brand-400 font-medium hover:bg-brand-500/10 border-b border-dark-300/30'
+                                  : 'text-dark-500 hover:text-white hover:bg-dark-200/50'
+                              )}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                 </div>
             </div>
 

@@ -103,44 +103,204 @@ export async function exportInvoices() {
 }
 
 // ============ REPORTS EXPORT ============
-export async function exportReportData(reportType: string, data: any) {
-    switch (reportType) {
-        case 'sales':
-            if (data?.topProducts?.length) {
-                exportToCSV(data.topProducts, [
-                    { key: 'name', label: 'Product' },
-                    { key: 'quantity', label: 'Quantity Sold' },
-                    { key: 'revenue', label: 'Revenue' },
-                ], 'sales_report_products')
-            }
-            if (data?.topCustomers?.length) {
-                exportToCSV(data.topCustomers, [
-                    { key: 'name', label: 'Customer' },
-                    { key: 'orders', label: 'Orders' },
-                    { key: 'revenue', label: 'Revenue' },
-                ], 'sales_report_customers')
-            }
-            break
-        case 'inventory':
-            if (data?.lowStockItems?.length) {
-                exportToCSV(data.lowStockItems, [
-                    { key: 'name', label: 'Product' },
-                    { key: 'sku', label: 'SKU' },
-                    { key: 'available', label: 'Available' },
-                    { key: 'reorder', label: 'Reorder Point' },
-                ], 'low_stock_report')
-            }
-            break
-        case 'financial':
-            if (data?.invoiceAging?.length) {
-                exportToCSV(data.invoiceAging, [
-                    { key: 'range', label: 'Aging Range' },
-                    { key: 'count', label: 'Invoices' },
-                    { key: 'amount', label: 'Amount' },
-                ], 'invoice_aging_report')
-            }
-            break
-    }
+export async function exportSingleReport(reportType: string, reportName: string, data: any) {
+  if (!data) throw new Error('No report data to export')
+  
+  const timestamp = new Date().toISOString().split('T')[0]
+
+  const exportMap: Record<string, Record<string, () => void>> = {
+    sales: {
+      'sales_summary': () => exportToCSV([{
+        total_orders: data.totalOrders || 0,
+        total_revenue: data.totalRevenue || 0,
+        avg_order_value: data.avgOrderValue || 0,
+      }], [
+        { key: 'total_orders', label: 'Total Orders' },
+        { key: 'total_revenue', label: 'Total Revenue (₹)' },
+        { key: 'avg_order_value', label: 'Avg Order Value (₹)' },
+      ], `sales_summary_${timestamp}`),
+
+      'top_products': () => {
+        if (!data.topProducts?.length) throw new Error('No product data available')
+        exportToCSV(data.topProducts, [
+          { key: 'name', label: 'Product' },
+          { key: 'quantity', label: 'Quantity Sold' },
+          { key: 'revenue', label: 'Revenue (₹)' },
+        ], `sales_top_products_${timestamp}`)
+      },
+
+      'top_customers': () => {
+        if (!data.topCustomers?.length) throw new Error('No customer data available')
+        exportToCSV(data.topCustomers, [
+          { key: 'name', label: 'Customer' },
+          { key: 'orders', label: 'Total Orders' },
+          { key: 'revenue', label: 'Revenue (₹)' },
+        ], `sales_top_customers_${timestamp}`)
+      },
+
+      'monthly_revenue': () => {
+        if (!data.monthlyRevenue?.length) throw new Error('No monthly data available')
+        exportToCSV(data.monthlyRevenue, [
+          { key: 'month', label: 'Month' },
+          { key: 'revenue', label: 'Revenue (₹)' },
+          { key: 'orders', label: 'Orders' },
+        ], `sales_monthly_revenue_${timestamp}`)
+      },
+
+      'status_breakdown': () => {
+        if (!data.statusBreakdown?.length) throw new Error('No status data available')
+        exportToCSV(data.statusBreakdown, [
+          { key: 'status', label: 'Order Status' },
+          { key: 'count', label: 'Count' },
+        ], `sales_status_breakdown_${timestamp}`)
+      },
+
+      'payment_breakdown': () => {
+        if (!data.paymentBreakdown?.length) throw new Error('No payment data available')
+        exportToCSV(data.paymentBreakdown, [
+          { key: 'status', label: 'Payment Status' },
+          { key: 'count', label: 'Count' },
+        ], `sales_payment_breakdown_${timestamp}`)
+      },
+
+      'all': () => {
+        if (data.topProducts?.length) exportMap.sales.top_products()
+        if (data.topCustomers?.length) exportMap.sales.top_customers()
+        if (data.monthlyRevenue?.length) exportMap.sales.monthly_revenue()
+        if (data.statusBreakdown?.length) exportMap.sales.status_breakdown()
+        if (data.paymentBreakdown?.length) exportMap.sales.payment_breakdown()
+        exportMap.sales.sales_summary()
+      },
+    },
+
+    inventory: {
+      'inventory_summary': () => exportToCSV([{
+        total_products: data.totalProducts || 0,
+        total_value: data.totalValue || 0,
+        low_stock_count: data.lowStockItems?.length || 0,
+        expiring_count: data.expiringItems?.length || 0,
+      }], [
+        { key: 'total_products', label: 'Total Products' },
+        { key: 'total_value', label: 'Stock Value (₹)' },
+        { key: 'low_stock_count', label: 'Low Stock Items' },
+        { key: 'expiring_count', label: 'Expiring Items' },
+      ], `inventory_summary_${timestamp}`),
+
+      'low_stock': () => {
+        if (!data.lowStockItems?.length) throw new Error('No low stock items')
+        exportToCSV(data.lowStockItems, [
+          { key: 'name', label: 'Product' },
+          { key: 'sku', label: 'SKU' },
+          { key: 'available', label: 'Available Qty' },
+          { key: 'reorder', label: 'Reorder Point' },
+        ], `inventory_low_stock_${timestamp}`)
+      },
+
+      'expiring_items': () => {
+        if (!data.expiringItems?.length) throw new Error('No expiring items')
+        exportToCSV(data.expiringItems, [
+          { key: 'name', label: 'Product' },
+          { key: 'batch', label: 'Batch No' },
+          { key: 'expiry', label: 'Expiry Date' },
+          { key: 'days', label: 'Days Remaining' },
+          { key: 'quantity', label: 'Quantity' },
+        ], `inventory_expiring_${timestamp}`)
+      },
+
+      'category_breakdown': () => {
+        if (!data.categoryBreakdown?.length) throw new Error('No category data')
+        exportToCSV(data.categoryBreakdown, [
+          { key: 'category', label: 'Category' },
+          { key: 'count', label: 'Products' },
+          { key: 'value', label: 'Value (₹)' },
+        ], `inventory_categories_${timestamp}`)
+      },
+
+      'all': () => {
+        if (data.lowStockItems?.length) exportMap.inventory.low_stock()
+        if (data.expiringItems?.length) exportMap.inventory.expiring_items()
+        if (data.categoryBreakdown?.length) exportMap.inventory.category_breakdown()
+        exportMap.inventory.inventory_summary()
+      },
+    },
+
+    financial: {
+      'financial_summary': () => exportToCSV([{
+        total_invoiced: data.totalInvoiced || 0,
+        total_paid: data.totalPaid || 0,
+        total_pending: data.totalPending || 0,
+        total_purchases: data.totalPurchases || 0,
+        gross_profit: data.grossProfit || 0,
+      }], [
+        { key: 'total_invoiced', label: 'Total Invoiced (₹)' },
+        { key: 'total_paid', label: 'Total Paid (₹)' },
+        { key: 'total_pending', label: 'Pending (₹)' },
+        { key: 'total_purchases', label: 'Purchases (₹)' },
+        { key: 'gross_profit', label: 'Gross Profit (₹)' },
+      ], `financial_summary_${timestamp}`),
+
+      'invoice_aging': () => {
+        if (!data.invoiceAging?.length) throw new Error('No aging data')
+        exportToCSV(data.invoiceAging, [
+          { key: 'range', label: 'Aging Range' },
+          { key: 'count', label: 'Invoices' },
+          { key: 'amount', label: 'Amount (₹)' },
+        ], `financial_aging_${timestamp}`)
+      },
+
+      'monthly_income_expense': () => {
+        if (!data.monthlyInOut?.length) throw new Error('No monthly data')
+        exportToCSV(data.monthlyInOut, [
+          { key: 'month', label: 'Month' },
+          { key: 'income', label: 'Income (₹)' },
+          { key: 'expense', label: 'Expense (₹)' },
+        ], `financial_monthly_${timestamp}`)
+      },
+
+      'all': () => {
+        if (data.invoiceAging?.length) exportMap.financial.invoice_aging()
+        if (data.monthlyInOut?.length) exportMap.financial.monthly_income_expense()
+        exportMap.financial.financial_summary()
+      },
+    },
+
+    production: {
+      'production_summary': () => exportToCSV([{
+        total_orders: data.totalOrders || 0,
+        completed: data.completed || 0,
+        total_produced: data.totalProduced || 0,
+        efficiency: `${data.efficiency || 0}%`,
+      }], [
+        { key: 'total_orders', label: 'Total Orders' },
+        { key: 'completed', label: 'Completed' },
+        { key: 'total_produced', label: 'Total Produced' },
+        { key: 'efficiency', label: 'Efficiency' },
+      ], `production_summary_${timestamp}`),
+
+      'material_usage': () => {
+        if (!data.materialUsage?.length) throw new Error('No material data')
+        exportToCSV(data.materialUsage, [
+          { key: 'name', label: 'Material' },
+          { key: 'planned', label: 'Planned Qty' },
+          { key: 'actual', label: 'Actual Qty' },
+          { key: 'unit', label: 'Unit' },
+        ], `production_materials_${timestamp}`)
+      },
+
+      'all': () => {
+        if (data.materialUsage?.length) exportMap.production.material_usage()
+        exportMap.production.production_summary()
+      },
+    },
+  }
+
+  const tabExports = exportMap[reportType]
+  if (!tabExports) throw new Error(`Unknown report type: ${reportType}`)
+
+  const exportFn = tabExports[reportName]
+  if (!exportFn) throw new Error(`Unknown report: ${reportName}`)
+
+  exportFn()
 }
 
 // ============ GST INVOICE PDF ============
