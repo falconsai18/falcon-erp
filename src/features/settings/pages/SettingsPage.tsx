@@ -314,7 +314,7 @@ export function SettingsPage() {
                                         <Building2 size={16} className="text-blue-400" /> Company Information
                                     </h3>
                                     {hasCompanyChanges && (
-                                        <Button variant="primary" icon={<Save size={14} />} size="sm" onClick={saveCompany} loading={saving}>
+                                        <Button variant="primary" icon={<Save size={14} />} size="sm" onClick={saveCompany} isLoading={saving}>
                                             Save Company
                                         </Button>
                                     )}
@@ -355,7 +355,7 @@ export function SettingsPage() {
                                             <Landmark size={16} className="text-emerald-400" /> Bank Account
                                         </h3>
                                         {hasBankChanges && (
-                                            <Button variant="primary" icon={<Save size={14} />} size="sm" onClick={saveBank} loading={saving}>
+                                            <Button variant="primary" icon={<Save size={14} />} size="sm" onClick={saveBank} isLoading={saving}>
                                                 Save Bank
                                             </Button>
                                         )}
@@ -420,7 +420,7 @@ export function SettingsPage() {
                                     <InputField label="Role" value={profile.role || 'admin'} onChange={() => { }} disabled />
                                 </div>
                                 <div className="mt-4 flex justify-end">
-                                    <Button variant="primary" icon={<Save size={14} />} onClick={saveProfile} loading={saving} size="sm">
+                                    <Button variant="primary" icon={<Save size={14} />} onClick={saveProfile} isLoading={saving} size="sm">
                                         Update Profile
                                     </Button>
                                 </div>
@@ -444,7 +444,7 @@ export function SettingsPage() {
                                     </div>
                                 )}
                                 <div className="mt-4 flex justify-end">
-                                    <Button variant="secondary" icon={<Shield size={14} />} onClick={handleChangePassword} loading={saving} size="sm"
+                                    <Button variant="secondary" icon={<Shield size={14} />} onClick={handleChangePassword} isLoading={saving} size="sm"
                                         disabled={!passwords.new || passwords.new !== passwords.confirm}>
                                         Change Password
                                     </Button>
@@ -461,7 +461,7 @@ export function SettingsPage() {
                                     <Hash size={16} className="text-purple-400" /> Document Number Sequences
                                 </h3>
                                 {hasSequenceChanges.size > 0 && (
-                                    <Button variant="primary" icon={<Save size={14} />} size="sm" onClick={saveSequences} loading={saving}>
+                                    <Button variant="primary" icon={<Save size={14} />} size="sm" onClick={saveSequences} isLoading={saving}>
                                         Save ({hasSequenceChanges.size} changed)
                                     </Button>
                                 )}

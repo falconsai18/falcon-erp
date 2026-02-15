@@ -21,7 +21,12 @@ export interface InventoryItem {
     updated_at: string
     product_name?: string
     product_sku?: string
-    days_to_expiry?: number
+    days_to_expiry?: number | null
+    products?: {
+        name: string
+        sku: string
+        reorder_point?: number
+    }
 }
 
 export interface StockMovement {
@@ -101,8 +106,9 @@ export async function getInventory(
     }
 
     if (filters?.expiringDays) {
+        const days = filters.expiringDays
         result.data = result.data.filter(i =>
-            i.days_to_expiry !== null && i.days_to_expiry >= 0 && i.days_to_expiry <= filters.expiringDays!
+            i.days_to_expiry != null && i.days_to_expiry >= 0 && i.days_to_expiry <= days
         )
     }
 

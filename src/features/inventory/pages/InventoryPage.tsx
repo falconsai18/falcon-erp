@@ -65,7 +65,7 @@ function StockDetail({ item, onClose, onAdjust }: {
             <div className="flex items-center justify-between p-4 border-b border-dark-300/50">
                 <div className="flex items-center gap-3">
                     <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center',
-                        item.days_to_expiry !== null && item.days_to_expiry <= 30
+                        item.days_to_expiry !== null && (item.days_to_expiry ?? 999) <= 30
                             ? 'bg-red-500/10 text-red-400'
                             : 'bg-orange-500/10 text-orange-400')}>
                         <Warehouse size={20} />
@@ -121,18 +121,18 @@ function StockDetail({ item, onClose, onAdjust }: {
                 </div>
 
                 {/* Expiry Alert */}
-                {item.days_to_expiry !== null && item.days_to_expiry <= 90 && (
+                {item.days_to_expiry !== null && (item.days_to_expiry ?? 999) <= 90 && (
                     <div className={cn('rounded-xl p-4 flex items-start gap-3',
-                        item.days_to_expiry < 0 ? 'bg-red-500/10 border border-red-500/20' :
-                            item.days_to_expiry <= 30 ? 'bg-red-500/5 border border-red-500/20' :
+                        (item.days_to_expiry ?? 999) < 0 ? 'bg-red-500/10 border border-red-500/20' :
+                            (item.days_to_expiry ?? 999) <= 30 ? 'bg-red-500/5 border border-red-500/20' :
                                 'bg-amber-500/5 border border-amber-500/20')}>
-                        <AlertTriangle size={18} className={item.days_to_expiry <= 30 ? 'text-red-400' : 'text-amber-400'} />
+                        <AlertTriangle size={18} className={(item.days_to_expiry ?? 999) <= 30 ? 'text-red-400' : 'text-amber-400'} />
                         <div>
                             <p className="text-sm font-medium text-white">
-                                {item.days_to_expiry < 0 ? 'EXPIRED' : `Expiring in ${item.days_to_expiry} days`}
+                                {(item.days_to_expiry ?? 999) < 0 ? 'EXPIRED' : `Expiring in ${item.days_to_expiry} days`}
                             </p>
                             <p className="text-xs text-dark-500 mt-0.5">
-                                {item.days_to_expiry < 0 ? 'Remove from saleable stock immediately' : 'Consider FEFO allocation for upcoming orders'}
+                                {(item.days_to_expiry ?? 999) < 0 ? 'Remove from saleable stock immediately' : 'Consider FEFO allocation for upcoming orders'}
                             </p>
                         </div>
                     </div>
@@ -369,9 +369,9 @@ export function InventoryPage() {
                                         <tbody className="divide-y divide-dark-300/30">
                                             {items.map(item => (
                                                 <tr key={item.id} onClick={() => setSelectedItem(item)}
-                                                    className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
+                                                className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
                                                         selectedItem?.id === item.id && 'bg-orange-500/5 border-l-2 border-orange-500',
-                                                        item.days_to_expiry !== null && item.days_to_expiry <= 0 && 'bg-red-500/5')}>
+                                                        item.days_to_expiry !== null && (item.days_to_expiry ?? 999) <= 0 && 'bg-red-500/5')}>
                                                     <td className="px-3 py-3">
                                                         <p className="text-sm font-medium text-white">{item.product_name}</p>
                                                         <p className="text-xs text-dark-500">{item.product_sku}</p>

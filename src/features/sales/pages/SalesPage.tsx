@@ -571,7 +571,13 @@ export function SalesPage() {
             <PageHeader title="Sales Orders"
                 description={`${stats.total} orders • Value: ${formatCurrency(stats.totalValue)}`}
                 actions={<div className="flex items-center gap-3">
-                    <Button variant="secondary" icon={<Download size={16} />} size="sm">Export</Button>
+                    <Button variant="secondary" icon={<Download size={16} />} size="sm" onClick={async () => {
+                        try {
+                            const { exportSalesOrders } = await import('@/services/exportService')
+                            await exportSalesOrders()
+                            toast.success('Sales orders exported!')
+                        } catch (err: any) { toast.error(err.message) }
+                    }}>Export CSV</Button>
                     <Button icon={<Plus size={16} />} onClick={() => setShowWizard(true)}>New Order</Button>
                 </div>} />
 

@@ -29,6 +29,7 @@ export interface BOMItem {
     notes: string | null
     material_name?: string
     material_code?: string
+    current_stock?: number
 }
 
 export interface ProductionOrder {

@@ -79,7 +79,17 @@ export function ReportsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <Button variant="secondary" icon={<RefreshCw size={16} />} size="sm" onClick={() => loadReport(activeTab)}>Refresh</Button>
-                    <Button variant="secondary" icon={<Download size={16} />} size="sm">Export</Button>
+                    <Button variant="secondary" icon={<Download size={16} />} size="sm" onClick={async () => {
+                        try {
+                            const { exportReportData } = await import('@/services/exportService')
+                            const currentData = activeTab === 'sales' ? salesData
+                                : activeTab === 'inventory' ? inventoryData
+                                    : activeTab === 'financial' ? financialData
+                                        : productionData
+                            await exportReportData(activeTab, currentData)
+                            toast.success('Report exported!')
+                        } catch (err: any) { toast.error(err.message) }
+                    }}>Export CSV</Button>
                 </div>
             </div>
 

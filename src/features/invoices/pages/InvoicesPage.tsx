@@ -103,6 +103,13 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                     {(invoice.status === 'sent' || invoice.status === 'partial') && (
                         <Button size="sm" variant="success" onClick={() => setShowPayment(true)} icon={<IndianRupee size={14} />}>Record Payment</Button>
                     )}
+                    <Button size="sm" variant="secondary" icon={<Download size={14} />} onClick={async () => {
+                        try {
+                            const { generateInvoicePDF } = await import('@/services/exportService')
+                            await generateInvoicePDF(invoiceId)
+                            toast.success('PDF downloaded!')
+                        } catch (err: any) { toast.error(err.message) }
+                    }}>PDF</Button>
                     <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
@@ -407,7 +414,13 @@ export function InvoicesPage() {
             <PageHeader title="Invoices"
                 description={`${stats.total} invoices • Pending: ${formatCurrency(stats.totalPending)}`}
                 actions={<div className="flex items-center gap-3">
-                    <Button variant="secondary" icon={<Download size={16} />} size="sm">Export</Button>
+                    <Button variant="secondary" icon={<Download size={16} />} size="sm" onClick={async () => {
+                        try {
+                            const { exportInvoices } = await import('@/services/exportService')
+                            await exportInvoices()
+                            toast.success('Invoices exported!')
+                        } catch (err: any) { toast.error(err.message) }
+                    }}>Export CSV</Button>
                     <Button icon={<Plus size={16} />} onClick={() => setShowGenerateModal(true)}>Generate Invoice</Button>
                 </div>} />
 
