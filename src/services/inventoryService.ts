@@ -168,24 +168,26 @@ export async function addStock(data: AddStockFormData, userId?: string): Promise
         if (error) throw error
     } else {
         // Create new batch
+        const payload = {
+            product_id: data.product_id,
+            batch_number: data.batch_number || null,
+            manufacturing_date: data.manufacturing_date || null,
+            expiry_date: data.expiry_date || null,
+            quantity: Number(data.quantity),
+            available_quantity: Number(data.quantity),
+            reserved_quantity: 0,
+            unit_cost: Number(data.unit_cost),
+            warehouse_location: data.warehouse_location || null,
+            status: 'available',
+        }
         const { error } = await supabase
             .from('inventory')
-            .insert({
-                product_id: data.product_id,
-                batch_number: data.batch_number || null,
-                manufacturing_date: data.manufacturing_date || null,
-                expiry_date: data.expiry_date || null,
-                quantity: Number(data.quantity),
-                reserved_quantity: 0,
-                unit_cost: Number(data.unit_cost),
-                warehouse_location: data.warehouse_location || null,
-                status: 'available',
-            })
+            .insert(payload)
         if (error) throw error
     }
 
     // Log movement
-    await supabase.from('inventory_movements').insert({
+    const movementPayload = {
         product_id: data.product_id,
         batch_number: data.batch_number || null,
         movement_type: 'in',
@@ -193,7 +195,8 @@ export async function addStock(data: AddStockFormData, userId?: string): Promise
         reference_type: 'manual',
         notes: data.notes || 'Manual stock addition',
         created_by: userId || null,
-    })
+    }
+    await supabase.from('inventory_movements').insert(movementPayload)
 }
 
 export async function adjustStock(

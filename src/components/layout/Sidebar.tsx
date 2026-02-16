@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useThemeStore } from '@/stores/themeStore'
@@ -16,33 +16,163 @@ import {
     Settings,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
     LogOut,
     Sun,
     Moon,
     Boxes,
+    PackageCheck,
+    FileMinus,
+    ClipboardCheck,
+    Wallet,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const NAV_ITEMS = [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-    { label: 'Products', icon: Package, path: '/products' },
-    { label: 'Inventory', icon: Warehouse, path: '/inventory' },
-    { label: 'Customers', icon: Users, path: '/customers' },
-    { label: 'Sales Orders', icon: ShoppingCart, path: '/sales' },
-    { label: 'Invoices', icon: FileText, path: '/invoices' },
-    { label: 'Purchase', icon: Truck, path: '/purchase' },
-    { label: 'Suppliers', icon: Boxes, path: '/suppliers' },
-    { label: 'Raw Materials', icon: FlaskConical, path: '/raw-materials' },
-    { label: 'Production', icon: Factory, path: '/production' },
-    { label: 'Reports', icon: BarChart3, path: '/reports' },
-    { label: 'Settings', icon: Settings, path: '/settings' },
+// ============ SECTIONED NAVIGATION ============
+interface NavItem {
+    label: string
+    icon: React.ElementType
+    path: string
+}
+
+interface NavSection {
+    title: string
+    items: NavItem[]
+}
+
+const NAV_SECTIONS: NavSection[] = [
+    {
+        title: 'Dashboard',
+        items: [
+            { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+        ]
+    },
+    {
+        title: 'Sales',
+        items: [
+            { label: 'Customers', icon: Users, path: '/customers' },
+            { label: 'Quotations', icon: FileText, path: '/quotations' },
+            { label: 'Sales Orders', icon: ShoppingCart, path: '/sales' },
+            { label: 'Invoices', icon: FileText, path: '/invoices' },
+            { label: 'Credit Notes', icon: FileText, path: '/credit-notes' },
+            { label: 'Delivery Challans', icon: Truck, path: '/challans' },
+        ]
+    },
+    {
+        title: 'Purchase',
+        items: [
+            { label: 'Suppliers', icon: Boxes, path: '/suppliers' },
+            { label: 'Purchase Orders', icon: Truck, path: '/purchase' },
+            { label: 'Goods Receipt', icon: PackageCheck, path: '/grn' },
+            { label: 'Debit Notes', icon: FileMinus, path: '/debit-notes' },
+            { label: 'Supplier Payments', icon: Wallet, path: '/supplier-payments' },
+        ]
+    },
+    {
+        title: 'Manufacturing',
+        items: [
+            { label: 'Raw Materials', icon: FlaskConical, path: '/raw-materials' },
+            { label: 'Formulations', icon: FlaskConical, path: '/formulations' },
+            { label: 'Production', icon: Factory, path: '/production' },
+            { label: 'Batches', icon: Package, path: '/batches' },
+        ]
+    },
+    {
+        title: 'Quality',
+        items: [
+            { label: 'Quality Checks', icon: ClipboardCheck, path: '/quality-checks' },
+        ]
+    },
+    {
+        title: 'Inventory',
+        items: [
+            { label: 'Products', icon: Package, path: '/products' },
+            { label: 'Inventory', icon: Warehouse, path: '/inventory' },
+        ]
+    },
+    {
+        title: 'Reports & Settings',
+        items: [
+            { label: 'Reports', icon: BarChart3, path: '/reports' },
+            { label: 'Settings', icon: Settings, path: '/settings' },
+        ]
+    },
 ]
+
+const STORAGE_KEY = 'sidebar-sections'
 
 export function Sidebar() {
     const [collapsed, setCollapsed] = useState(false)
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
     const { user, logout } = useAuthStore()
     const { isDark, toggle: toggleTheme } = useThemeStore()
     const location = useLocation()
+
+    // Load expanded state from localStorage
+    useEffect(() => {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (stored) {
+            try {
+                setExpandedSections(JSON.parse(stored))
+            } catch {
+                // If parsing fails, default to all expanded
+                const defaultExpanded: Record<string, boolean> = {}
+                NAV_SECTIONS.forEach(section => {
+                    defaultExpanded[section.title] = true
+                })
+                setExpandedSections(defaultExpanded)
+            }
+        } else {
+            // Default: all sections expanded
+            const defaultExpanded: Record<string, boolean> = {}
+            NAV_SECTIONS.forEach(section => {
+                defaultExpanded[section.title] = true
+            })
+            setExpandedSections(defaultExpanded)
+        }
+    }, [])
+
+    // Save to localStorage whenever expandedSections changes
+    useEffect(() => {
+        if (Object.keys(expandedSections).length > 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(expandedSections))
+        }
+    }, [expandedSections])
+
+    // Auto-expand section containing active page
+    useEffect(() => {
+        const activeSection = NAV_SECTIONS.find(section =>
+            section.items.some(item =>
+                location.pathname === item.path ||
+                (item.path !== '/' && location.pathname.startsWith(item.path))
+            )
+        )
+
+        if (activeSection) {
+            setExpandedSections(prev => ({
+                ...prev,
+                [activeSection.title]: true
+            }))
+        }
+    }, [location.pathname])
+
+    const toggleSection = (title: string) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [title]: !prev[title]
+        }))
+    }
+
+    // Determine which section contains the active page
+    const activeSectionTitle = useMemo(() => {
+        const section = NAV_SECTIONS.find(section =>
+            section.items.some(item =>
+                location.pathname === item.path ||
+                (item.path !== '/' && location.pathname.startsWith(item.path))
+            )
+        )
+        return section?.title
+    }, [location.pathname])
 
     return (
         <aside
@@ -63,29 +193,62 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-                {NAV_ITEMS.map((item) => {
-                    const isActive = location.pathname === item.path ||
-                        (item.path !== '/' && location.pathname.startsWith(item.path))
+            <nav className="flex-1 overflow-y-auto py-3 px-2">
+                {NAV_SECTIONS.map((section, sectionIndex) => {
+                    const isExpanded = expandedSections[section.title] ?? true
+                    const isActiveSection = activeSectionTitle === section.title
 
                     return (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            className={cn(
-                                'sidebar-item group relative',
-                                isActive
-                                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-                                    : 'text-gray-600 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50'
+                        <div key={section.title} className={cn(sectionIndex > 0 && 'mt-2')}>
+                            {!collapsed && (
+                                <button
+                                    onClick={() => toggleSection(section.title)}
+                                    className="w-full px-3 py-2 flex items-center justify-between text-[10px] font-medium uppercase text-gray-500 dark:text-dark-500 tracking-wider hover:text-gray-300 dark:hover:text-gray-300 cursor-pointer transition-colors"
+                                >
+                                    <span>{section.title}</span>
+                                    <ChevronDown
+                                        size={14}
+                                        className={cn(
+                                            'transition-transform duration-200',
+                                            !isExpanded && '-rotate-90'
+                                        )}
+                                    />
+                                </button>
                             )}
-                            title={collapsed ? item.label : undefined}
-                        >
-                            {isActive && (
-                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-500 rounded-r-full" />
-                            )}
-                            <item.icon size={20} className="flex-shrink-0" />
-                            {!collapsed && <span>{item.label}</span>}
-                        </NavLink>
+                            <div
+                                className={cn(
+                                    'overflow-hidden transition-all duration-200 ease-in-out',
+                                    isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+                                )}
+                            >
+                                <div className="space-y-0.5 pt-1">
+                                    {section.items.map((item) => {
+                                        const isActive = location.pathname === item.path ||
+                                            (item.path !== '/' && location.pathname.startsWith(item.path))
+
+                                        return (
+                                            <NavLink
+                                                key={item.path}
+                                                to={item.path}
+                                                className={cn(
+                                                    'sidebar-item group relative',
+                                                    isActive
+                                                        ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                                                        : 'text-gray-600 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50'
+                                                )}
+                                                title={collapsed ? item.label : undefined}
+                                            >
+                                                {isActive && (
+                                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-500 rounded-r-full" />
+                                                )}
+                                                <item.icon size={20} className="flex-shrink-0" />
+                                                {!collapsed && <span>{item.label}</span>}
+                                            </NavLink>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     )
                 })}
             </nav>

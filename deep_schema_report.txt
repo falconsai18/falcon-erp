@@ -1,0 +1,70 @@
+=== DEEP SCHEMA AUDIT ===
+
+=== Table: inventory ===
+id [string:uuid] [REQUIRED] - Note:
+This is a Primary Key.<pk/>
+product_id [string:uuid] [REQUIRED] - Note:
+This is a Foreign Key to `products.id`.<fk table='products' column='id'/>
+batch_number [string:text] [NULLABLE] 
+manufacturing_date [string:date] [NULLABLE] 
+expiry_date [string:date] [NULLABLE] 
+quantity [number:numeric] [NULLABLE] 
+reserved_quantity [number:numeric] [NULLABLE] 
+available_quantity [number:numeric] [NULLABLE] 
+unit_cost [number:numeric] [NULLABLE] 
+warehouse_location [string:text] [NULLABLE] 
+status [string:text] [NULLABLE] 
+created_at [string:timestamp with time zone] [NULLABLE] 
+updated_at [string:timestamp with time zone] [NULLABLE] 
+warehouse_id [string:uuid] [NULLABLE] - Note:
+This is a Foreign Key to `warehouses.id`.<fk table='warehouses' column='id'/>
+
+=== Table: inventory_movements ===
+id [string:uuid] [REQUIRED] - Note:
+This is a Primary Key.<pk/>
+product_id [string:uuid] [REQUIRED] - Note:
+This is a Foreign Key to `products.id`.<fk table='products' column='id'/>
+batch_number [string:text] [NULLABLE] 
+movement_type [string:text] [REQUIRED] 
+quantity [number:numeric] [REQUIRED] 
+reference_type [string:text] [NULLABLE] 
+reference_id [string:uuid] [NULLABLE] 
+notes [string:text] [NULLABLE] 
+created_by [string:uuid] [NULLABLE] - Note:
+This is a Foreign Key to `users.id`.<fk table='users' column='id'/>
+created_at [string:timestamp with time zone] [NULLABLE] 
+
+=== Table: quality_checks ===
+id [string:uuid] [REQUIRED] - Note:
+This is a Primary Key.<pk/>
+production_order_id [string:uuid] [NULLABLE] - Note:
+This is a Foreign Key to `production_orders.id`.<fk table='production_orders' column='id'/>
+batch_number [string:text] [NULLABLE] 
+parameter [string:text] [REQUIRED] 
+expected_value [string:text] [NULLABLE] 
+actual_value [string:text] [NULLABLE] 
+result [string:text] [NULLABLE] 
+checked_by [string:uuid] [NULLABLE] - Note:
+This is a Foreign Key to `users.id`.<fk table='users' column='id'/>
+notes [string:text] [NULLABLE] 
+checked_at [string:timestamp with time zone] [NULLABLE] 
+created_at [string:timestamp with time zone] [NULLABLE] 
+
+=== Table: quality_check_items ===
+id [string:uuid] [REQUIRED] - Note:
+This is a Primary Key.<pk/>
+quality_check_id [string:uuid] [NULLABLE] - Note:
+This is a Foreign Key to `quality_checks.id`.<fk table='quality_checks' column='id'/>
+parameter_name [string:text] [REQUIRED] 
+specification [string:text] [NULLABLE] 
+method [string:text] [NULLABLE] 
+min_value [number:numeric] [NULLABLE] 
+max_value [number:numeric] [NULLABLE] 
+actual_value [number:numeric] [NULLABLE] 
+unit [string:text] [NULLABLE] 
+result [string:text] [NULLABLE] 
+tested_by [string:uuid] [NULLABLE] 
+tested_at [string:timestamp with time zone] [NULLABLE] 
+notes [string:text] [NULLABLE] 
+created_at [string:timestamp with time zone] [NULLABLE] 
+

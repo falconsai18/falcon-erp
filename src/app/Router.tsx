@@ -8,7 +8,16 @@ import { InventoryPage } from '@/features/inventory/pages/InventoryPage'
 import { CustomersPage } from '@/features/customers/pages/CustomersPage'
 import { SalesPage } from '@/features/sales/pages/SalesPage'
 import { InvoicesPage } from '@/features/invoices/pages/InvoicesPage'
+import { QuotationsPage } from '@/features/quotations/pages/QuotationsPage'
 import { PurchasePage } from '@/features/purchase/pages/PurchasePage'
+import { GRNPage } from '@/features/grn/pages/GRNPage'
+import { CreditNotesPage } from '@/features/credit-notes/pages/CreditNotesPage'
+import { DebitNotesPage } from '@/features/debit-notes/pages/DebitNotesPage'
+import { ChallansPage } from '@/features/challans/pages/ChallansPage'
+import { BatchesPage } from '@/features/batches/pages/BatchesPage'
+import { QualityChecksPage } from '@/features/quality-checks/pages/QualityChecksPage'
+import { FormulationsPage } from '@/features/formulations/pages/FormulationsPage'
+import { SupplierPaymentsPage } from '@/features/supplier-payments/pages/SupplierPaymentsPage'
 import { SuppliersPage } from '@/features/suppliers/pages/SuppliersPage'
 import { RawMaterialsPage } from '@/features/raw-materials/pages/RawMaterialsPage'
 import { ProductionPage } from '@/features/production/pages/ProductionPage'
@@ -62,7 +71,16 @@ export function AppRouter() {
                     <Route path="/customers" element={<CustomersPage />} />
                     <Route path="/sales" element={<SalesPage />} />
                     <Route path="/invoices" element={<InvoicesPage />} />
+                    <Route path="/quotations" element={<QuotationsPage />} />
                     <Route path="/purchase" element={<PurchasePage />} />
+                    <Route path="/grn" element={<GRNPage />} />
+                    <Route path="/credit-notes" element={<CreditNotesPage />} />
+                    <Route path="/debit-notes" element={<DebitNotesPage />} />
+                    <Route path="/challans" element={<ChallansPage />} />
+                    <Route path="/batches" element={<BatchesPage />} />
+                    <Route path="/quality-checks" element={<QualityChecksPage />} />
+                    <Route path="/formulations" element={<FormulationsPage />} />
+                    <Route path="/supplier-payments" element={<SupplierPaymentsPage />} />
                     <Route path="/suppliers" element={<SuppliersPage />} />
                     <Route path="/raw-materials" element={<RawMaterialsPage />} />
                     <Route path="/production" element={<ProductionPage />} />
