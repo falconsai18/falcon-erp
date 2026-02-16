@@ -193,7 +193,7 @@ export async function updateQualityCheckStatus(
             await supabase
                 .from('batches')
                 .update({
-                    quality_status: 'passed',
+                    quality_status: 'pass',
                     status: 'available'
                 })
                 .eq('batch_number', qc.batch_number)

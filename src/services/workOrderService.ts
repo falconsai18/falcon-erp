@@ -423,7 +423,7 @@ export async function getAvailableBatchesForProduct(productId: string): Promise<
         .from('batches')
         .select('id, batch_number, available_qty')
         .eq('product_id', productId)
-        .eq('quality_status', 'passed')
+        .eq('quality_status', 'pass')
         .eq('is_expired', false)
         .gt('available_qty', 0)
         .order('expiry_date', { ascending: true })

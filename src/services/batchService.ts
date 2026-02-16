@@ -17,7 +17,7 @@ export interface Batch {
     rejected_qty: number
     unit_cost: number
     total_cost: number
-    quality_status: string  // pending, passed, failed, conditionally_passed
+    quality_status: string  // pending, pass, fail
     grade: string | null  // A, B, C
     warehouse_id: string | null
     warehouse_location_id: string | null
@@ -43,9 +43,8 @@ export interface BatchFormData {
 
 export const BATCH_STATUSES = [
     { value: 'pending', label: 'Pending QC', color: 'warning' },
-    { value: 'passed', label: 'Passed', color: 'success' },
-    { value: 'failed', label: 'Failed', color: 'danger' },
-    { value: 'conditionally_passed', label: 'Cond. Passed', color: 'info' },
+    { value: 'pass', label: 'Passed', color: 'success' },
+    { value: 'fail', label: 'Failed', color: 'danger' },
 ]
 
 export const QUALITY_GRADES = [
@@ -196,7 +195,7 @@ export async function updateBatchStatus(
 ): Promise<void> {
     const updates: any = {
         quality_status: status,
-        status: (status === 'passed' || status === 'conditionally_passed') ? 'available' : status === 'failed' ? 'rejected' : 'quarantine',
+        status: (status === 'pass') ? 'available' : status === 'fail' ? 'rejected' : 'quarantine',
         updated_at: new Date().toISOString(),
     }
 
@@ -211,7 +210,7 @@ export async function updateBatchStatus(
     if (error) throw error
 
     // Update inventory status if passed
-    if (status === 'passed' || status === 'conditionally_passed') {
+    if (status === 'pass') {
         const batch = await getBatchById(id)
         await supabase
             .from('inventory')
@@ -244,8 +243,8 @@ export async function getBatchStats() {
     return {
         total: batches.length,
         pending: batches.filter(b => b.quality_status === 'pending').length,
-        passed: batches.filter(b => b.quality_status === 'passed').length,
-        failed: batches.filter(b => b.quality_status === 'failed').length,
+        passed: batches.filter(b => b.quality_status === 'pass').length,
+        failed: batches.filter(b => b.quality_status === 'fail').length,
         expired: batches.filter(b => b.is_expired).length,
         nearExpiry: batches.filter(b => b.is_near_expiry && !b.is_expired).length,
     }
