@@ -179,15 +179,13 @@ export default function AuditLogsPage() {
 
             {/* Refresh Button */}
             <div className="flex justify-end">
-                <Button 
-                    variant="secondary" 
-                    size="sm" 
+                <button
                     onClick={() => loadLogs(true)}
-                    className="glass-card gap-2 px-4 py-2 rounded-lg bg-white/50 dark:bg-dark-100/50 backdrop-blur-md border border-gray-200 dark:border-dark-300"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl glass-card bg-white/50 dark:bg-dark-100/50 backdrop-blur-md border border-gray-200 dark:border-dark-300 text-gray-700 dark:text-white hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all text-sm font-medium"
                 >
                     <RotateCcw className="w-4 h-4" />
                     Refresh
-                </Button>
+                </button>
             </div>
 
             {/* Filters */}

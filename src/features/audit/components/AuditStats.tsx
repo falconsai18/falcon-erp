@@ -45,12 +45,13 @@ export function AuditStats({ className }: AuditStatsProps) {
     try {
       setLoading(true)
 
-      // Get today's actions
-      const today = new Date().toISOString().split('T')[0]
+      // Get today's actions (using local timezone start of day)
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
       const { count: todayCount } = await supabase
         .from('activity_log')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', today)
+        .gte('created_at', todayStart.toISOString())
 
       // Get this week's actions
       const weekAgo = new Date()
@@ -64,7 +65,7 @@ export function AuditStats({ className }: AuditStatsProps) {
       const { data: userActivity } = await supabase
         .from('activity_log')
         .select('user_id, users(full_name)')
-        .gte('created_at', today)
+        .gte('created_at', todayStart.toISOString())
 
       const userCounts: Record<string, { name: string; count: number }> = {}
       userActivity?.forEach((log: any) => {
@@ -83,7 +84,7 @@ export function AuditStats({ className }: AuditStatsProps) {
       const { data: actionData } = await supabase
         .from('activity_log')
         .select('action')
-        .gte('created_at', today)
+        .gte('created_at', todayStart.toISOString())
 
       const actionCounts: Record<string, number> = {}
       actionData?.forEach((log: any) => {

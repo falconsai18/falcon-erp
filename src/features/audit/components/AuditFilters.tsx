@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { Search, X, Calendar, Filter, RotateCcw } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Search, X, Calendar, Filter, RotateCcw, ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { cn, formatDate } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 
 interface AuditFiltersProps {
@@ -48,6 +48,96 @@ const DATE_PRESETS = [
   { label: '30 Days', days: 30 },
   { label: '90 Days', days: 90 },
 ]
+
+// Custom Dropdown Component
+interface DropdownOption {
+  value: string
+  label: string
+}
+
+interface CustomDropdownProps {
+  label: string
+  value: string
+  options: DropdownOption[]
+  onChange: (value: string) => void
+}
+
+function CustomDropdown({ label, value, options, onChange }: CustomDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const selectedOption = options.find((o) => o.value === value)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="space-y-1" ref={dropdownRef}>
+      <label className="text-xs text-gray-400 uppercase">{label}</label>
+      <div className="relative">
+        {/* Trigger Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            'w-full flex items-center justify-between px-3 py-2 rounded-lg',
+            'glass-card bg-white/50 dark:bg-dark-100/50 backdrop-blur-md',
+            'border border-gray-200 dark:border-dark-300',
+            'text-sm text-gray-900 dark:text-white',
+            'hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all'
+          )}
+        >
+          <span>{selectedOption?.label || 'Select...'}</span>
+          <ChevronDown
+            size={16}
+            className={cn('text-gray-400 transition-transform', isOpen && 'rotate-180')}
+          />
+        </button>
+
+        {/* Dropdown Panel */}
+        {isOpen && (
+          <div
+            className={cn(
+              'absolute z-50 w-full mt-1 rounded-xl',
+              'bg-white dark:bg-dark-200',
+              'shadow-xl border border-gray-200 dark:border-dark-300',
+              'max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2'
+            )}
+          >
+            {options.map((option) => (
+              <div
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value)
+                  setIsOpen(false)
+                }}
+                className={cn(
+                  'px-4 py-2 cursor-pointer text-sm',
+                  'text-gray-900 dark:text-white',
+                  'hover:bg-gray-100 dark:hover:bg-dark-300',
+                  value === option.value && 'bg-indigo-500/10 text-indigo-500'
+                )}
+              >
+                {option.label}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function AuditFilters({ onFilterChange, className }: AuditFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
@@ -116,6 +206,9 @@ export function AuditFilters({ onFilterChange, className }: AuditFiltersProps) {
     filters.entityType !== 'all' ||
     filters.dateFrom ||
     filters.dateTo
+
+  // Prepare user options for dropdown
+  const userOptions = [{ value: 'all', label: 'All Users' }, ...users.map((u) => ({ value: u.id, label: u.full_name }))]
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -186,53 +279,28 @@ export function AuditFilters({ onFilterChange, className }: AuditFiltersProps) {
           {/* Dropdown Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* User Filter */}
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400 uppercase">User</label>
-              <select
-                value={filters.userId}
-                onChange={(e) => updateFilter('userId', e.target.value)}
-                className="w-full bg-white dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/30"
-              >
-                <option value="all">All Users</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.full_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              label="User"
+              value={filters.userId}
+              options={userOptions}
+              onChange={(value) => updateFilter('userId', value)}
+            />
 
             {/* Action Type Filter */}
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400 uppercase">Action Type</label>
-              <select
-                value={filters.actionType}
-                onChange={(e) => updateFilter('actionType', e.target.value)}
-                className="w-full bg-white dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/30"
-              >
-                {ACTION_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              label="Action Type"
+              value={filters.actionType}
+              options={ACTION_TYPES}
+              onChange={(value) => updateFilter('actionType', value)}
+            />
 
             {/* Entity Type Filter */}
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400 uppercase">Entity Type</label>
-              <select
-                value={filters.entityType}
-                onChange={(e) => updateFilter('entityType', e.target.value)}
-                className="w-full bg-white dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/30"
-              >
-                {ENTITY_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              label="Entity Type"
+              value={filters.entityType}
+              options={ENTITY_TYPES}
+              onChange={(value) => updateFilter('entityType', value)}
+            />
           </div>
         </div>
       )}
