@@ -3,6 +3,8 @@ import {
     fetchPaginated, createRecord, updateRecord, deleteRecord, generateNumber,
     type PaginationParams, type PaginatedResult,
 } from './baseService'
+import { logActivity, AUDIT_ACTIONS } from './auditService'
+import { createNotification } from './notificationService'
 
 export interface SalesOrder {
     id: string
@@ -108,26 +110,46 @@ export function calculateOrderTotals(items: SalesOrderItem[]) {
 // ============ CRUD ============
 export async function getSalesOrders(
     params: PaginationParams,
-    filters?: { status?: string; paymentStatus?: string; search?: string }
+    filters?: { status?: string; paymentStatus?: string; search?: string; dateFrom?: string; dateTo?: string; customerId?: string }
 ): Promise<PaginatedResult<SalesOrder>> {
-    const filterArr = []
-    if (filters?.status && filters.status !== 'all') filterArr.push({ column: 'status', value: filters.status })
-    if (filters?.paymentStatus && filters.paymentStatus !== 'all') filterArr.push({ column: 'payment_status', value: filters.paymentStatus })
+    const { page, pageSize } = params
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
 
-    const result = await fetchPaginated<SalesOrder>('sales_orders', params, {
-        select: '*, customers(name, phone)',
-        filters: filterArr,
-        search: filters?.search ? { columns: ['order_number'], query: filters.search } : undefined,
-        orderBy: { column: 'created_at', ascending: false },
-    })
+    let query = supabase
+        .from('sales_orders')
+        .select('*, customers(name, phone)', { count: 'exact' })
 
-    result.data = result.data.map((so: any) => ({
+    if (filters?.status && filters.status !== 'all') query = query.eq('status', filters.status)
+    if (filters?.paymentStatus && filters.paymentStatus !== 'all') query = query.eq('payment_status', filters.paymentStatus)
+    if (filters?.customerId) query = query.eq('customer_id', filters.customerId)
+    if (filters?.dateFrom) query = query.gte('order_date', filters.dateFrom)
+    if (filters?.dateTo) query = query.lte('order_date', filters.dateTo)
+
+    if (filters?.search) {
+        query = query.ilike('order_number', `%${filters.search}%`)
+    }
+
+    query = query.order('created_at', { ascending: false })
+        .range(from, to)
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+
+    const mappedData = (data || []).map((so: any) => ({
         ...so,
         customer_name: so.customers?.name || '-',
         customer_phone: so.customers?.phone || '-',
     }))
 
-    return result
+    return {
+        data: mappedData,
+        count: count || 0,
+        page,
+        pageSize,
+        totalPages: Math.ceil((count || 0) / pageSize),
+    }
 }
 
 export async function getSalesOrderById(id: string): Promise<SalesOrder> {
@@ -197,6 +219,23 @@ export async function createSalesOrder(data: SalesOrderFormData, userId?: string
 
         if (itemsError) throw itemsError
     }
+
+    // Log activity
+    await logActivity({
+        action: AUDIT_ACTIONS.SO_CREATED,
+        entity_type: 'sales_order',
+        entity_id: order.id,
+        details: { order_number: order.order_number, total_amount: order.total_amount }
+    })
+
+    // Create Notification
+    createNotification({
+        user_id: order.created_by || '',
+        title: 'New Sales Order Created',
+        message: `${order.order_number} created for ${order.customers?.name || 'Customer'}`,
+        type: 'success',
+        link: '/sales'
+    })
 
     return order
 }

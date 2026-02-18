@@ -20,6 +20,7 @@ import {
     getRawMaterialStats, RM_CATEGORIES,
     type RawMaterial, type RawMaterialFormData, EMPTY_RAWMATERIAL_FORM,
 } from '@/services/rawMaterialService'
+import { createPOFromLowStock, getLowStockMaterials } from '@/services/purchaseService'
 
 const UNIT_OPTIONS = [
     { value: 'KG', label: 'Kilogram' }, { value: 'GM', label: 'Gram' },
@@ -76,8 +77,8 @@ function RawMaterialDetail({ item, onClose, onEdit }: {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button size="sm" variant="secondary" onClick={onEdit} icon={<Edit2 size={14} />}>Edit</Button>
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <Button size="sm" variant="secondary" onClick={onEdit} icon={<Edit2 size={14} />} title="Edit">Edit</Button>
+                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200" title="Close"><X size={16} /></button>
                 </div>
             </div>
 
@@ -157,12 +158,36 @@ export function RawMaterialsPage() {
     const [isSaving, setIsSaving] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [stats, setStats] = useState({ total: 0, active: 0, lowStock: 0, totalValue: 0 })
+    const [lowStockMaterials, setLowStockMaterials] = useState<any[]>([])
+    const [creatingPO, setCreatingPO] = useState<string | null>(null)
 
     const fetchSuppliers = async () => {
         try {
             const { data } = await supabase.from('suppliers').select('id, name').eq('status', 'active').order('name')
             setSuppliers((data || []).map((s: any) => ({ value: s.id, label: s.name })))
         } catch { }
+    }
+
+    const fetchLowStock = async () => {
+        try {
+            const materials = await getLowStockMaterials()
+            setLowStockMaterials(materials)
+        } catch (err: any) {
+            console.error('Failed to fetch low stock:', err)
+        }
+    }
+
+    const handleCreatePO = async (materialId: string, quantity: number) => {
+        try {
+            setCreatingPO(materialId)
+            const po = await createPOFromLowStock(materialId, quantity)
+            toast.success(`PO ${po.po_number} created!`)
+            fetchLowStock()
+        } catch (err: any) {
+            toast.error('Failed: ' + err.message)
+        } finally {
+            setCreatingPO(null)
+        }
     }
 
     const fetchData = useCallback(async () => {
@@ -183,7 +208,7 @@ export function RawMaterialsPage() {
         }
     }, [page, statusFilter, categoryFilter, search, showLowStock])
 
-    useEffect(() => { fetchData(); fetchSuppliers() }, [fetchData])
+    useEffect(() => { fetchData(); fetchSuppliers(); fetchLowStock() }, [fetchData])
     useEffect(() => {
         const t = setTimeout(() => { setPage(1); fetchData() }, 300)
         return () => clearTimeout(t)
@@ -259,6 +284,45 @@ export function RawMaterialsPage() {
                 ))}
             </div>
 
+            {/* Low Stock Alerts */}
+            {lowStockMaterials.length > 0 && (
+                <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle size={18} className="text-red-400" />
+                        <h3 className="text-sm font-semibold text-white">Low Stock Alerts ({lowStockMaterials.length})</h3>
+                        <p className="text-xs text-dark-500 ml-auto">Click to auto-create Purchase Order</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {lowStockMaterials.slice(0, 6).map((material) => (
+                            <div key={material.id} className="bg-dark-200/30 rounded-lg p-3 flex items-center justify-between">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-white truncate">{material.name}</p>
+                                    <p className="text-xs text-dark-500">
+                                        Stock: <span className="text-red-400">{material.current_stock}</span> / {material.reorder_point} {material.unit_of_measure}
+                                    </p>
+                                    {material.supplier_name && (
+                                        <p className="text-xs text-dark-600">{material.supplier_name}</p>
+                                    )}
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => handleCreatePO(material.id, material.suggested_quantity)}
+                                    isLoading={creatingPO === material.id}
+                                    disabled={!material.supplier_id}
+                                    className="shrink-0 ml-2"
+                                >
+                                    Order {material.suggested_quantity} {material.unit_of_measure}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                    {lowStockMaterials.length > 6 && (
+                        <p className="text-xs text-dark-500 text-center">+{lowStockMaterials.length - 6} more items below reorder point</p>
+                    )}
+                </div>
+            )}
+
             {/* Filters */}
             <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex-1 max-w-md">
@@ -282,9 +346,9 @@ export function RawMaterialsPage() {
                 <Select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1) }}
                     options={[{ value: 'all', label: 'All Categories' }, ...RM_CATEGORIES.map(c => ({ value: c, label: c }))]} />
                 <div className="flex items-center border border-dark-300 rounded-lg overflow-hidden">
-                    <button onClick={() => setViewMode('table')}
+                    <button title="List view" onClick={() => setViewMode('table')}
                         className={cn('p-2', viewMode === 'table' ? 'bg-lime-500/20 text-lime-400' : 'text-dark-500')}><LayoutList size={16} /></button>
-                    <button onClick={() => setViewMode('grid')}
+                    <button title="Grid view" onClick={() => setViewMode('grid')}
                         className={cn('p-2', viewMode === 'grid' ? 'bg-lime-500/20 text-lime-400' : 'text-dark-500')}><LayoutGrid size={16} /></button>
                 </div>
             </div>
@@ -304,9 +368,9 @@ export function RawMaterialsPage() {
                             {items.map(rm => (
                                 <Card key={rm.id} hover onClick={() => setSelectedItem(rm)} className="group relative">
                                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(rm) }}
+                                        <button title="Edit" onClick={(e) => { e.stopPropagation(); handleEdit(rm) }}
                                             className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-lime-400"><Edit2 size={14} /></button>
-                                        <button onClick={(e) => { e.stopPropagation(); setDeletingItem(rm); setIsDeleteModalOpen(true) }}
+                                        <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingItem(rm); setIsDeleteModalOpen(true) }}
                                             className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-red-400"><Trash2 size={14} /></button>
                                     </div>
                                     <div className="space-y-3">
@@ -364,9 +428,9 @@ export function RawMaterialsPage() {
                                             <td className="px-4 py-3"><StatusBadge status={rm.status} /></td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-1">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(rm) }}
+                                                    <button title="Edit" onClick={(e) => { e.stopPropagation(); handleEdit(rm) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-lime-400 hover:bg-dark-200"><Edit2 size={14} /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); setDeletingItem(rm); setIsDeleteModalOpen(true) }}
+                                                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingItem(rm); setIsDeleteModalOpen(true) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 </div>
                                             </td>

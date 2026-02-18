@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { usePermission } from '@/hooks/usePermission'
 import {
     LayoutDashboard,
     Package,
@@ -84,16 +85,19 @@ const NAV_SECTIONS: NavSection[] = [
         ]
     },
     {
-        title: 'Inventory',
+        title: 'Stock',
         items: [
             { label: 'Products', icon: Package, path: '/products' },
-            { label: 'Inventory', icon: Warehouse, path: '/inventory' },
+            { label: 'Stock', icon: Warehouse, path: '/inventory' },
         ]
     },
     {
         title: 'Reports & Settings',
         items: [
             { label: 'Reports', icon: BarChart3, path: '/reports' },
+            { label: 'GST Reports', icon: FileText, path: '/gst-reports' },
+            { label: 'Users', icon: Users, path: '/users' },
+            { label: 'Audit Logs', icon: ClipboardCheck, path: '/audit-logs' },
             { label: 'Settings', icon: Settings, path: '/settings' },
         ]
     },
@@ -106,7 +110,16 @@ export function Sidebar() {
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
     const { user, logout } = useAuthStore()
     const { isDark, toggle: toggleTheme } = useThemeStore()
+    const { canAccessModule } = usePermission()
     const location = useLocation()
+
+    // Filter sections based on permissions
+    const filteredSections = useMemo(() => {
+        return NAV_SECTIONS.map(section => ({
+            ...section,
+            items: section.items.filter(item => canAccessModule(item.path))
+        })).filter(section => section.items.length > 0)
+    }, [canAccessModule])
 
     // Load expanded state from localStorage
     useEffect(() => {
@@ -117,7 +130,7 @@ export function Sidebar() {
             } catch {
                 // If parsing fails, default to all expanded
                 const defaultExpanded: Record<string, boolean> = {}
-                NAV_SECTIONS.forEach(section => {
+                filteredSections.forEach(section => {
                     defaultExpanded[section.title] = true
                 })
                 setExpandedSections(defaultExpanded)
@@ -125,12 +138,12 @@ export function Sidebar() {
         } else {
             // Default: all sections expanded
             const defaultExpanded: Record<string, boolean> = {}
-            NAV_SECTIONS.forEach(section => {
+            filteredSections.forEach(section => {
                 defaultExpanded[section.title] = true
             })
             setExpandedSections(defaultExpanded)
         }
-    }, [])
+    }, [filteredSections]) // Added dependency on filteredSections
 
     // Save to localStorage whenever expandedSections changes
     useEffect(() => {
@@ -141,7 +154,7 @@ export function Sidebar() {
 
     // Auto-expand section containing active page
     useEffect(() => {
-        const activeSection = NAV_SECTIONS.find(section =>
+        const activeSection = filteredSections.find(section =>
             section.items.some(item =>
                 location.pathname === item.path ||
                 (item.path !== '/' && location.pathname.startsWith(item.path))
@@ -154,7 +167,7 @@ export function Sidebar() {
                 [activeSection.title]: true
             }))
         }
-    }, [location.pathname])
+    }, [location.pathname, filteredSections])
 
     const toggleSection = (title: string) => {
         setExpandedSections(prev => ({
@@ -165,19 +178,19 @@ export function Sidebar() {
 
     // Determine which section contains the active page
     const activeSectionTitle = useMemo(() => {
-        const section = NAV_SECTIONS.find(section =>
+        const section = filteredSections.find(section =>
             section.items.some(item =>
                 location.pathname === item.path ||
                 (item.path !== '/' && location.pathname.startsWith(item.path))
             )
         )
         return section?.title
-    }, [location.pathname])
+    }, [location.pathname, filteredSections])
 
     return (
         <aside
             className={cn(
-                'h-screen flex flex-col border-r border-dark-300/50 dark:border-dark-300/50 border-gray-200 bg-dark-50 dark:bg-dark-50 bg-white transition-all duration-300 sticky top-0',
+                'h-screen flex flex-col border-r border-gray-200 dark:border-dark-300/50 bg-white dark:bg-dark-50 transition-all duration-300 sticky top-0',
                 collapsed ? 'w-[68px]' : 'w-[240px]'
             )}
         >
@@ -194,7 +207,7 @@ export function Sidebar() {
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-3 px-2">
-                {NAV_SECTIONS.map((section, sectionIndex) => {
+                {filteredSections.map((section, sectionIndex) => {
                     const isExpanded = expandedSections[section.title] ?? true
                     const isActiveSection = activeSectionTitle === section.title
 

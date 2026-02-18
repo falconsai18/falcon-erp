@@ -404,6 +404,71 @@ export async function getPOItemsForGRN(poId: string): Promise<any[]> {
     })).filter((item: any) => item.remaining_quantity > 0)
 }
 
+// ============ CREATE GRN FROM PO ============
+export async function createGRNFromPO(poId: string, userId?: string): Promise<GRN> {
+    // Get PO details
+    const { data: po, error: poError } = await supabase
+        .from('purchase_orders')
+        .select('*, suppliers(id, name)')
+        .eq('id', poId)
+        .single()
+
+    if (poError) throw poError
+    if (!['confirmed', 'partial'].includes(po.status)) {
+        throw new Error('PO must be confirmed or partially received to create GRN')
+    }
+
+    // Get PO items with remaining quantities
+    const poItems = await getPOItemsForGRN(poId)
+    if (poItems.length === 0) {
+        throw new Error('All items have been fully received')
+    }
+
+    // Generate GRN number
+    const grnNumber = await generateNumber('grn')
+
+    // Create GRN
+    const { data: grn, error: grnError } = await supabase
+        .from('grn')
+        .insert({
+            grn_number: grnNumber,
+            purchase_order_id: poId,
+            supplier_id: po.supplier_id,
+            received_date: new Date().toISOString().split('T')[0],
+            status: 'draft',
+            notes: `GRN for PO ${po.po_number}`,
+            received_by: userId || null,
+        })
+        .select()
+        .single()
+
+    if (grnError) throw grnError
+
+    // Create GRN items with default received quantities (0, user will update)
+    const grnItems = poItems.map((item: any) => ({
+        grn_id: grn.id,
+        purchase_order_item_id: item.id,
+        raw_material_id: item.raw_material_id,
+        product_id: item.product_id,
+        ordered_quantity: item.ordered_quantity,
+        received_quantity: 0,
+        accepted_quantity: 0,
+        rejected_quantity: 0,
+        batch_number: '',
+        manufacturing_date: null,
+        expiry_date: null,
+        notes: '',
+    }))
+
+    const { error: itemsError } = await supabase
+        .from('grn_items')
+        .insert(grnItems)
+
+    if (itemsError) throw itemsError
+
+    return grn
+}
+
 // ============ STATS ============
 export async function getGRNStats() {
     const { data, error } = await supabase.from('grn').select('status')

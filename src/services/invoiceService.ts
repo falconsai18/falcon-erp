@@ -3,6 +3,9 @@ import {
     fetchPaginated, createRecord, updateRecord, deleteRecord, generateNumber,
     type PaginationParams, type PaginatedResult,
 } from './baseService'
+import { logActivity, AUDIT_ACTIONS } from './auditService'
+
+import { createNotification } from './notificationService'
 
 export interface Invoice {
     id: string
@@ -125,19 +128,33 @@ export function calculateInvoiceTotals(items: InvoiceItem[]) {
 
 export async function getInvoices(
     params: PaginationParams,
-    filters?: { status?: string; search?: string }
+    filters?: { status?: string; search?: string; dateFrom?: string; dateTo?: string; customerId?: string }
 ): Promise<PaginatedResult<Invoice>> {
-    const filterArr = []
-    if (filters?.status && filters.status !== 'all') filterArr.push({ column: 'status', value: filters.status })
+    const { page, pageSize } = params
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
 
-    const result = await fetchPaginated<Invoice>('invoices', params, {
-        select: '*, customers(name, phone, gst_number), sales_orders(order_number)',
-        filters: filterArr,
-        search: filters?.search ? { columns: ['invoice_number'], query: filters.search } : undefined,
-        orderBy: { column: 'created_at', ascending: false },
-    })
+    let query = supabase
+        .from('invoices')
+        .select('*, customers(name, phone, gst_number), sales_orders(order_number)', { count: 'exact' })
 
-    result.data = result.data.map((inv: any) => ({
+    if (filters?.status && filters.status !== 'all') query = query.eq('status', filters.status)
+    if (filters?.customerId) query = query.eq('customer_id', filters.customerId)
+    if (filters?.dateFrom) query = query.gte('invoice_date', filters.dateFrom)
+    if (filters?.dateTo) query = query.lte('invoice_date', filters.dateTo)
+
+    if (filters?.search) {
+        query = query.ilike('invoice_number', `%${filters.search}%`)
+    }
+
+    query = query.order('created_at', { ascending: false })
+        .range(from, to)
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+
+    const mappedData = (data || []).map((inv: any) => ({
         ...inv,
         customer_name: inv.customers?.name || '-',
         customer_phone: inv.customers?.phone || '-',
@@ -145,7 +162,13 @@ export async function getInvoices(
         order_number: inv.sales_orders?.order_number || '-',
     }))
 
-    return result
+    return {
+        data: mappedData,
+        count: count || 0,
+        page,
+        pageSize,
+        totalPages: Math.ceil((count || 0) / pageSize),
+    }
 }
 
 export async function getInvoiceById(id: string): Promise<Invoice> {
@@ -250,6 +273,23 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
     const { error: itemsError } = await supabase.from('invoice_items').insert(invItems)
     if (itemsError) throw itemsError
 
+    // Log Activity
+    logActivity({
+        action: AUDIT_ACTIONS.INVOICE_CREATED,
+        entity_type: 'invoice',
+        entity_id: invoice.id,
+        details: { invoice_number: invoice.invoice_number, total_amount: invoice.total_amount }
+    })
+
+    // Create Notification
+    createNotification({
+        user_id: invoice.created_by || '',
+        title: 'Invoice Generated',
+        message: `${invoice.invoice_number} created for ₹${invoice.total_amount}`,
+        type: 'success',
+        link: '/invoices'
+    })
+
     return invoice
 }
 
@@ -257,6 +297,14 @@ export async function updateInvoiceStatus(id: string, status: string): Promise<v
     const update: any = { status, updated_at: new Date().toISOString() }
     const { error } = await supabase.from('invoices').update(update).eq('id', id)
     if (error) throw error
+
+    if (status === 'cancelled') {
+        logActivity({
+            action: AUDIT_ACTIONS.INVOICE_CANCELLED,
+            entity_type: 'invoice',
+            entity_id: id,
+        })
+    }
 }
 
 export async function recordPayment(
@@ -306,10 +354,28 @@ export async function recordPayment(
     }).eq('id', invoiceId)
 
     if (error) throw error
+
+    logActivity({
+        action: AUDIT_ACTIONS.PAYMENT_RECEIVED,
+        entity_type: 'invoice',
+        entity_id: invoiceId,
+        details: { amount, payment_number: paymentNumber }
+    })
 }
 
 export async function deleteInvoice(id: string): Promise<void> {
     return deleteRecord('invoices', id)
+}
+
+export async function getInvoicePayments(invoiceId: string): Promise<any[]> {
+    const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('invoice_id', invoiceId)
+        .order('payment_date', { ascending: false })
+
+    if (error) throw error
+    return data || []
 }
 
 export async function getInvoiceStats() {

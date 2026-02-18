@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     BarChart3, ShoppingCart, Warehouse, IndianRupee, Factory,
     TrendingUp, TrendingDown, AlertTriangle, Clock, Users, Package,
-    Download, RefreshCw,
+    Download, RefreshCw, Calendar, Printer,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -14,6 +15,7 @@ import {
 } from 'recharts'
 import {
     getSalesReport, getInventoryReport, getFinancialReport, getProductionReport,
+    getSalesReportByDateRange, getCustomerSalesReport, getProductPLReport, getStockValuationReport,
     type SalesReport, type InventoryReport, type FinancialReport, type ProductionReport,
 } from '@/services/reportService'
 
@@ -38,16 +40,26 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 // ============ REPORT TABS ============
-type ReportTab = 'sales' | 'inventory' | 'financial' | 'production'
+type ReportTab = 'sales' | 'inventory' | 'financial' | 'production' | 'customer-sales' | 'product-pl' | 'stock-valuation'
+
 
 export function ReportsPage() {
+    const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState<ReportTab>('sales')
+    const [expandedBucket, setExpandedBucket] = useState<number | null>(null)
     const [loading, setLoading] = useState(true)
     const [salesData, setSalesData] = useState<SalesReport | null>(null)
     const [inventoryData, setInventoryData] = useState<InventoryReport | null>(null)
     const [financialData, setFinancialData] = useState<FinancialReport | null>(null)
     const [productionData, setProductionData] = useState<ProductionReport | null>(null)
     const [showExportMenu, setShowExportMenu] = useState(false)
+    const [fromDate, setFromDate] = useState<string>(
+        new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+    )
+    const [toDate, setToDate] = useState<string>(new Date().toISOString().split('T')[0])
+    const [customerSalesData, setCustomerSalesData] = useState<any[]>([])
+    const [productPLData, setProductPLData] = useState<any[]>([])
+    const [stockValuationData, setStockValuationData] = useState<{ items: any[], totals: any } | null>(null)
 
     const loadReport = async (tab: ReportTab) => {
         try {
@@ -57,18 +69,24 @@ export function ReportsPage() {
                 case 'inventory': setInventoryData(await getInventoryReport()); break
                 case 'financial': setFinancialData(await getFinancialReport()); break
                 case 'production': setProductionData(await getProductionReport()); break
+                case 'customer-sales': setCustomerSalesData(await getCustomerSalesReport(fromDate, toDate)); break
+                case 'product-pl': setProductPLData(await getProductPLReport(fromDate, toDate)); break
+                case 'stock-valuation': setStockValuationData(await getStockValuationReport()); break
             }
         } catch (err: any) { toast.error(err.message) }
         finally { setLoading(false) }
     }
 
-    useEffect(() => { loadReport(activeTab) }, [activeTab])
+    useEffect(() => { loadReport(activeTab) }, [activeTab, fromDate, toDate])
 
     const tabs = [
         { key: 'sales' as const, label: 'Sales', icon: ShoppingCart, color: 'text-blue-400' },
         { key: 'inventory' as const, label: 'Inventory', icon: Warehouse, color: 'text-orange-400' },
         { key: 'financial' as const, label: 'Financial', icon: IndianRupee, color: 'text-emerald-400' },
         { key: 'production' as const, label: 'Production', icon: Factory, color: 'text-purple-400' },
+        { key: 'customer-sales' as const, label: 'Customer Sales', icon: Users, color: 'text-cyan-400' },
+        { key: 'product-pl' as const, label: 'Product P&L', icon: TrendingUp, color: 'text-green-400' },
+        { key: 'stock-valuation' as const, label: 'Stock Valuation', icon: IndianRupee, color: 'text-yellow-400' },
     ]
 
     const exportOptions: Record<string, { key: string; label: string }[]> = {
@@ -127,48 +145,114 @@ export function ReportsPage() {
                     <p className="text-sm text-dark-500 mt-1">Real-time business intelligence</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <style>{`
+                        @media print {
+                            body { background: white !important; color: black !important; }
+                            .glass-card { background: white !important; border: 1px solid #ddd !important; box-shadow: none !important; }
+                            .text-white { color: black !important; }
+                            .text-dark-500 { color: #555 !important; }
+                            button, .no-print { display: none !important; }
+                        }
+                    `}</style>
+                    <Button variant="secondary" icon={<Printer size={16} />} size="sm" onClick={() => window.print()}>Print</Button>
                     <Button variant="secondary" icon={<RefreshCw size={16} />} size="sm" onClick={() => loadReport(activeTab)}>Refresh</Button>
                     <div className="relative export-dropdown-container">
-                      <Button variant="secondary" icon={<Download size={16} />} size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setShowExportMenu(!showExportMenu)
-                        }}>
-                        Export CSV ▾
-                      </Button>
-                      {showExportMenu && (
-                        <div className="absolute right-0 top-full mt-1 w-64 glass-card border border-dark-300/50 rounded-lg shadow-xl z-50 py-1 max-h-80 overflow-y-auto">
-                          {(exportOptions[activeTab] || []).map((opt) => (
-                            <button
-                              key={opt.key}
-                              onClick={async (e) => {
+                        <Button variant="secondary" icon={<Download size={16} />} size="sm"
+                            onClick={(e) => {
                                 e.stopPropagation()
-                                try {
-                                  setShowExportMenu(false)
-                                  const { exportSingleReport } = await import('@/services/exportService')
-                                  const currentData = activeTab === 'sales' ? salesData
-                                    : activeTab === 'inventory' ? inventoryData
-                                    : activeTab === 'financial' ? financialData
-                                    : productionData
-                                  await exportSingleReport(activeTab, opt.key, currentData)
-                                  toast.success(`${opt.label.replace(/^[^\s]+\s/, '')} exported!`)
-                                } catch (err: any) {
-                                  toast.error(err.message)
-                                }
-                              }}
-                              className={cn(
-                                'w-full text-left px-4 py-2.5 text-sm transition-colors',
-                                opt.key === 'all'
-                                  ? 'text-brand-400 font-medium hover:bg-brand-500/10 border-b border-dark-300/30'
-                                  : 'text-dark-500 hover:text-white hover:bg-dark-200/50'
-                              )}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                                setShowExportMenu(!showExportMenu)
+                            }}>
+                            Export CSV ▾
+                        </Button>
+                        {showExportMenu && (
+                            <div className="absolute right-0 top-full mt-1 w-64 glass-card border border-dark-300/50 rounded-lg shadow-xl z-50 py-1 max-h-80 overflow-y-auto">
+                                {(exportOptions[activeTab] || []).map((opt) => (
+                                    <button
+                                        key={opt.key}
+                                        onClick={async (e) => {
+                                            e.stopPropagation()
+                                            try {
+                                                setShowExportMenu(false)
+                                                const { exportSingleReport } = await import('@/services/exportService')
+                                                const currentData = activeTab === 'sales' ? salesData
+                                                    : activeTab === 'inventory' ? inventoryData
+                                                        : activeTab === 'financial' ? financialData
+                                                            : productionData
+                                                await exportSingleReport(activeTab, opt.key, currentData)
+                                                toast.success(`${opt.label.replace(/^[^\s]+\s/, '')} exported!`)
+                                            } catch (err: any) {
+                                                toast.error(err.message)
+                                            }
+                                        }}
+                                        className={cn(
+                                            'w-full text-left px-4 py-2.5 text-sm transition-colors',
+                                            opt.key === 'all'
+                                                ? 'text-brand-400 font-medium hover:bg-brand-500/10 border-b border-dark-300/30'
+                                                : 'text-dark-500 hover:text-white hover:bg-dark-200/50'
+                                        )}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
+                </div>
+            </div>
+
+            {/* Date Range Filter */}
+            <div className="glass-card p-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-500 dark:text-dark-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-dark-600">Date Range:</span>
+                    </div>
+                    <input
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        className="input-field text-sm py-1.5 px-3"
+                    />
+                    <span className="text-gray-500 dark:text-dark-500">to</span>
+                    <input
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        className="input-field text-sm py-1.5 px-3"
+                    />
+                    <button
+                        onClick={() => loadReport(activeTab)}
+                        className="px-4 py-1.5 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors"
+                    >
+                        Apply
+                    </button>
+                    {/* Quick filters */}
+                    {[
+                        { label: 'This Month', days: 'month' },
+                        { label: 'Last 30 Days', days: '30' },
+                        { label: 'Last 90 Days', days: '90' },
+                        { label: 'This Year', days: 'year' }
+                    ].map(filter => (
+                        <button
+                            key={filter.label}
+                            onClick={() => {
+                                const today = new Date();
+                                let from = new Date();
+                                if (filter.days === 'month') {
+                                    from = new Date(today.getFullYear(), today.getMonth(), 1);
+                                } else if (filter.days === 'year') {
+                                    from = new Date(today.getFullYear(), 0, 1);
+                                } else {
+                                    from = new Date(Date.now() - parseInt(filter.days) * 24 * 60 * 60 * 1000);
+                                }
+                                setFromDate(from.toISOString().split('T')[0]);
+                                setToDate(today.toISOString().split('T')[0]);
+                            }}
+                            className="px-3 py-1.5 rounded-lg text-sm text-gray-600 dark:text-dark-600 bg-gray-100 dark:bg-dark-200 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors"
+                        >
+                            {filter.label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -405,7 +489,7 @@ export function ReportsPage() {
                                     { label: 'Gross Profit', value: formatCurrency(financialData.grossProfit), color: financialData.grossProfit >= 0 ? 'text-emerald-400' : 'text-red-400' },
                                 ].map(k => (
                                     <div key={k.label} className="glass-card p-4">
-                                        <p className="text-xs text-dark-500">{k.label}</p>
+                                        <p className="text-xs text-gray-500 dark:text-dark-500">{k.label}</p>
                                         <p className={cn('text-lg font-bold mt-1', k.color)}>{k.value}</p>
                                     </div>
                                 ))}
@@ -414,7 +498,7 @@ export function ReportsPage() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Income vs Expense */}
                                 <div className="glass-card p-6">
-                                    <h3 className="text-sm font-semibold text-white mb-4">Income vs Expense</h3>
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Income vs Expense</h3>
                                     {financialData.monthlyInOut.length > 0 ? (
                                         <ResponsiveContainer width="100%" height={250}>
                                             <BarChart data={financialData.monthlyInOut}>
@@ -426,27 +510,135 @@ export function ReportsPage() {
                                                 <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} name="Expense" />
                                             </BarChart>
                                         </ResponsiveContainer>
-                                    ) : <p className="text-dark-500 text-center py-12">No financial data yet</p>}
+                                    ) : <p className="text-gray-500 dark:text-dark-500 text-center py-12">No financial data yet</p>}
+                                </div>
+                            </div>
+
+                            {/* Invoice Aging - Enhanced */}
+                            <div className="glass-card p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <Clock size={16} className="text-amber-400" />
+                                        Receivables Aging Analysis
+                                    </h3>
+                                    <p className="text-xs text-gray-500 dark:text-dark-500">Based on due date</p>
                                 </div>
 
-                                {/* Invoice Aging */}
-                                <div className="glass-card p-6">
-                                    <h3 className="text-sm font-semibold text-white mb-4">Invoice Aging</h3>
-                                    <div className="space-y-3">
-                                        {financialData.invoiceAging.map(a => (
-                                            <div key={a.range} className="flex items-center justify-between bg-dark-200/20 rounded-lg p-3">
-                                                <div>
-                                                    <p className="text-sm text-white">{a.range}</p>
-                                                    <p className="text-xs text-dark-500">{a.count} invoices</p>
-                                                </div>
-                                                <p className={cn('text-sm font-mono font-semibold',
-                                                    a.range === '90+ days' ? 'text-red-400' : a.range === '61-90 days' ? 'text-amber-400' : 'text-white')}>
-                                                    {formatCurrency(a.amount)}
-                                                </p>
+                                {/* Aging Bar Visualization */}
+                                {(() => {
+                                    const totalAging = financialData.invoiceAging.reduce((s, a) => s + a.amount, 0)
+                                    if (totalAging === 0) return <p className="text-emerald-400 text-center py-8">✓ No outstanding receivables</p>
+
+                                    const bucketColors = ['bg-emerald-500', 'bg-amber-500', 'bg-orange-500', 'bg-red-500']
+                                    const bucketTextColors = ['text-emerald-400', 'text-amber-400', 'text-orange-400', 'text-red-400']
+
+                                    return (
+                                        <>
+                                            {/* Stacked horizontal bar */}
+                                            <div className="flex h-8 rounded-lg overflow-hidden mb-6">
+                                                {financialData.invoiceAging.map((a, i) => {
+                                                    const pct = totalAging > 0 ? (a.amount / totalAging) * 100 : 0
+                                                    if (pct === 0) return null
+                                                    return (
+                                                        <div
+                                                            key={a.range}
+                                                            className={cn('flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-opacity hover:opacity-80', bucketColors[i])}
+                                                            style={{ width: `${Math.max(pct, 5)}%` }}
+                                                            onClick={() => setExpandedBucket(expandedBucket === i ? null : i)}
+                                                            title={`${a.range}: ${formatCurrency(a.amount)} (${a.count} invoices)`}
+                                                        >
+                                                            {pct > 10 ? `${Math.round(pct)}%` : ''}
+                                                        </div>
+                                                    )
+                                                })}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
+
+                                            {/* Bucket Cards */}
+                                            <div className="grid grid-cols-4 gap-3 mb-4">
+                                                {financialData.invoiceAging.map((a, i) => (
+                                                    <button
+                                                        key={a.range}
+                                                        onClick={() => setExpandedBucket(expandedBucket === i ? null : i)}
+                                                        className={cn(
+                                                            'rounded-xl p-3 text-left transition-all border',
+                                                            expandedBucket === i
+                                                                ? `${bucketColors[i]}/10 border-current ${bucketTextColors[i]}`
+                                                                : 'bg-gray-50 dark:bg-dark-200/20 border-transparent hover:bg-gray-100 dark:hover:bg-dark-200/40'
+                                                        )}
+                                                    >
+                                                        <p className={cn('text-xs font-medium', bucketTextColors[i])}>{a.range}</p>
+                                                        <p className={cn('text-lg font-bold mt-1', bucketTextColors[i])}>{formatCurrency(a.amount)}</p>
+                                                        <p className="text-[10px] text-gray-500 dark:text-dark-500 mt-0.5">{a.count} invoice{a.count !== 1 ? 's' : ''}</p>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Expanded Invoice List */}
+                                            {expandedBucket !== null && financialData.invoiceAging[expandedBucket] && (
+                                                <div className="border border-gray-200 dark:border-dark-300/30 rounded-xl overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                                                    <div className="bg-gray-50 dark:bg-dark-200/30 px-4 py-2.5 flex items-center justify-between">
+                                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            {financialData.invoiceAging[expandedBucket].range} — {financialData.invoiceAging[expandedBucket].count} invoices
+                                                        </p>
+                                                        <button
+                                                            onClick={() => setExpandedBucket(null)}
+                                                            className="text-xs text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white"
+                                                        >
+                                                            Collapse
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Customer-wise grouping */}
+                                                    {(() => {
+                                                        const invoices = financialData.invoiceAging[expandedBucket].invoices
+                                                        const customerGroups = invoices.reduce<Record<string, typeof invoices>>((acc, inv) => {
+                                                            const key = inv.customer_name
+                                                            if (!acc[key]) acc[key] = []
+                                                            acc[key].push(inv)
+                                                            return acc
+                                                        }, {})
+
+                                                        return (
+                                                            <div className="divide-y divide-gray-200 dark:divide-dark-300/20">
+                                                                {Object.entries(customerGroups).map(([customerName, custInvoices]) => {
+                                                                    const custTotal = custInvoices.reduce((s, inv) => s + inv.balance_amount, 0)
+                                                                    return (
+                                                                        <div key={customerName}>
+                                                                            {/* Customer Header */}
+                                                                            <div className="flex items-center justify-between px-4 py-2 bg-gray-50/50 dark:bg-dark-200/10">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <Users size={12} className="text-gray-400 dark:text-dark-500" />
+                                                                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{customerName}</span>
+                                                                                    <Badge variant="default">{custInvoices.length}</Badge>
+                                                                                </div>
+                                                                                <span className="text-xs font-mono font-semibold text-red-400">{formatCurrency(custTotal)}</span>
+                                                                            </div>
+                                                                            {/* Invoices */}
+                                                                            {custInvoices.map((inv) => (
+                                                                                <div
+                                                                                    key={inv.id}
+                                                                                    onClick={() => navigate('/invoices')}
+                                                                                    className="flex items-center gap-4 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-200/20 cursor-pointer transition-colors text-sm"
+                                                                                >
+                                                                                    <span className="font-mono text-rose-400 font-medium w-28">{inv.invoice_number}</span>
+                                                                                    <span className="text-gray-500 dark:text-dark-500 w-24">{formatDate(inv.due_date)}</span>
+                                                                                    <span className="text-gray-900 dark:text-white font-mono w-28">{formatCurrency(inv.total_amount)}</span>
+                                                                                    <span className="text-emerald-400 font-mono w-28">{formatCurrency(inv.paid_amount)}</span>
+                                                                                    <span className="text-red-400 font-mono font-semibold flex-1">{formatCurrency(inv.balance_amount)}</span>
+                                                                                    <Badge variant="danger" dot>{inv.days_overdue}d</Badge>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        )
+                                                    })()}
+                                                </div>
+                                            )}
+                                        </>
+                                    )
+                                })()}
                             </div>
                         </div>
                     )}
@@ -482,6 +674,194 @@ export function ReportsPage() {
                                         </BarChart>
                                     </ResponsiveContainer>
                                 ) : <p className="text-dark-500 text-center py-12">No production data yet</p>}
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {!loading && (
+                <>
+                    {/* ============ CUSTOMER SALES TAB ============ */}
+                    {activeTab === 'customer-sales' && (
+                        <div className="glass-card p-6">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                                Customer-wise Sales Report
+                            </h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-dark-300">
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">#</th>
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Customer</th>
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Phone</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Invoices</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Total Invoiced</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Total Paid</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Outstanding</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {customerSalesData.map((customer, index) => (
+                                            <tr key={customer.customer_id}
+                                                className="border-b border-gray-100 dark:border-dark-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors">
+                                                <td className="py-3 px-4 text-sm text-gray-500 dark:text-dark-500">{index + 1}</td>
+                                                <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">{customer.name}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-dark-600">{customer.phone}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{customer.invoice_count}</td>
+                                                <td className="py-3 px-4 text-sm text-right font-medium text-gray-900 dark:text-white">{formatCurrency(customer.total_invoiced)}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-green-600 dark:text-green-400">{formatCurrency(customer.total_paid)}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-red-600 dark:text-red-400">{formatCurrency(customer.total_outstanding)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    {customerSalesData.length > 0 && (
+                                        <tfoot>
+                                            <tr className="border-t-2 border-gray-300 dark:border-dark-300 bg-gray-50 dark:bg-dark-200/50">
+                                                <td colSpan={4} className="py-3 px-4 text-sm font-bold text-gray-900 dark:text-white">TOTAL</td>
+                                                <td className="py-3 px-4 text-sm text-right font-bold text-gray-900 dark:text-white">
+                                                    {formatCurrency(customerSalesData.reduce((s, c) => s + c.total_invoiced, 0))}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-right font-bold text-green-600 dark:text-green-400">
+                                                    {formatCurrency(customerSalesData.reduce((s, c) => s + c.total_paid, 0))}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-right font-bold text-red-600 dark:text-red-400">
+                                                    {formatCurrency(customerSalesData.reduce((s, c) => s + c.total_outstanding, 0))}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
+                                </table>
+                                {customerSalesData.length === 0 && (
+                                    <div className="text-center py-12">
+                                        <Users className="w-12 h-12 mx-auto text-gray-400 dark:text-dark-500 mb-3" />
+                                        <p className="text-gray-600 dark:text-dark-600">No sales data for selected period</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ============ PRODUCT P&L TAB ============ */}
+                    {activeTab === 'product-pl' && (
+                        <div className="glass-card p-6">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                                Product-wise P&L Report
+                            </h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-dark-300">
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">#</th>
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Product</th>
+                                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">SKU</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Qty Sold</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Revenue</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Cost</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Profit</th>
+                                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Margin</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {productPLData.map((product, index) => (
+                                            <tr key={product.product_id}
+                                                className="border-b border-gray-100 dark:border-dark-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors">
+                                                <td className="py-3 px-4 text-sm text-gray-500 dark:text-dark-500">{index + 1}</td>
+                                                <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">{product.name}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-600 dark:text-dark-600">{product.sku}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{product.qty_sold}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatCurrency(product.revenue)}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-red-600 dark:text-red-400">{formatCurrency(product.cost)}</td>
+                                                <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatCurrency(product.profit)}</td>
+                                                <td className="py-3 px-4">
+                                                    <span className={`text-sm font-semibold ${product.margin_percent >= 20 ? 'text-green-600 dark:text-green-400' :
+                                                        product.margin_percent >= 10 ? 'text-yellow-600 dark:text-yellow-400' :
+                                                            'text-red-600 dark:text-red-400'
+                                                        }`}>
+                                                        {product.margin_percent.toFixed(1)}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {productPLData.length === 0 && (
+                                    <div className="text-center py-12">
+                                        <Package className="w-12 h-12 mx-auto text-gray-400 dark:text-dark-500 mb-3" />
+                                        <p className="text-gray-600 dark:text-dark-600">No product sales data for selected period</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ============ STOCK VALUATION TAB ============ */}
+                    {activeTab === 'stock-valuation' && stockValuationData && (
+                        <div className="space-y-6">
+                            {/* Summary KPIs */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="glass-card p-5">
+                                    <p className="text-sm text-gray-600 dark:text-dark-600 mb-1">Total Cost Value</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {formatCurrency(stockValuationData.totals.total_cost_value)}
+                                    </p>
+                                </div>
+                                <div className="glass-card p-5">
+                                    <p className="text-sm text-gray-600 dark:text-dark-600 mb-1">Total Retail Value</p>
+                                    <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+                                        {formatCurrency(stockValuationData.totals.total_retail_value)}
+                                    </p>
+                                </div>
+                                <div className="glass-card p-5">
+                                    <p className="text-sm text-gray-600 dark:text-dark-600 mb-1">Potential Profit</p>
+                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                        {formatCurrency(stockValuationData.totals.total_potential_profit)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Items Table */}
+                            <div className="glass-card p-6">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Stock Valuation</h2>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 dark:border-dark-300">
+                                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">#</th>
+                                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Product</th>
+                                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">SKU</th>
+                                                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Qty</th>
+                                                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Unit Cost</th>
+                                                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Selling Price</th>
+                                                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Cost Value</th>
+                                                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Retail Value</th>
+                                                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-dark-600">Potential Profit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {stockValuationData.items.map((item, index) => (
+                                                <tr key={item.product_id}
+                                                    className="border-b border-gray-100 dark:border-dark-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors">
+                                                    <td className="py-3 px-4 text-sm text-gray-500 dark:text-dark-500">{index + 1}</td>
+                                                    <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
+                                                    <td className="py-3 px-4 text-sm text-gray-600 dark:text-dark-600">{item.sku}</td>
+                                                    <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{item.available_qty}</td>
+                                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-dark-600">{formatCurrency(item.unit_cost)}</td>
+                                                    <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-dark-600">{formatCurrency(item.selling_price)}</td>
+                                                    <td className="py-3 px-4 text-sm text-right text-red-600 dark:text-red-400">{formatCurrency(item.cost_value)}</td>
+                                                    <td className="py-3 px-4 text-sm text-right text-brand-600 dark:text-brand-400">{formatCurrency(item.retail_value)}</td>
+                                                    <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatCurrency(item.potential_profit)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    {stockValuationData.items.length === 0 && (
+                                        <div className="text-center py-12">
+                                            <Package className="w-12 h-12 mx-auto text-gray-400 dark:text-dark-500 mb-3" />
+                                            <p className="text-gray-600 dark:text-dark-600">No inventory data found</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

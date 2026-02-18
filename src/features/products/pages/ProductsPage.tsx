@@ -378,6 +378,34 @@ export function ProductsPage() {
             ),
         },
         {
+            key: 'margin',
+            label: 'Margin',
+            render: (item: Product) => {
+                const cost = item.cost_price || 0
+                const selling = item.selling_price || 0
+                if (!cost || !selling) return <span className="text-dark-500 text-sm">N/A</span>
+
+                const marginPercent = ((selling - cost) / selling * 100).toFixed(1)
+                const marginAmount = selling - cost
+                const isGood = Number(marginPercent) >= 20
+                const isMid = Number(marginPercent) >= 10 && Number(marginPercent) < 20
+
+                return (
+                    <div className="flex flex-col">
+                        <span className={cn(
+                            'text-sm font-semibold',
+                            isGood ? 'text-green-400' : isMid ? 'text-yellow-400' : 'text-red-400'
+                        )}>
+                            {marginPercent}%
+                        </span>
+                        <span className="text-xs text-dark-500">
+                            {formatCurrency(marginAmount)}
+                        </span>
+                    </div>
+                )
+            },
+        },
+        {
             key: 'tax_rate',
             label: 'GST',
             render: (item: Product) => (
@@ -396,18 +424,21 @@ export function ProductsPage() {
             render: (item: Product) => (
                 <div className="flex items-center gap-1">
                     <button
+                        title="View"
                         onClick={(e) => { e.stopPropagation(); setViewProduct(item) }}
                         className="p-1.5 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200 transition-colors"
                     >
                         <Eye size={15} />
                     </button>
                     <button
+                        title="Edit"
                         onClick={(e) => { e.stopPropagation(); handleEdit(item) }}
                         className="p-1.5 rounded-lg text-dark-500 hover:text-brand-400 hover:bg-dark-200 transition-colors"
                     >
                         <Edit2 size={15} />
                     </button>
                     <button
+                        title="Delete"
                         onClick={(e) => {
                             e.stopPropagation()
                             setDeletingProduct(item)

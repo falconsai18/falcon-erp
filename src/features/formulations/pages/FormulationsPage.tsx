@@ -3,7 +3,7 @@ import {
     Plus, Search, Download, Trash2, X, Save, ChevronLeft, ChevronRight,
     FlaskConical, Check, RotateCcw, Calendar, Beaker,
     ArrowRight, AlertCircle, ListOrdered, Thermometer, Droplets,
-    Package, CheckCircle, List,
+    Package, CheckCircle, List, Edit2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -48,13 +48,13 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
     const [activeTab, setActiveTab] = useState<'ingredients' | 'steps'>('ingredients')
-    
+
     // Ingredient form
     const [showIngredientForm, setShowIngredientForm] = useState(false)
     const [editingIngredient, setEditingIngredient] = useState<FormulationIngredient | null>(null)
     const [ingredientForm, setIngredientForm] = useState<IngredientFormData>(EMPTY_INGREDIENT_FORM)
     const [rawMaterials, setRawMaterials] = useState<{ id: string; name: string; code: string }[]>([])
-    
+
     // Step form
     const [showStepForm, setShowStepForm] = useState(false)
     const [editingStep, setEditingStep] = useState<FormulationProcessStep | null>(null)
@@ -98,7 +98,7 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
         try {
             setUpdating(true)
             await updateFormulationStatus(formulationId, status, user?.id)
-            toast.success(`Formulation ${status}!`)
+            toast.success(`Formulation ${status} !`)
             loadData(); onRefresh()
         } catch (err: any) { toast.error(err.message) }
         finally { setUpdating(false) }
@@ -184,7 +184,7 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
             <div className="flex items-center justify-between p-4 border-b border-dark-300/50">
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="font-semibold text-white">{formulation.formulation_number}</h2>
+                        <h2 className="font-semibold text-gray-900 dark:text-white">{formulation.formulation_number}</h2>
                         <FormulationStatusBadge status={formulation.status} />
                     </div>
                     <p className="text-xs text-dark-500 mt-1">{formulation.name}</p>
@@ -199,7 +199,7 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
                     {formulation.status === 'obsolete' && (
                         <Button size="sm" variant="secondary" onClick={() => handleStatusChange('draft')} isLoading={updating} icon={<RotateCcw size={14} />}>Restore</Button>
                     )}
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -218,7 +218,7 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
                 {/* Product Info */}
                 <div className="bg-dark-200/20 rounded-xl p-4">
                     <p className="text-[10px] text-dark-500 uppercase tracking-wider mb-2">Product</p>
-                    <p className="text-sm font-medium text-white">{formulation.product_name}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{formulation.product_name}</p>
                     <p className="text-xs text-dark-500">{formulation.product_sku}</p>
                 </div>
 
@@ -227,11 +227,11 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-dark-200/20 rounded-xl p-4">
                             <p className="text-[10px] text-dark-500 uppercase tracking-wider mb-1">Yield Quantity</p>
-                            <p className="text-sm font-medium text-white">{formulation.yield_quantity} {formulation.yield_unit}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{formulation.yield_quantity} {formulation.yield_unit}</p>
                         </div>
                         <div className="bg-dark-200/20 rounded-xl p-4">
                             <p className="text-[10px] text-dark-500 uppercase tracking-wider mb-1">Ingredients</p>
-                            <p className="text-sm font-medium text-white">{ingredients.length}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{ingredients.length}</p>
                         </div>
                     </div>
                 )}
@@ -245,18 +245,18 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
                 )}
 
                 {/* Tabs */}
-                <div className="flex items-center gap-2 border-b border-dark-300/30">
+                <div className="flex items-center gap-2 border-b border-gray-200 dark:border-dark-300/30">
                     <button
                         onClick={() => setActiveTab('ingredients')}
                         className={cn('px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-                            activeTab === 'ingredients' ? 'border-brand-500 text-brand-400' : 'border-transparent text-dark-500 hover:text-white')}
+                            activeTab === 'ingredients' ? 'border-brand-500 text-brand-400' : 'border-transparent text-gray-500 dark:text-dark-500 hover:text-white')}
                     >
                         Ingredients ({ingredients.length})
                     </button>
                     <button
                         onClick={() => setActiveTab('steps')}
                         className={cn('px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-                            activeTab === 'steps' ? 'border-brand-500 text-brand-400' : 'border-transparent text-dark-500 hover:text-white')}
+                            activeTab === 'steps' ? 'border-brand-500 text-brand-400' : 'border-transparent text-gray-500 dark:text-dark-500 hover:text-white')}
                     >
                         Process Steps ({steps.length})
                     </button>
@@ -271,8 +271,8 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
 
                         {showIngredientForm && (
                             <div className="bg-dark-200/30 rounded-lg p-4 space-y-3">
-                                <Select 
-                                    label="Raw Material *" 
+                                <Select
+                                    label="Raw Material *"
                                     value={ingredientForm.raw_material_id}
                                     onChange={(e) => setIngredientForm(p => ({ ...p, raw_material_id: e.target.value }))}
                                     options={rawMaterials.map(m => ({ value: m.id, label: `${m.name} (${m.code})` }))}
@@ -292,7 +292,7 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
                         )}
 
                         <table className="w-full text-sm">
-                            <thead className="text-xs text-dark-500 border-b border-dark-300/30">
+                            <thead className="text-xs text-gray-500 dark:text-dark-500 border-b border-gray-200 dark:border-dark-300/30">
                                 <tr>
                                     <th className="text-left py-2">Material</th>
                                     <th className="text-center py-2">Qty</th>
@@ -312,8 +312,8 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
                                         <td className="py-2 text-right">
                                             {formulation.status === 'draft' && (
                                                 <div className="flex items-center justify-end gap-1">
-                                                    <button onClick={() => { setEditingIngredient(item); setIngredientForm({ raw_material_id: item.raw_material_id, quantity: item.quantity, unit: item.unit, percentage: item.percentage || 0, sequence_order: item.sequence_order, notes: item.notes || '' }); setShowIngredientForm(true) }} className="p-1 text-dark-500 hover:text-white"><Check size={14} /></button>
-                                                    <button onClick={() => handleDeleteIngredient(item.id)} className="p-1 text-dark-500 hover:text-red-400"><Trash2 size={14} /></button>
+                                                    <button title="Edit" onClick={() => { setEditingIngredient(item); setIngredientForm({ raw_material_id: item.raw_material_id, quantity: item.quantity, unit: item.unit, percentage: item.percentage || 0, sequence_order: item.sequence_order, notes: item.notes || '' }); setShowIngredientForm(true) }} className="p-1 text-dark-500 hover:text-white"><Edit2 size={14} /></button>
+                                                    <button title="Delete" onClick={() => handleDeleteIngredient(item.id)} className="p-1 text-dark-500 hover:text-red-400"><Trash2 size={14} /></button>
                                                 </div>
                                             )}
                                         </td>
@@ -376,8 +376,8 @@ function FormulationDetail({ formulationId, onClose, onRefresh }: {
                                         </div>
                                         {formulation.status === 'draft' && (
                                             <div className="flex items-center gap-1 ml-2">
-                                                <button onClick={() => { setEditingStep(step); setStepForm({ step_number: step.step_number, title: step.title, description: step.description || '', duration_minutes: step.duration_minutes || 0, temperature_min: step.temperature_min || 0, temperature_max: step.temperature_max || 0, humidity_min: step.humidity_min || 0, humidity_max: step.humidity_max || 0, equipment_needed: step.equipment_needed || '', safety_notes: step.safety_notes || '' }); setShowStepForm(true) }} className="p-1 text-dark-500 hover:text-white"><Check size={14} /></button>
-                                                <button onClick={() => handleDeleteStep(step.id)} className="p-1 text-dark-500 hover:text-red-400"><Trash2 size={14} /></button>
+                                                <button title="Edit" onClick={() => { setEditingStep(step); setStepForm({ step_number: step.step_number, title: step.title, description: step.description || '', duration_minutes: step.duration_minutes || 0, temperature_min: step.temperature_min || 0, temperature_max: step.temperature_max || 0, humidity_min: step.humidity_min || 0, humidity_max: step.humidity_max || 0, equipment_needed: step.equipment_needed || '', safety_notes: step.safety_notes || '' }); setShowStepForm(true) }} className="p-1 text-dark-500 hover:text-white"><Edit2 size={14} /></button>
+                                                <button title="Delete" onClick={() => handleDeleteStep(step.id)} className="p-1 text-dark-500 hover:text-red-400"><Trash2 size={14} /></button>
                                             </div>
                                         )}
                                     </div>
@@ -545,32 +545,32 @@ export function FormulationsPage() {
                             <table className="w-full">
                                 <thead><tr className="border-b border-dark-300/50">
                                     {['FM #', 'Name', 'Product', 'Version', 'Ingredients', 'Steps', 'Status', 'Date', ''].map(h => (
-                                        <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-dark-500 uppercase">{h}</th>
+                                        <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-dark-500 uppercase">{h}</th>
                                     ))}
                                 </tr></thead>
                                 <tbody className="divide-y divide-dark-300/30">
                                     {formulations.map(formulation => (
                                         <tr key={formulation.id} onClick={() => setSelectedFormulationId(formulation.id)}
-                                            className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
+                                            className={cn('hover:bg-gray-100/30 dark:hover:bg-dark-200/30 cursor-pointer transition-colors',
                                                 selectedFormulationId === formulation.id && 'bg-brand-500/5 border-l-2 border-brand-500')}>
                                             <td className="px-3 py-3">
                                                 <p className="text-sm font-medium text-brand-400 font-mono">{formulation.formulation_number}</p>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <p className="text-sm text-white">{formulation.name}</p>
+                                                <p className="text-sm text-gray-900 dark:text-white">{formulation.name}</p>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <p className="text-sm text-dark-500">{formulation.product_name}</p>
+                                                <p className="text-sm text-gray-500 dark:text-dark-500">{formulation.product_name}</p>
                                             </td>
-                                            <td className="px-3 py-3 text-sm text-dark-500">v{formulation.version}</td>
-                                            <td className="px-3 py-3 text-sm text-dark-500">{formulation.ingredient_count}</td>
-                                            <td className="px-3 py-3 text-sm text-dark-500">{formulation.step_count}</td>
+                                            <td className="px-3 py-3 text-sm text-gray-500 dark:text-dark-500">v{formulation.version}</td>
+                                            <td className="px-3 py-3 text-sm text-gray-500 dark:text-dark-500">{formulation.ingredient_count}</td>
+                                            <td className="px-3 py-3 text-sm text-gray-500 dark:text-dark-500">{formulation.step_count}</td>
                                             <td className="px-3 py-3"><FormulationStatusBadge status={formulation.status} /></td>
                                             <td className="px-3 py-3 text-sm text-dark-500">{formatDate(formulation.created_at)}</td>
                                             <td className="px-3 py-3">
                                                 {formulation.status === 'draft' && (
                                                     <button onClick={(e) => { e.stopPropagation(); setDeletingFormulation(formulation) }}
-                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
+                                                        className="p-1.5 rounded-lg text-gray-500 dark:text-dark-500 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-200" title="Delete"><Trash2 size={14} /></button>
                                                 )}
                                             </td>
                                         </tr>

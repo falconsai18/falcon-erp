@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Plus, Search, Download, Edit2, Trash2, X, Save, Phone, Mail, MapPin,
     CreditCard, Building2, ChevronLeft, ChevronRight, AlertCircle, Star,
-    LayoutGrid, LayoutList, Truck, User,
+    LayoutGrid, LayoutList, Truck, User, FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -76,8 +77,8 @@ function SupplierDetail({ supplier, onClose, onEdit }: {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button size="sm" variant="secondary" onClick={onEdit} icon={<Edit2 size={14} />}>Edit</Button>
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <Button size="sm" variant="secondary" onClick={onEdit} icon={<Edit2 size={14} />} title="Edit">Edit</Button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -131,6 +132,7 @@ function SupplierDetail({ supplier, onClose, onEdit }: {
 
 // ============ MAIN PAGE ============
 export function SuppliersPage() {
+    const navigate = useNavigate()
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -291,10 +293,16 @@ export function SuppliersPage() {
                             {suppliers.map(s => (
                                 <Card key={s.id} hover onClick={() => setSelectedSupplier(s)} className="group relative">
                                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(s) }}
-                                            className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-teal-400"><Edit2 size={14} /></button>
-                                        <button onClick={(e) => { e.stopPropagation(); setDeletingSupplier(s); setIsDeleteModalOpen(true) }}
-                                            className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-red-400"><Trash2 size={14} /></button>
+                                        <button title="View Ledger" onClick={(e) => { e.stopPropagation(); navigate(`/suppliers/${s.id}/ledger`) }}
+                                            className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-blue-400"><FileText size={14} /></button>
+                                        <button title="Edit" onClick={(e) => { e.stopPropagation(); handleEdit(s) }}
+                                            className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-200 text-gray-500 dark:text-dark-500 hover:text-cyan-400 transition-colors">
+                                            <Edit2 size={14} />
+                                        </button>
+                                        <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingSupplier(s); setIsDeleteModalOpen(true) }}
+                                            className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-200 text-gray-500 dark:text-dark-500 hover:text-red-400 transition-colors">
+                                            <Trash2 size={14} />
+                                        </button>
                                     </div>
                                     <div className="flex items-start gap-4">
                                         <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 font-bold text-lg flex-shrink-0">
@@ -346,6 +354,8 @@ export function SuppliersPage() {
                                             <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-1">
+                                                    <button title="View Ledger" onClick={(e) => { e.stopPropagation(); navigate(`/suppliers/${s.id}/ledger`) }}
+                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-blue-400 hover:bg-dark-200"><FileText size={14} /></button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleEdit(s) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-teal-400 hover:bg-dark-200"><Edit2 size={14} /></button>
                                                     <button onClick={(e) => { e.stopPropagation(); setDeletingSupplier(s); setIsDeleteModalOpen(true) }}

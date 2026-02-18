@@ -23,29 +23,15 @@ import { RawMaterialsPage } from '@/features/raw-materials/pages/RawMaterialsPag
 import { ProductionPage } from '@/features/production/pages/ProductionPage'
 import { ReportsPage } from '@/features/reports/pages/ReportsPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
-import { useEffect } from 'react'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { useEffect, lazy, Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated, isLoading } = useAuthStore()
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-dark flex items-center justify-center">
-                <div className="text-center space-y-4">
-                    <Loader2 size={40} className="animate-spin text-brand-400 mx-auto" />
-                    <p className="text-dark-500">Loading Falcon ERP...</p>
-                </div>
-            </div>
-        )
-    }
-
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />
-    }
-
-    return <>{children}</>
-}
+const CustomerLedgerPage = lazy(() => import('@/features/customers/pages/CustomerLedgerPage'))
+const SupplierLedgerPage = lazy(() => import('@/features/suppliers/pages/SupplierLedgerPage'))
+const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'))
+const AuditLogsPage = lazy(() => import('@/features/audit/pages/AuditLogsPage'))
+const GSTReportsPage = lazy(() => import('@/features/gst/pages/GSTReportsPage'))
 
 export function AppRouter() {
     const { checkSession } = useAuthStore()
@@ -65,30 +51,158 @@ export function AppRouter() {
                         </ProtectedRoute>
                     }
                 >
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/products" element={<ProductsPage />} />
-                    <Route path="/inventory" element={<InventoryPage />} />
-                    <Route path="/customers" element={<CustomersPage />} />
-                    <Route path="/sales" element={<SalesPage />} />
-                    <Route path="/invoices" element={<InvoicesPage />} />
-                    <Route path="/quotations" element={<QuotationsPage />} />
-                    <Route path="/purchase" element={<PurchasePage />} />
-                    <Route path="/grn" element={<GRNPage />} />
-                    <Route path="/credit-notes" element={<CreditNotesPage />} />
-                    <Route path="/debit-notes" element={<DebitNotesPage />} />
-                    <Route path="/challans" element={<ChallansPage />} />
-                    <Route path="/batches" element={<BatchesPage />} />
-                    <Route path="/quality-checks" element={<QualityChecksPage />} />
-                    <Route path="/formulations" element={<FormulationsPage />} />
-                    <Route path="/supplier-payments" element={<SupplierPaymentsPage />} />
-                    <Route path="/suppliers" element={<SuppliersPage />} />
-                    <Route path="/raw-materials" element={<RawMaterialsPage />} />
-                    <Route path="/production" element={<ProductionPage />} />
-                    <Route path="/reports" element={<ReportsPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'dashboard' }}>
+                            <DashboardPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/products" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'products' }}>
+                            <ProductsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/inventory" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'warehouses' }}>
+                            <InventoryPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/customers" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'customers' }}>
+                            <CustomersPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/customers/:id/ledger" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'customers' }}>
+                            <Suspense fallback={<LoadingFallback />}>
+                                <CustomerLedgerPage />
+                            </Suspense>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/suppliers/:id/ledger" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'suppliers' }}>
+                            <Suspense fallback={<LoadingFallback />}>
+                                <SupplierLedgerPage />
+                            </Suspense>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/sales" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'sales_orders' }}>
+                            <SalesPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/invoices" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'invoices' }}>
+                            <InvoicesPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/quotations" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'quotations' }}>
+                            <QuotationsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/purchase" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'purchase_orders' }}>
+                            <PurchasePage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/grn" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'grn' }}>
+                            <GRNPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/credit-notes" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'credit_notes' }}>
+                            <CreditNotesPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/debit-notes" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'debit_notes' }}>
+                            <DebitNotesPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/challans" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'challans' }}>
+                            <ChallansPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/batches" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'batches' }}>
+                            <BatchesPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/quality-checks" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'quality_checks' }}>
+                            <QualityChecksPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/formulations" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'formulations' }}>
+                            <FormulationsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/supplier-payments" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'payments' }}>
+                            <SupplierPaymentsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/suppliers" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'suppliers' }}>
+                            <SuppliersPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/raw-materials" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'raw_materials' }}>
+                            <RawMaterialsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/production" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'work_orders' }}>
+                            <ProductionPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/reports" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'reports' }}>
+                            <ReportsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/settings" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'settings' }}>
+                            <SettingsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/users" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'users' }}>
+                            <Suspense fallback={<LoadingFallback />}>
+                                <UsersPage />
+                            </Suspense>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/audit-logs" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'audit_logs' }}>
+                            <Suspense fallback={<LoadingFallback />}>
+                                <AuditLogsPage />
+                            </Suspense>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/gst-reports" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'reports' }}>
+                            <Suspense fallback={<LoadingFallback />}>
+                                <GSTReportsPage />
+                            </Suspense>
+                        </ProtectedRoute>
+                    } />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
+    )
+}
+
+function LoadingFallback() {
+    return (
+        <div className="p-6 animate-pulse">
+            <div className="h-10 w-48 bg-gray-200 dark:bg-dark-300 rounded-lg mb-6" />
+            <div className="h-32 w-full bg-gray-200 dark:bg-dark-300 rounded-xl" />
+        </div>
     )
 }

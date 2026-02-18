@@ -111,7 +111,7 @@ function QuotationDetail({ quotationId, onClose, onRefresh }: {
                     {quotation.status === 'rejected' && (
                         <Button size="sm" variant="secondary" onClick={() => handleStatusChange('draft')} isLoading={updating} icon={<RotateCcw size={14} />}>Reopen</Button>
                     )}
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -422,7 +422,7 @@ export function QuotationsPage() {
                                             <td className="px-3 py-3"><QuotationStatusBadge status={q.status} /></td>
                                             <td className="px-3 py-3">
                                                 {q.status === 'draft' && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setDeletingQuotation(q) }}
+                                                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingQuotation(q) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 )}
                                             </td>
@@ -505,7 +505,7 @@ export function QuotationsPage() {
                                     </div>
                                     <div className="col-span-1">
                                         <button onClick={() => removeItem(idx)}
-                                            className="p-2 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
+                                            className="p-2 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200" title="Delete"><Trash2 size={14} /></button>
                                     </div>
                                 </div>
                             ))}

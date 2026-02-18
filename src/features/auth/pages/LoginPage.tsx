@@ -70,7 +70,7 @@ export function LoginPage() {
 
                     <div className="grid grid-cols-2 gap-4 mt-12 max-w-md mx-auto">
                         {[
-                            { label: 'Inventory', value: 'Real-time Tracking' },
+                            { label: 'Stock', value: 'Real-time Tracking' },
                             { label: 'Production', value: 'Batch Management' },
                             { label: 'Sales', value: 'Order to Invoice' },
                             { label: 'Analytics', value: 'AI Insights' },

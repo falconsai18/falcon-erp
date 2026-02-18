@@ -5,8 +5,12 @@ import {
     CheckCircle2, AlertCircle, RefreshCw, Landmark,
     Package, Users, Truck, ShoppingCart, Receipt, Factory,
     Warehouse as WarehouseIcon, CreditCard, FileQuestion,
+    Plus, Search, Edit2, Trash2, X, Tag, Percent, Scale, Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
+import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
@@ -16,10 +20,14 @@ import {
     getBankAccounts, updateBankAccount,
     getCurrentUser, updateUserProfile, changePassword,
     getSystemStats,
+    getCategories, createCategory, updateCategory, deleteCategory,
+    getBrands, createBrand, updateBrand, deleteBrand,
+    getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
+    getUnitsOfMeasure, createUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure,
     type CompanyInfo, type SettingRow, type NumberSequence, type BankAccount,
 } from '@/services/settingsService'
 
-type SettingsTab = 'company' | 'profile' | 'numbering' | 'system'
+type SettingsTab = 'company' | 'profile' | 'numbering' | 'system' | 'categories' | 'brands' | 'taxes' | 'units'
 
 const INDIAN_STATES = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -58,6 +66,7 @@ const ENTITY_ICONS: Record<string, any> = {
     challan: Truck,
 }
 
+// Keeping local components for existing tabs to maintain stability
 function InputField({ label, value, onChange, type = 'text', placeholder, required, disabled, className }: {
     label: string; value: string | number; onChange: (v: string) => void;
     type?: string; placeholder?: string; required?: boolean; disabled?: boolean; className?: string
@@ -105,7 +114,7 @@ export function SettingsPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
 
-    // Data states
+    // Data states - Existing
     const [company, setCompany] = useState<CompanyInfo | null>(null)
     const [settings, setSettings] = useState<SettingRow[]>([])
     const [sequences, setSequences] = useState<NumberSequence[]>([])
@@ -117,18 +126,36 @@ export function SettingsPage() {
     const [hasSequenceChanges, setHasSequenceChanges] = useState<Set<string>>(new Set())
     const [hasBankChanges, setHasBankChanges] = useState(false)
 
+    // Data states - New Master Data
+    const [categories, setCategories] = useState<any[]>([])
+    const [brands, setBrands] = useState<any[]>([])
+    const [taxRates, setTaxRates] = useState<any[]>([])
+    const [units, setUnits] = useState<any[]>([])
+
+    // Master Data UI States
+    const [search, setSearch] = useState('')
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [editingItem, setEditingItem] = useState<any | null>(null)
+    const [deletingItem, setDeletingItem] = useState<any | null>(null)
+    const [formData, setFormData] = useState<any>({})
+
     useEffect(() => { loadAll() }, [])
 
     const loadAll = async () => {
         try {
             setLoading(true)
-            const [companyData, settingsData, seqData, bankData, userData, statsData] = await Promise.all([
+            const [companyData, settingsData, seqData, bankData, userData, statsData, cats, brnds, taxes, uom] = await Promise.all([
                 getCompanyInfo(),
                 getAllSettings(),
                 getNumberSequences(),
                 getBankAccounts(),
                 getCurrentUser(),
                 getSystemStats(),
+                getCategories().catch(() => []),
+                getBrands().catch(() => []),
+                getTaxRates().catch(() => []),
+                getUnitsOfMeasure().catch(() => []),
             ])
             setCompany(companyData)
             setSettings(settingsData)
@@ -136,6 +163,10 @@ export function SettingsPage() {
             setBankAccounts(bankData)
             setProfile(userData)
             setStats(statsData)
+            setCategories(cats || [])
+            setBrands(brnds || [])
+            setTaxRates(taxes || [])
+            setUnits(uom || [])
         } catch (err: any) {
             toast.error('Failed to load settings: ' + err.message)
         } finally {
@@ -143,7 +174,7 @@ export function SettingsPage() {
         }
     }
 
-    // ---- Company handlers ----
+    // Existing handlers ...
     const updateCompanyField = (field: keyof CompanyInfo, value: string) => {
         if (!company) return
         setCompany({ ...company, [field]: value })
@@ -164,7 +195,6 @@ export function SettingsPage() {
         }
     }
 
-    // ---- Settings handlers ----
     const updateSettingValue = async (setting: SettingRow, newValue: string) => {
         try {
             await updateSetting(setting.id, newValue)
@@ -175,7 +205,6 @@ export function SettingsPage() {
         }
     }
 
-    // ---- Sequence handlers ----
     const updateSequenceField = (id: string, field: 'prefix' | 'current_number' | 'padding', value: string | number) => {
         setSequences(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s))
         setHasSequenceChanges(prev => new Set(prev).add(id))
@@ -195,7 +224,6 @@ export function SettingsPage() {
         }
     }
 
-    // ---- Bank handlers ----
     const updateBankField = (id: string, field: keyof BankAccount, value: any) => {
         setBankAccounts(prev => prev.map(b => b.id === id ? { ...b, [field]: value } : b))
         setHasBankChanges(true)
@@ -215,7 +243,6 @@ export function SettingsPage() {
         }
     }
 
-    // ---- Profile handlers ----
     const saveProfile = async () => {
         if (!profile) return
         try {
@@ -244,15 +271,156 @@ export function SettingsPage() {
         }
     }
 
-    // ---- Helpers ----
-    const getSettingValue = (key: string) => settings.find(s => s.key === key)?.value || ''
-    const getSettingRow = (key: string) => settings.find(s => s.key === key)
+    // New Master Data Handlers
+    const handleAdd = () => {
+        setEditingItem(null)
+        setFormData({})
+        setIsModalOpen(true)
+    }
+
+    const handleEdit = (item: any) => {
+        setEditingItem(item)
+        setFormData({ ...item })
+        setIsModalOpen(true)
+    }
+
+    const handleDelete = async () => {
+        if (!deletingItem) return
+        try {
+            setSaving(true)
+            if (activeTab === 'categories') await deleteCategory(deletingItem.id)
+            else if (activeTab === 'brands') await deleteBrand(deletingItem.id)
+            else if (activeTab === 'taxes') await deleteTaxRate(deletingItem.id)
+            else if (activeTab === 'units') await deleteUnitOfMeasure(deletingItem.id)
+
+            toast.success('Item deleted successfully')
+            setIsDeleteModalOpen(false)
+            setDeletingItem(null)
+            loadAll()
+        } catch (err: any) {
+            toast.error('Failed to delete: ' + err.message)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleSaveMaster = async () => {
+        try {
+            setSaving(true)
+            if (activeTab === 'categories') {
+                if (!formData.name) throw new Error('Name is required')
+                if (editingItem) await updateCategory(editingItem.id, { name: formData.name, description: formData.description })
+                else await createCategory({ name: formData.name, description: formData.description })
+            } else if (activeTab === 'brands') {
+                if (!formData.name) throw new Error('Name is required')
+                if (editingItem) await updateBrand(editingItem.id, { name: formData.name, description: formData.description })
+                else await createBrand({ name: formData.name, description: formData.description })
+            } else if (activeTab === 'taxes') {
+                if (!formData.name) throw new Error('Name is required')
+                const rate = Number(formData.rate)
+                if (isNaN(rate)) throw new Error('Rate must be a number')
+                if (editingItem) await updateTaxRate(editingItem.id, { name: formData.name, rate, description: formData.description })
+                else await createTaxRate({ name: formData.name, rate, description: formData.description })
+            } else if (activeTab === 'units') {
+                if (!formData.name) throw new Error('Name is required')
+                if (!formData.abbreviation) throw new Error('Abbreviation is required')
+                if (editingItem) await updateUnitOfMeasure(editingItem.id, { name: formData.name, abbreviation: formData.abbreviation })
+                else await createUnitOfMeasure({ name: formData.name, abbreviation: formData.abbreviation })
+            }
+
+            toast.success(`Saved successfully`)
+            setIsModalOpen(false)
+            loadAll()
+        } catch (err: any) {
+            toast.error(err.message)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    // Generic Table Renderer
+    function renderMasterTable(data: any[], type: 'categories' | 'brands' | 'taxes' | 'units') {
+        const filtered = data.filter(item =>
+            item.name?.toLowerCase().includes(search.toLowerCase()) ||
+            item.description?.toLowerCase().includes(search.toLowerCase()) ||
+            item.abbreviation?.toLowerCase().includes(search.toLowerCase())
+        )
+
+        return (
+            <>
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-1 max-w-md">
+                        <Input
+                            placeholder="Search..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            icon={<Search size={16} />}
+                        />
+                    </div>
+                    <Button icon={<Plus size={16} />} onClick={handleAdd}>Add New</Button>
+                </div>
+
+                <div className="border border-gray-200 dark:border-dark-300 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                        <thead className="bg-gray-50 dark:bg-dark-200/50">
+                            <tr>
+                                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-dark-500">Name</th>
+                                {type === 'taxes' && <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-dark-500">Rate (%)</th>}
+                                {type === 'units' && <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-dark-500">Abbreviation</th>}
+                                {type !== 'units' && <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-dark-500">Description</th>}
+                                <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-dark-500">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-dark-300">
+                            {filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-dark-500">
+                                        No items found. Click "Add New" to create one.
+                                    </td>
+                                </tr>
+                            ) : (
+                                filtered.map(item => (
+                                    <tr key={item.id} className="group hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors">
+                                        <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{item.name}</td>
+                                        {type === 'taxes' && (
+                                            <td className="px-4 py-3 text-gray-900 dark:text-white">
+                                                <Badge variant="info">{item.rate}%</Badge>
+                                            </td>
+                                        )}
+                                        {type === 'units' && (
+                                            <td className="px-4 py-3 text-gray-900 dark:text-white font-mono">{item.abbreviation}</td>
+                                        )}
+                                        {type !== 'units' && <td className="px-4 py-3 text-gray-500 dark:text-dark-500">{item.description || '-'}</td>}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} title="Edit">
+                                                    <Edit2 size={16} className="text-gray-500 dark:text-dark-500 hover:text-brand-400" />
+                                                </Button>
+                                                <Button variant="ghost" size="sm" onClick={() => { setDeletingItem(item); setIsDeleteModalOpen(true) }} title="Delete">
+                                                    <Trash2 size={16} className="text-gray-500 dark:text-dark-500 hover:text-red-400" />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </>
+        )
+    }
 
     const tabs = [
         { key: 'company' as const, label: 'Company', icon: Building2, color: 'text-blue-400' },
         { key: 'profile' as const, label: 'Profile & Security', icon: User, color: 'text-emerald-400' },
         { key: 'numbering' as const, label: 'Numbering & Tax', icon: Hash, color: 'text-purple-400' },
         { key: 'system' as const, label: 'System Info', icon: Database, color: 'text-orange-400' },
+        { separator: true },
+        { key: 'categories' as const, label: 'Categories', icon: Layers, color: 'text-pink-400' },
+        { key: 'brands' as const, label: 'Brands', icon: Tag, color: 'text-indigo-400' },
+        { key: 'taxes' as const, label: 'Tax Rates', icon: Percent, color: 'text-red-400' },
+        { key: 'units' as const, label: 'Units', icon: Scale, color: 'text-cyan-400' },
     ]
 
     if (loading) {
@@ -278,8 +446,8 @@ export function SettingsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Settings</h1>
-                    <p className="text-sm text-dark-500 mt-1">Manage your company and system configuration</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+                    <p className="text-sm text-gray-500 dark:text-dark-500 mt-1">Manage your company and system configuration</p>
                 </div>
                 <Button variant="secondary" icon={<RefreshCw size={16} />} size="sm" onClick={loadAll}>Refresh</Button>
             </div>
@@ -287,17 +455,21 @@ export function SettingsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Sidebar */}
                 <div className="glass-card p-2 h-fit">
-                    {tabs.map(tab => (
-                        <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                            className={cn(
-                                'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
-                                activeTab === tab.key
-                                    ? 'bg-dark-200/50 text-white'
-                                    : 'text-dark-500 hover:text-white hover:bg-dark-200/30'
-                            )}>
-                            <tab.icon size={16} className={activeTab === tab.key ? tab.color : ''} />
-                            {tab.label}
-                        </button>
+                    {tabs.map((tab: any, i) => (
+                        tab.separator ? (
+                            <div key={`sep-${i}`} className="my-2 border-t border-gray-200 dark:border-dark-300 mx-4" />
+                        ) : (
+                            <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSearch('') }}
+                                className={cn(
+                                    'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
+                                    activeTab === tab.key
+                                        ? 'bg-gray-100 dark:bg-dark-200/50 text-gray-900 dark:text-white'
+                                        : 'text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-dark-200/30'
+                                )}>
+                                <tab.icon size={16} className={activeTab === tab.key ? tab.color : ''} />
+                                {tab.label}
+                            </button>
+                        )
                     ))}
                 </div>
 
@@ -310,7 +482,7 @@ export function SettingsPage() {
                             {/* Basic Info */}
                             <div className="glass-card p-6">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                         <Building2 size={16} className="text-blue-400" /> Company Information
                                     </h3>
                                     {hasCompanyChanges && (
@@ -334,7 +506,7 @@ export function SettingsPage() {
 
                             {/* Address */}
                             <div className="glass-card p-6">
-                                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Globe size={16} className="text-cyan-400" /> Address
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -351,7 +523,7 @@ export function SettingsPage() {
                             {bankAccounts.length > 0 && (
                                 <div className="glass-card p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                             <Landmark size={16} className="text-emerald-400" /> Bank Account
                                         </h3>
                                         {hasBankChanges && (
@@ -376,7 +548,7 @@ export function SettingsPage() {
 
                             {/* General Settings */}
                             <div className="glass-card p-6">
-                                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <IndianRupee size={16} className="text-amber-400" /> General Settings
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -410,7 +582,7 @@ export function SettingsPage() {
                     {activeTab === 'profile' && profile && (
                         <>
                             <div className="glass-card p-6">
-                                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <User size={16} className="text-emerald-400" /> Your Profile
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -427,7 +599,7 @@ export function SettingsPage() {
                             </div>
 
                             <div className="glass-card p-6">
-                                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Key size={16} className="text-amber-400" /> Change Password
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -457,7 +629,7 @@ export function SettingsPage() {
                     {activeTab === 'numbering' && (
                         <div className="glass-card p-6">
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                     <Hash size={16} className="text-purple-400" /> Document Number Sequences
                                 </h3>
                                 {hasSequenceChanges.size > 0 && (
@@ -483,11 +655,11 @@ export function SettingsPage() {
                                     return (
                                         <div key={seq.id} className={cn(
                                             'grid grid-cols-1 sm:grid-cols-12 gap-4 items-center p-4 rounded-lg transition-all',
-                                            isChanged ? 'bg-brand-500/5 border border-brand-500/20' : 'bg-dark-200/20'
+                                            isChanged ? 'bg-brand-500/5 border border-brand-500/20' : 'bg-gray-50 dark:bg-dark-200/20'
                                         )}>
                                             <div className="sm:col-span-3 flex items-center gap-2">
                                                 <Icon size={16} className="text-purple-400" />
-                                                <span className="text-sm text-white font-medium">
+                                                <span className="text-sm text-gray-900 dark:text-white font-medium">
                                                     {ENTITY_LABELS[seq.entity_type] || seq.entity_type}
                                                 </span>
                                             </div>
@@ -496,7 +668,7 @@ export function SettingsPage() {
                                                     type="text"
                                                     value={seq.prefix}
                                                     onChange={e => updateSequenceField(seq.id, 'prefix', e.target.value)}
-                                                    className="w-full px-2 py-1.5 bg-dark-200/50 border border-dark-300/50 rounded text-white text-sm
+                                                    className="w-full px-2 py-1.5 bg-white dark:bg-dark-200/50 border border-gray-200 dark:border-dark-300/50 rounded text-gray-900 dark:text-white text-sm
                             focus:outline-none focus:border-brand-500/50 transition-all"
                                                 />
                                             </div>
@@ -505,7 +677,7 @@ export function SettingsPage() {
                                                     type="number"
                                                     value={seq.current_number}
                                                     onChange={e => updateSequenceField(seq.id, 'current_number', parseInt(e.target.value) || 0)}
-                                                    className="w-full px-2 py-1.5 bg-dark-200/50 border border-dark-300/50 rounded text-white text-sm
+                                                    className="w-full px-2 py-1.5 bg-white dark:bg-dark-200/50 border border-gray-200 dark:border-dark-300/50 rounded text-gray-900 dark:text-white text-sm
                             focus:outline-none focus:border-brand-500/50 transition-all"
                                                 />
                                             </div>
@@ -515,7 +687,7 @@ export function SettingsPage() {
                                                     value={seq.padding}
                                                     onChange={e => updateSequenceField(seq.id, 'padding', parseInt(e.target.value) || 1)}
                                                     min={1} max={10}
-                                                    className="w-full px-2 py-1.5 bg-dark-200/50 border border-dark-300/50 rounded text-white text-sm
+                                                    className="w-full px-2 py-1.5 bg-white dark:bg-dark-200/50 border border-gray-200 dark:border-dark-300/50 rounded text-gray-900 dark:text-white text-sm
                             focus:outline-none focus:border-brand-500/50 transition-all"
                                                 />
                                             </div>
@@ -536,7 +708,7 @@ export function SettingsPage() {
                     {activeTab === 'system' && (
                         <>
                             <div className="glass-card p-6">
-                                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Database size={16} className="text-orange-400" /> Database Statistics
                                 </h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -558,10 +730,10 @@ export function SettingsPage() {
                                         }
                                         const Icon = icons[key] || Database
                                         return (
-                                            <div key={key} className="bg-dark-200/30 rounded-lg p-4 text-center">
+                                            <div key={key} className="bg-gray-100 dark:bg-dark-200/30 rounded-lg p-4 text-center">
                                                 <Icon size={18} className={cn('mx-auto mb-2', colors[key] || 'text-dark-500')} />
-                                                <p className={cn('text-2xl font-bold', colors[key] || 'text-white')}>{value}</p>
-                                                <p className="text-xs text-dark-500 mt-1 capitalize">{key.replace(/_/g, ' ')}</p>
+                                                <p className={cn('text-2xl font-bold', colors[key] || 'text-gray-900 dark:text-white')}>{value}</p>
+                                                <p className="text-xs text-gray-500 dark:text-dark-500 mt-1 capitalize">{key.replace(/_/g, ' ')}</p>
                                             </div>
                                         )
                                     })}
@@ -569,7 +741,7 @@ export function SettingsPage() {
                             </div>
 
                             <div className="glass-card p-6">
-                                <h3 className="text-sm font-semibold text-white mb-4">System Information</h3>
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">System Information</h3>
                                 <div className="space-y-3">
                                     {[
                                         { label: 'Application', value: 'Falcon Super Gold ERP v1.0' },
@@ -582,9 +754,9 @@ export function SettingsPage() {
                                         { label: 'Tables', value: '43 tables' },
                                         { label: 'Modules', value: '13 (All Complete ✅)' },
                                     ].map(info => (
-                                        <div key={info.label} className="flex items-center justify-between py-2 border-b border-dark-300/20 last:border-0">
-                                            <span className="text-sm text-dark-500">{info.label}</span>
-                                            <span className="text-sm text-white font-medium">{info.value}</span>
+                                        <div key={info.label} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-dark-300/20 last:border-0">
+                                            <span className="text-sm text-gray-500 dark:text-dark-500">{info.label}</span>
+                                            <span className="text-sm text-gray-900 dark:text-white font-medium">{info.value}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -593,13 +765,131 @@ export function SettingsPage() {
                             <div className="glass-card p-6 border-emerald-500/20">
                                 <div className="text-center py-4">
                                     <CheckCircle2 size={48} className="text-emerald-400 mx-auto mb-3" />
-                                    <h3 className="text-lg font-bold text-white">All Systems Operational</h3>
-                                    <p className="text-sm text-dark-500 mt-1">All 13 modules are active and running</p>
-                                    <p className="text-xs text-dark-500 mt-1">43 database tables • Supabase PostgreSQL</p>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">All Systems Operational</h3>
+                                    <p className="text-sm text-gray-500 dark:text-dark-500 mt-1">All 13 modules are active and running</p>
+                                    <p className="text-xs text-gray-500 dark:text-dark-500 mt-1">43 database tables • Supabase PostgreSQL</p>
                                 </div>
                             </div>
                         </>
                     )}
+
+                    {/* ============ NEW MASTER DATA TABS ============ */}
+                    {activeTab === 'categories' && (
+                        <div className="glass-card p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Layers size={16} className="text-pink-400" /> Product Categories
+                                </h3>
+                            </div>
+                            {renderMasterTable(categories, 'categories')}
+                        </div>
+                    )}
+
+                    {activeTab === 'brands' && (
+                        <div className="glass-card p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Tag size={16} className="text-indigo-400" /> Brands
+                                </h3>
+                            </div>
+                            {renderMasterTable(brands, 'brands')}
+                        </div>
+                    )}
+
+                    {activeTab === 'taxes' && (
+                        <div className="glass-card p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Percent size={16} className="text-red-400" /> Tax Rates
+                                </h3>
+                            </div>
+                            {renderMasterTable(taxRates, 'taxes')}
+                        </div>
+                    )}
+
+                    {activeTab === 'units' && (
+                        <div className="glass-card p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Scale size={16} className="text-cyan-400" /> Units of Measure
+                                </h3>
+                            </div>
+                            {renderMasterTable(units, 'units')}
+                        </div>
+                    )}
+
+                    {/* ============ MASTER DATA MODALS ============ */}
+                    <Modal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        title={editingItem ? 'Edit Item' : 'Add New Item'}
+                        description={`Manage ${activeTab.replace('_', ' ')}`}
+                        footer={
+                            <>
+                                <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                                <Button onClick={handleSaveMaster} isLoading={saving}>Save Changes</Button>
+                            </>
+                        }
+                    >
+                        <div className="space-y-4">
+                            <Input
+                                label="Name *"
+                                value={formData.name || ''}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="e.g. Health Supplements"
+                            />
+
+                            {activeTab === 'taxes' && (
+                                <Input
+                                    label="Rate (%) *"
+                                    type="number"
+                                    value={formData.rate || ''}
+                                    onChange={e => setFormData({ ...formData, rate: e.target.value })}
+                                    placeholder="18"
+                                />
+                            )}
+
+                            {activeTab === 'units' && (
+                                <Input
+                                    label="Abbreviation *"
+                                    value={formData.abbreviation || ''}
+                                    onChange={e => setFormData({ ...formData, abbreviation: e.target.value })}
+                                    placeholder="e.g. KG, PCS, BOX"
+                                />
+                            )}
+
+                            {activeTab !== 'units' && (
+                                <Input
+                                    label="Description"
+                                    value={formData.description || ''}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Optional description"
+                                />
+                            )}
+                        </div>
+                    </Modal>
+
+                    <Modal
+                        isOpen={isDeleteModalOpen}
+                        onClose={() => setIsDeleteModalOpen(false)}
+                        title="Delete Item"
+                        description="Are you sure you want to delete this item? This action cannot be undone."
+                        footer={
+                            <>
+                                <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+                                <Button variant="danger" onClick={handleDelete} isLoading={saving}>Delete</Button>
+                            </>
+                        }
+                    >
+                        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-900/20">
+                            <AlertCircle size={24} />
+                            <div>
+                                <p className="font-semibold">Confirm Deletion</p>
+                                <p className="text-sm">Deleting this item might affect other records like Products linked to it.</p>
+                            </div>
+                        </div>
+                    </Modal>
+
                 </div>
             </div>
         </div>

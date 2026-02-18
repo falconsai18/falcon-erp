@@ -23,6 +23,12 @@ export interface Customer {
     outstanding_amount: number
     status: string
     notes: string | null
+    address_line1: string | null
+    address_line2: string | null
+    city: string | null
+    state: string | null
+    pincode: string | null
+    country: string | null
     created_at: string
     updated_at: string
 }
@@ -52,6 +58,12 @@ export interface CustomerFormData {
     credit_days: number
     status: string
     notes: string
+    address_line1: string
+    address_line2: string
+    city: string
+    state: string
+    pincode: string
+    country: string
 }
 
 export const EMPTY_CUSTOMER_FORM: CustomerFormData = {
@@ -66,6 +78,12 @@ export const EMPTY_CUSTOMER_FORM: CustomerFormData = {
     credit_days: 30,
     status: 'active',
     notes: '',
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    state: '',
+    pincode: '',
+    country: 'India',
 }
 
 export interface AddressFormData {
@@ -104,7 +122,7 @@ export async function getCustomers(
 
     return fetchPaginated<Customer>('customers', params, {
         filters: filterArr,
-        search: filters?.search ? { columns: ['name', 'email', 'phone', 'gst_number'], query: filters.search } : undefined,
+        search: filters?.search ? { columns: ['name', 'email', 'phone', 'gst_number', 'city', 'state'], query: filters.search } : undefined,
         orderBy: { column: 'created_at', ascending: false },
     })
 }
@@ -126,6 +144,12 @@ export async function createCustomer(data: CustomerFormData): Promise<Customer> 
         credit_days: Number(data.credit_days),
         status: data.status,
         notes: data.notes.trim() || null,
+        address_line1: data.address_line1.trim() || null,
+        address_line2: data.address_line2.trim() || null,
+        city: data.city.trim() || null,
+        state: data.state.trim() || null,
+        pincode: data.pincode.trim() || null,
+        country: data.country.trim() || null,
     }
     return createRecord<Customer>('customers', payload)
 }
@@ -205,4 +229,14 @@ export async function getCustomerStats(): Promise<{
         blocked: customers.filter(c => c.status === 'blocked').length,
         totalOutstanding: customers.reduce((sum, c) => sum + (c.outstanding_amount || 0), 0),
     }
+}
+
+export async function getCustomerLedger(customerId: string, fromDate?: string, toDate?: string) {
+    const { data, error } = await supabase.rpc('get_customer_ledger', {
+        p_customer_id: customerId,
+        p_from_date: fromDate || null,
+        p_to_date: toDate || null,
+    })
+    if (error) throw error
+    return data
 }

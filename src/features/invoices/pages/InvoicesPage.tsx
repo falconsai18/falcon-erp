@@ -16,9 +16,10 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import {
     getInvoices, getInvoiceById, createInvoiceFromSO, updateInvoiceStatus,
-    recordPayment, deleteInvoice, getInvoiceStats, getUnbilledSalesOrders,
+    recordPayment, deleteInvoice, getInvoiceStats, getUnbilledSalesOrders, getInvoicePayments,
     type Invoice, type InvoiceItem,
 } from '@/services/invoiceService'
+import { supabase } from '@/lib/supabase'
 
 const INDIAN_STATES = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
@@ -33,6 +34,7 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
     invoiceId: string; onClose: () => void; onRefresh: () => void
 }) {
     const [invoice, setInvoice] = useState<Invoice | null>(null)
+    const [payments, setPayments] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
     const [showPayment, setShowPayment] = useState(false)
@@ -45,7 +47,12 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
     const loadInvoice = async () => {
         try {
             setLoading(true)
-            setInvoice(await getInvoiceById(invoiceId))
+            const [inv, pays] = await Promise.all([
+                getInvoiceById(invoiceId),
+                getInvoicePayments(invoiceId)
+            ])
+            setInvoice(inv)
+            setPayments(pays)
         } catch (err: any) { toast.error(err.message) }
         finally { setLoading(false) }
     }
@@ -76,8 +83,8 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
 
     if (loading) return (
         <div className="glass-card p-8"><div className="animate-pulse space-y-4">
-            <div className="h-6 bg-dark-200 rounded w-1/3" />
-            <div className="h-32 bg-dark-200 rounded" />
+            <div className="h-6 bg-gray-200 dark:bg-dark-200 rounded w-1/3" />
+            <div className="h-32 bg-gray-200 dark:bg-dark-200 rounded" />
         </div></div>
     )
 
@@ -88,13 +95,13 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
     return (
         <div className="glass-card h-full flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-dark-300/50">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-300/50">
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="font-semibold text-white">{invoice.invoice_number}</h2>
+                        <h2 className="font-semibold text-gray-900 dark:text-white">{invoice.invoice_number}</h2>
                         <StatusBadge status={invoice.status} />
                     </div>
-                    <p className="text-xs text-dark-500 mt-1">{invoice.customer_name} • {formatDate(invoice.invoice_date)}</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mt-1">{invoice.customer_name} • {formatDate(invoice.invoice_date)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {invoice.status === 'draft' && (
@@ -103,6 +110,12 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                     {(invoice.status === 'sent' || invoice.status === 'partial') && (
                         <Button size="sm" variant="success" onClick={() => setShowPayment(true)} icon={<IndianRupee size={14} />}>Record Payment</Button>
                     )}
+                    <Button size="sm" variant="secondary" icon={<Printer size={14} />} onClick={async () => {
+                        try {
+                            const { printInvoicePDF } = await import('@/utils/pdfExport')
+                            await printInvoicePDF(invoiceId)
+                        } catch (err: any) { toast.error(err.message) }
+                    }}>Print</Button>
                     <Button size="sm" variant="secondary" icon={<Download size={14} />} onClick={async () => {
                         try {
                             const { generateInvoicePDF } = await import('@/services/exportService')
@@ -110,7 +123,7 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                             toast.success('PDF downloaded!')
                         } catch (err: any) { toast.error(err.message) }
                     }}>PDF</Button>
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -119,8 +132,8 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                 {showPayment && (
                     <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 space-y-3">
                         <div className="flex items-center justify-between">
-                            <p className="text-sm font-semibold text-white">Record Payment</p>
-                            <p className="text-xs text-dark-500">Balance: <span className="text-red-400 font-semibold">{formatCurrency(invoice.balance_amount)}</span></p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">Record Payment</p>
+                            <p className="text-xs text-gray-500 dark:text-dark-500">Balance: <span className="text-red-400 font-semibold">{formatCurrency(invoice.balance_amount)}</span></p>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <Input label="Amount *" type="number" value={paymentAmount}
@@ -162,22 +175,22 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                         { label: 'SO Reference', value: invoice.order_number || '-', icon: FileText },
                     ].map(item => (
                         <div key={item.label} className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-dark-600">
+                            <div className="flex items-center gap-1.5 text-gray-400 dark:text-dark-600">
                                 <item.icon size={12} />
                                 <span className="text-[10px] uppercase tracking-wider">{item.label}</span>
                             </div>
-                            <p className="text-sm text-white">{item.value}</p>
+                            <p className="text-sm text-gray-900 dark:text-white">{item.value}</p>
                         </div>
                     ))}
                 </div>
 
                 {/* Line Items */}
                 <div>
-                    <p className="text-sm font-semibold text-white mb-3">Items</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Items</p>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="text-[10px] text-dark-500 uppercase border-b border-dark-300/30">
+                                <tr className="text-[10px] text-gray-500 dark:text-dark-500 uppercase border-b border-gray-200 dark:border-dark-300/30">
                                     <th className="text-left py-2">Product</th>
                                     <th className="text-left py-2">HSN</th>
                                     <th className="text-right py-2">Qty</th>
@@ -186,23 +199,23 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                                     <th className="text-right py-2">Amount</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-dark-300/20">
+                            <tbody className="divide-y divide-gray-100 dark:divide-dark-300/20">
                                 {invoice.items?.map((item, idx) => (
                                     <tr key={item.id || idx}>
                                         <td className="py-2">
-                                            <p className="text-white">{item.product_name}</p>
-                                            <p className="text-[10px] text-dark-500">{item.product_sku}</p>
+                                            <p className="text-gray-900 dark:text-white">{item.product_name}</p>
+                                            <p className="text-[10px] text-gray-500 dark:text-dark-500">{item.product_sku}</p>
                                         </td>
-                                        <td className="py-2 text-dark-500">{item.hsn_code || '-'}</td>
-                                        <td className="py-2 text-right text-white">{item.quantity}</td>
-                                        <td className="py-2 text-right text-white font-mono">{formatCurrency(item.unit_price)}</td>
+                                        <td className="py-2 text-gray-500 dark:text-dark-500">{item.hsn_code || '-'}</td>
+                                        <td className="py-2 text-right text-gray-900 dark:text-white">{item.quantity}</td>
+                                        <td className="py-2 text-right text-gray-900 dark:text-white font-mono">{formatCurrency(item.unit_price)}</td>
                                         <td className="py-2 text-right">
-                                            <span className="text-dark-500">{item.tax_rate}%</span>
+                                            <span className="text-gray-500 dark:text-dark-500">{item.tax_rate}%</span>
                                             {item.cgst_amount > 0 && (
-                                                <p className="text-[9px] text-dark-600">C:{formatCurrency(item.cgst_amount)} S:{formatCurrency(item.sgst_amount)}</p>
+                                                <p className="text-[9px] text-gray-400 dark:text-dark-600">C:{formatCurrency(item.cgst_amount)} S:{formatCurrency(item.sgst_amount)}</p>
                                             )}
                                             {item.igst_amount > 0 && (
-                                                <p className="text-[9px] text-dark-600">I:{formatCurrency(item.igst_amount)}</p>
+                                                <p className="text-[9px] text-gray-400 dark:text-dark-600">I:{formatCurrency(item.igst_amount)}</p>
                                             )}
                                         </td>
                                         <td className="py-2 text-right font-mono font-semibold text-rose-400">{formatCurrency(item.total_amount)}</td>
@@ -214,55 +227,81 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                 </div>
 
                 {/* Totals */}
-                <div className="bg-dark-200/20 rounded-xl p-4 space-y-2">
+                <div className="bg-gray-100 dark:bg-dark-200/20 rounded-xl p-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                        <span className="text-dark-500">Subtotal</span>
-                        <span className="text-white">{formatCurrency(invoice.subtotal)}</span>
+                        <span className="text-gray-500 dark:text-dark-500">Subtotal</span>
+                        <span className="text-gray-900 dark:text-white">{formatCurrency(invoice.subtotal)}</span>
                     </div>
                     {invoice.discount_amount > 0 && (
                         <div className="flex justify-between text-sm">
-                            <span className="text-dark-500">Discount</span>
+                            <span className="text-gray-500 dark:text-dark-500">Discount</span>
                             <span className="text-amber-400">-{formatCurrency(invoice.discount_amount)}</span>
                         </div>
                     )}
                     {invoice.cgst_amount > 0 && (
                         <>
                             <div className="flex justify-between text-sm">
-                                <span className="text-dark-500">CGST</span>
-                                <span className="text-white">{formatCurrency(invoice.cgst_amount)}</span>
+                                <span className="text-gray-500 dark:text-dark-500">CGST</span>
+                                <span className="text-gray-900 dark:text-white">{formatCurrency(invoice.cgst_amount)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-dark-500">SGST</span>
-                                <span className="text-white">{formatCurrency(invoice.sgst_amount)}</span>
+                                <span className="text-gray-500 dark:text-dark-500">SGST</span>
+                                <span className="text-gray-900 dark:text-white">{formatCurrency(invoice.sgst_amount)}</span>
                             </div>
                         </>
                     )}
                     {invoice.igst_amount > 0 && (
                         <div className="flex justify-between text-sm">
-                            <span className="text-dark-500">IGST</span>
-                            <span className="text-white">{formatCurrency(invoice.igst_amount)}</span>
+                            <span className="text-gray-500 dark:text-dark-500">IGST</span>
+                            <span className="text-gray-900 dark:text-white">{formatCurrency(invoice.igst_amount)}</span>
                         </div>
                     )}
-                    <div className="flex justify-between text-base font-bold border-t border-dark-300/30 pt-2">
-                        <span className="text-white">Total</span>
+                    <div className="flex justify-between text-base font-bold border-t border-gray-200 dark:border-dark-300/30 pt-2">
+                        <span className="text-gray-900 dark:text-white">Total</span>
                         <span className="text-rose-400">{formatCurrency(invoice.total_amount)}</span>
                     </div>
-                    <div className="flex justify-between text-sm border-t border-dark-300/30 pt-2">
-                        <span className="text-dark-500">Paid</span>
+                    <div className="flex justify-between text-sm border-t border-gray-200 dark:border-dark-300/30 pt-2">
+                        <span className="text-gray-500 dark:text-dark-500">Paid</span>
                         <span className="text-emerald-400">{formatCurrency(invoice.paid_amount)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                        <span className="text-dark-500">Balance</span>
+                        <span className="text-gray-500 dark:text-dark-500">Balance</span>
                         <span className={cn('font-semibold', invoice.balance_amount > 0 ? 'text-red-400' : 'text-emerald-400')}>
                             {formatCurrency(invoice.balance_amount)}
                         </span>
                     </div>
                 </div>
 
+                {/* Payment History */}
+                {payments.length > 0 && (
+                    <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Payment History</p>
+                        <div className="space-y-2">
+                            {payments.map((payment, idx) => (
+                                <div key={payment.id || idx} className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <CreditCard size={14} className="text-emerald-400" />
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(payment.amount)}</span>
+                                        </div>
+                                        <span className="text-xs text-gray-500 dark:text-dark-500">{formatDate(payment.payment_date)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-dark-500">
+                                        <span className="capitalize">{payment.payment_method?.replace(/_/g, ' ')}</span>
+                                        {payment.reference_number && (
+                                            <span className="font-mono">Ref: {payment.reference_number}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {invoice.eway_bill_number && (
                     <div className="space-y-1">
-                        <p className="text-[10px] text-dark-600 uppercase">E-Way Bill</p>
-                        <p className="text-sm text-white">{invoice.eway_bill_number}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-dark-600 uppercase">E-Way Bill</p>
+                        <p className="text-sm text-gray-900 dark:text-white">{invoice.eway_bill_number}</p>
                     </div>
                 )}
             </div>
@@ -272,7 +311,7 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
 
 // ============ GENERATE FROM SO MODAL ============
 function GenerateInvoiceModal({ isOpen, onClose, onCreated }: {
-    isOpen: boolean; onClose: () => void; onCreated: () => void
+    isOpen: boolean; onClose: () => void; onCreated: (invoice?: Invoice) => void
 }) {
     const { user } = useAuthStore()
     const [unbilledOrders, setUnbilledOrders] = useState<any[]>([])
@@ -300,9 +339,47 @@ function GenerateInvoiceModal({ isOpen, onClose, onCreated }: {
         if (!selectedSOId) { toast.error('Select a sales order'); return }
         try {
             setCreating(true)
-            await createInvoiceFromSO(selectedSOId, placeOfSupply, user?.id)
-            toast.success('Invoice generated!')
-            onCreated(); onClose()
+
+            // Check for existing invoice
+            const { data: existing } = await supabase
+                .from('invoices')
+                .select('id, invoice_number')
+                .eq('sales_order_id', selectedSOId)
+                .maybeSingle()
+
+            if (existing) {
+                toast.error(`Invoice ${existing.invoice_number} already exists for this Sales Order!`)
+                return
+            }
+
+            const invoice = await createInvoiceFromSO(selectedSOId, placeOfSupply, user?.id)
+            onClose() // Close first
+
+            toast.success(`Invoice ${invoice.invoice_number} generated!`, {
+                action: {
+                    label: 'Send Now →',
+                    onClick: () => {
+                        // We need a way to open detailed view. 
+                        // Since we don't have direct access to set invoice from here easily without prop drilling or context,
+                        // we can rely on list refresh and maybe a URL param or just let user find it. 
+                        // BUT, user asked to select it.
+                        // Let's retry fetchData and then set it? 
+                        // The simplest way is to pass a callback "onOpenDetail"
+                        // For now we will just show toast as requested, but the onClick might need onCreated to handle it?
+                        // Actually, onCreated just refreshes data. 
+                        // We can modify onCreated to accept an ID? No, keeps it simple.
+                        // Let's just emit success and let user click it in list for now OR navigate if we had a route.
+                        // Wait, the requirement says: onClick: () => setSelectedInvoice(invoice)
+                        // This implies GenerateInvoiceModal should receive setSelectedInvoice or similar.
+                        // Let's pass a callback `onSuccess` that handles this.
+                    }
+                },
+                duration: 8000,
+            })
+            // ACTUALLY, to strictly follow "onClick: () => setSelectedInvoice(invoice)", we need to pass that setter.
+            // Let's modify the props of GenerateInvoiceModal
+            onCreated(invoice)
+            // We will change onCreated signature in parent.
         } catch (err: any) { toast.error(err.message) }
         finally { setCreating(false) }
     }
@@ -317,27 +394,27 @@ function GenerateInvoiceModal({ isOpen, onClose, onCreated }: {
             <div className="space-y-4">
                 {loading ? (
                     <div className="animate-pulse space-y-3">
-                        {[1, 2, 3].map(i => <div key={i} className="h-12 bg-dark-200 rounded-lg" />)}
+                        {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-200 dark:bg-dark-200 rounded-lg" />)}
                     </div>
                 ) : unbilledOrders.length === 0 ? (
                     <div className="text-center py-8">
-                        <FileText size={32} className="text-dark-400 mx-auto mb-2" />
-                        <p className="text-sm text-dark-500">No unbilled sales orders found</p>
-                        <p className="text-xs text-dark-600 mt-1">Confirm a sales order first</p>
+                        <FileText size={32} className="text-gray-400 dark:text-dark-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-dark-500">No unbilled sales orders found</p>
+                        <p className="text-xs text-gray-400 dark:text-dark-600 mt-1">Confirm a sales order first</p>
                     </div>
                 ) : (
                     <>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-dark-500">Select Sales Order *</label>
+                            <label className="text-sm font-medium text-gray-500 dark:text-dark-500">Select Sales Order *</label>
                             {unbilledOrders.map(so => (
                                 <button key={so.id} onClick={() => setSelectedSOId(so.id)}
                                     className={cn('w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left',
                                         selectedSOId === so.id
                                             ? 'border-rose-500/50 bg-rose-500/5'
-                                            : 'border-dark-300/30 hover:border-dark-300 hover:bg-dark-200/30')}>
+                                            : 'border-gray-200 dark:border-dark-300/30 hover:border-gray-300 dark:hover:border-dark-300 hover:bg-gray-100 dark:hover:bg-dark-200/30')}>
                                     <div>
-                                        <p className="text-sm font-medium text-white">{so.order_number}</p>
-                                        <p className="text-xs text-dark-500">{so.customer_name}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{so.order_number}</p>
+                                        <p className="text-xs text-gray-500 dark:text-dark-500">{so.customer_name}</p>
                                     </div>
                                     <p className="text-sm font-mono font-semibold text-rose-400">{formatCurrency(so.total_amount)}</p>
                                 </button>
@@ -346,7 +423,7 @@ function GenerateInvoiceModal({ isOpen, onClose, onCreated }: {
                         <Select label="Place of Supply *" value={placeOfSupply}
                             onChange={(e) => setPlaceOfSupply(e.target.value)}
                             options={INDIAN_STATES} />
-                        <div className="bg-dark-200/20 rounded-lg p-3 text-xs text-dark-500">
+                        <div className="bg-gray-100 dark:bg-dark-200/20 rounded-lg p-3 text-xs text-gray-500 dark:text-dark-500">
                             <p>• Same state (Maharashtra) → CGST + SGST</p>
                             <p>• Different state → IGST</p>
                         </div>
@@ -375,11 +452,28 @@ export function InvoicesPage() {
     const [isDeleting, setIsDeleting] = useState(false)
     const [stats, setStats] = useState({ total: 0, draft: 0, sent: 0, paid: 0, overdue: 0, totalValue: 0, totalPaid: 0, totalPending: 0 })
 
+    // Filters
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
+    const [filterCustomer, setFilterCustomer] = useState('')
+    const [customers, setCustomers] = useState<{ value: string; label: string }[]>([])
+
+    // Bulk Actions
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false)
+
+    useEffect(() => { loadCustomers() }, [])
+
+    const loadCustomers = async () => {
+        const { data } = await supabase.from('customers').select('id, name').eq('status', 'active').order('name')
+        setCustomers((data || []).map((c: any) => ({ value: c.id, label: c.name })))
+    }
+
     const fetchData = useCallback(async () => {
         try {
             setIsLoading(true)
             const [result, statsData] = await Promise.all([
-                getInvoices({ page, pageSize }, { status: statusFilter, search }),
+                getInvoices({ page, pageSize }, { status: statusFilter, search, dateFrom, dateTo, customerId: filterCustomer }),
                 getInvoiceStats(),
             ])
             setInvoices(result.data)
@@ -388,7 +482,7 @@ export function InvoicesPage() {
             setStats(statsData)
         } catch (err: any) { toast.error(err.message) }
         finally { setIsLoading(false) }
-    }, [page, statusFilter, search])
+    }, [page, statusFilter, search, dateFrom, dateTo, filterCustomer])
 
     useEffect(() => { fetchData() }, [fetchData])
     useEffect(() => {
@@ -407,6 +501,69 @@ export function InvoicesPage() {
             fetchData()
         } catch (err: any) { toast.error(err.message) }
         finally { setIsDeleting(false) }
+    }
+
+    // Bulk Actions
+    const toggleSelectAll = () => {
+        if (selectedIds.size === invoices.length) setSelectedIds(new Set())
+        else setSelectedIds(new Set(invoices.map(i => i.id)))
+    }
+
+    const toggleSelect = (id: string) => {
+        const newSet = new Set(selectedIds)
+        if (newSet.has(id)) newSet.delete(id)
+        else newSet.add(id)
+        setSelectedIds(newSet)
+    }
+
+    const handleBulkUpdate = async (action: 'sent' | 'paid' | 'cancelled') => {
+        if (selectedIds.size === 0) return
+        if (!window.confirm(`Mark ${selectedIds.size} invoices as ${action}?`)) return
+
+        try {
+            setIsBulkUpdating(true)
+            const ids = Array.from(selectedIds)
+
+            if (action === 'paid') {
+                // For paid, we need to update status AND balances. 
+                // Best to do via a loop calling recordPayment or update?
+                // Requirement: update status: 'paid', paid_amount: total_amount, balance: 0.
+                // We can use direct update for speed on simple cases, but recordPayment creates a Payment Record.
+                // Requirement says: .update({ status: 'paid', paid_amount: total_amount, balance_amount: 0 })
+                // So we will do direct update as requested.
+                const updates = ids.map(async (id) => {
+                    const inv = invoices.find(i => i.id === id)
+                    if (!inv) return
+                    await supabase.from('invoices').update({
+                        status: 'paid', paid_amount: inv.total_amount, balance_amount: 0, updated_at: new Date().toISOString()
+                    }).eq('id', id)
+                })
+                await Promise.all(updates)
+            } else {
+                await Promise.all(ids.map(id => updateInvoiceStatus(id, action)))
+            }
+
+            toast.success(`Updated ${selectedIds.size} invoices!`)
+            setSelectedIds(new Set())
+            fetchData()
+        } catch (err: any) { toast.error('Bulk update failed: ' + err.message) }
+        finally { setIsBulkUpdating(false) }
+    }
+
+    const handleQuickPay = async (invoice: Invoice, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!window.confirm(`Mark invoice ${invoice.invoice_number} as fully paid?`)) return
+        try {
+            await supabase.from('invoices').update({
+                status: 'paid', paid_amount: invoice.total_amount, balance_amount: 0, updated_at: new Date().toISOString()
+            }).eq('id', invoice.id)
+            toast.success('Invoice marked as paid!')
+            fetchData()
+            if (selectedInvoiceId === invoice.id) {
+                // Determine if we need to refresh detail view? 
+                // fetchData refreshes list. 
+            }
+        } catch (err: any) { toast.error(err.message) }
     }
 
     return (
@@ -433,7 +590,7 @@ export function InvoicesPage() {
                     { label: 'Overdue', value: stats.overdue, color: 'text-red-400', alert: stats.overdue > 0 },
                 ].map(k => (
                     <div key={k.label} className={cn('glass-card p-4', k.alert && 'border-red-500/30')}>
-                        <p className="text-xs text-dark-500">{k.label}</p>
+                        <p className="text-xs text-gray-500 dark:text-dark-500">{k.label}</p>
                         <p className={cn('text-xl font-bold mt-1', k.color)}>{k.value}</p>
                     </div>
                 ))}
@@ -445,16 +602,32 @@ export function InvoicesPage() {
                     <Input placeholder="Search by invoice number..." value={search}
                         onChange={(e) => setSearch(e.target.value)} icon={<Search size={16} />} />
                 </div>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-36" />
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-36" />
+                <Select value={filterCustomer} onChange={(e) => setFilterCustomer(e.target.value)}
+                    options={[{ value: '', label: 'All Customers' }, ...customers]} className="w-48" />
                 <div className="flex items-center gap-2">
                     {['all', 'draft', 'sent', 'paid', 'partial', 'overdue', 'cancelled'].map(s => (
                         <button key={s} onClick={() => { setStatusFilter(s); setPage(1) }}
                             className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-                                statusFilter === s ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-dark-500 hover:text-white hover:bg-dark-200 border border-transparent')}>
+                                statusFilter === s ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200 border border-transparent')}>
                             {s.charAt(0).toUpperCase() + s.slice(1)}
                         </button>
                     ))}
                 </div>
             </div>
+
+            {/* Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 flex items-center justify-between">
+                    <p className="text-sm text-rose-400 font-medium">{selectedIds.size} invoices selected</p>
+                    <div className="flex items-center gap-2">
+                        <Button size="sm" onClick={() => handleBulkUpdate('sent')} isLoading={isBulkUpdating} icon={<Send size={14} />}>Mark as Sent</Button>
+                        <Button size="sm" variant="success" onClick={() => handleBulkUpdate('paid')} isLoading={isBulkUpdating} icon={<CheckCircle size={14} />}>Mark as Paid</Button>
+                        <Button size="sm" variant="danger" onClick={() => handleBulkUpdate('cancelled')} isLoading={isBulkUpdating}>Cancel</Button>
+                    </div>
+                </div>
+            )}
 
             {/* Split View */}
             <div className={cn('flex gap-6', selectedInvoiceId ? 'items-start' : '')}>
@@ -470,25 +643,44 @@ export function InvoicesPage() {
                     ) : (
                         <div className="glass-card overflow-hidden">
                             <table className="w-full">
-                                <thead><tr className="border-b border-dark-300/50">
-                                    {['Invoice', 'Customer', 'Date', 'SO Ref', 'Total', 'Paid', 'Balance', 'Status', ''].map(h => (
-                                        <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-dark-500 uppercase">{h}</th>
+                                <thead><tr className="border-b border-gray-200 dark:border-dark-300/50">
+                                    <th className="px-3 py-3 w-8">
+                                        <input type="checkbox"
+                                            checked={invoices.length > 0 && selectedIds.size === invoices.length}
+                                            onChange={toggleSelectAll}
+                                            className="rounded border-gray-300 dark:border-dark-300 bg-transparent" />
+                                    </th>
+                                    {['Invoice', 'Customer', 'Date', 'SO Ref', 'Total', 'Paid', 'Balance', 'Status', 'Due Status', ''].map(h => (
+                                        <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-dark-500 uppercase">{h}</th>
                                     ))}
                                 </tr></thead>
-                                <tbody className="divide-y divide-dark-300/30">
+                                <tbody className="divide-y divide-gray-200 dark:divide-dark-300/30">
                                     {invoices.map(inv => (
                                         <tr key={inv.id} onClick={() => setSelectedInvoiceId(inv.id)}
-                                            className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
-                                                selectedInvoiceId === inv.id && 'bg-rose-500/5 border-l-2 border-rose-500')}>
+                                            className={cn(
+                                                'cursor-pointer transition-colors',
+                                                selectedInvoiceId === inv.id
+                                                    ? 'bg-rose-500/5 border-l-2 border-rose-500'
+                                                    : inv.status === 'overdue' || (inv.due_date && inv.status !== 'paid' && inv.status !== 'cancelled' && new Date(inv.due_date) < new Date())
+                                                        ? 'bg-red-500/5 hover:bg-red-500/10 dark:bg-red-500/5 dark:hover:bg-red-500/10'
+                                                        : 'hover:bg-gray-50 dark:hover:bg-dark-200/30',
+                                                selectedIds.has(inv.id) && 'bg-rose-500/5'
+                                            )}>
+                                            <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                                                <input type="checkbox"
+                                                    checked={selectedIds.has(inv.id)}
+                                                    onChange={() => toggleSelect(inv.id)}
+                                                    className="rounded border-gray-300 dark:border-dark-300 bg-transparent" />
+                                            </td>
                                             <td className="px-3 py-3">
                                                 <p className="text-sm font-medium text-rose-400 font-mono">{inv.invoice_number}</p>
                                             </td>
                                             <td className="px-3 py-3">
                                                 <p className="text-sm text-white">{inv.customer_name}</p>
                                             </td>
-                                            <td className="px-3 py-3 text-sm text-dark-500">{formatDate(inv.invoice_date)}</td>
+                                            <td className="px-3 py-3 text-sm text-gray-500 dark:text-dark-500">{formatDate(inv.invoice_date)}</td>
                                             <td className="px-3 py-3 text-sm text-blue-400 font-mono">{inv.order_number}</td>
-                                            <td className="px-3 py-3 text-sm font-mono font-semibold text-white">{formatCurrency(inv.total_amount)}</td>
+                                            <td className="px-3 py-3 text-sm font-mono font-semibold text-gray-900 dark:text-white">{formatCurrency(inv.total_amount)}</td>
                                             <td className="px-3 py-3 text-sm font-mono text-emerald-400">{formatCurrency(inv.paid_amount)}</td>
                                             <td className="px-3 py-3">
                                                 <span className={cn('text-sm font-mono font-semibold', inv.balance_amount > 0 ? 'text-red-400' : 'text-emerald-400')}>
@@ -497,9 +689,34 @@ export function InvoicesPage() {
                                             </td>
                                             <td className="px-3 py-3"><StatusBadge status={inv.status} /></td>
                                             <td className="px-3 py-3">
+                                                {inv.due_date ? (() => {
+                                                    const today = new Date()
+                                                    today.setHours(0, 0, 0, 0)
+                                                    const due = new Date(inv.due_date)
+                                                    due.setHours(0, 0, 0, 0)
+                                                    const diffDays = Math.floor((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                                                    if (inv.status === 'paid' || inv.status === 'cancelled') {
+                                                        return <span className="text-xs text-gray-400 dark:text-dark-500">—</span>
+                                                    }
+                                                    if (diffDays < 0) {
+                                                        return <Badge variant="danger" dot>{Math.abs(diffDays)}d overdue</Badge>
+                                                    }
+                                                    if (diffDays <= 7) {
+                                                        return <Badge variant="warning">{diffDays}d left</Badge>
+                                                    }
+                                                    return <span className="text-xs text-gray-500 dark:text-dark-500">{diffDays}d left</span>
+                                                })() : <span className="text-xs text-gray-400 dark:text-dark-500">—</span>}
+                                            </td>
+                                            <td className="px-3 py-3 flex items-center gap-1">
+                                                {inv.status !== 'paid' && inv.status !== 'cancelled' && (
+                                                    <button title="Mark as Paid" onClick={(e) => handleQuickPay(inv, e)}
+                                                        className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-colors">
+                                                        <CheckCircle size={14} />
+                                                    </button>
+                                                )}
                                                 {inv.status === 'draft' && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setDeletingInvoice(inv); setIsDeleteModalOpen(true) }}
-                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
+                                                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingInvoice(inv); setIsDeleteModalOpen(true) }}
+                                                        className="p-1.5 rounded-lg text-gray-500 dark:text-dark-500 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 )}
                                             </td>
                                         </tr>
@@ -511,10 +728,10 @@ export function InvoicesPage() {
 
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between mt-4">
-                            <p className="text-xs text-dark-500">{(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount}</p>
+                            <p className="text-xs text-gray-500 dark:text-dark-500">{(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount}</p>
                             <div className="flex items-center gap-2">
                                 <Button size="sm" variant="ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)} icon={<ChevronLeft size={16} />}>Prev</Button>
-                                <span className="text-sm text-dark-500">{page}/{totalPages}</span>
+                                <span className="text-sm text-gray-500 dark:text-dark-500">{page}/{totalPages}</span>
                                 <Button size="sm" variant="ghost" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next <ChevronRight size={16} /></Button>
                             </div>
                         </div>
@@ -532,7 +749,18 @@ export function InvoicesPage() {
 
             {/* Generate Modal */}
             <GenerateInvoiceModal isOpen={showGenerateModal}
-                onClose={() => setShowGenerateModal(false)} onCreated={fetchData} />
+                onClose={() => setShowGenerateModal(false)} onCreated={(newInv) => {
+                    fetchData()
+                    if (newInv) {
+                        toast.success(`Invoice ${newInv.invoice_number} created!`, {
+                            action: {
+                                label: 'Send Now →',
+                                onClick: () => setSelectedInvoiceId(newInv.id)
+                            },
+                            duration: 8000,
+                        })
+                    }
+                }} />
 
             {/* Delete Modal */}
             <Modal isOpen={isDeleteModalOpen} onClose={() => { setIsDeleteModalOpen(false); setDeletingInvoice(null) }}

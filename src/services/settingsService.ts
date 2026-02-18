@@ -207,3 +207,159 @@ export async function getSystemStats() {
     tables.forEach((t, i) => { stats[t] = results[i].count || 0 })
     return stats
 }
+
+// ============ PRODUCT CATEGORIES CRUD ============
+export async function getCategories() {
+    const { data, error } = await supabase
+        .from('product_categories')
+        .select('*')
+        .order('name')
+    if (error) throw error
+    return data
+}
+
+export async function createCategory(category: { name: string; description?: string }) {
+    const { data, error } = await supabase
+        .from('product_categories')
+        .insert([category])
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function updateCategory(id: string, updates: { name?: string; description?: string }) {
+    const { data, error } = await supabase
+        .from('product_categories')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function deleteCategory(id: string) {
+    const { error } = await supabase
+        .from('product_categories')
+        .delete()
+        .eq('id', id)
+    if (error) throw error
+}
+
+// ============ BRANDS CRUD ============
+export async function getBrands() {
+    const { data, error } = await supabase
+        .from('brands')
+        .select('*')
+        .order('name')
+    if (error) throw error
+    return data
+}
+
+export async function createBrand(brand: { name: string; description?: string }) {
+    const { data, error } = await supabase
+        .from('brands')
+        .insert([brand])
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function updateBrand(id: string, updates: { name?: string; description?: string }) {
+    const { data, error } = await supabase
+        .from('brands')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function deleteBrand(id: string) {
+    const { error } = await supabase
+        .from('brands')
+        .delete()
+        .eq('id', id)
+    if (error) throw error
+}
+
+// ============ TAX RATES CRUD ============
+export async function getTaxRates() {
+    const { data, error } = await supabase
+        .from('tax_rates')
+        .select('*')
+        .order('rate')
+    if (error) throw error
+    return data
+}
+
+export async function createTaxRate(tax: { name: string; rate: number; description?: string }) {
+    const { data, error } = await supabase
+        .from('tax_rates')
+        .insert([tax])
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function updateTaxRate(id: string, updates: { name?: string; rate?: number; description?: string }) {
+    const { data, error } = await supabase
+        .from('tax_rates')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function deleteTaxRate(id: string) {
+    const { error } = await supabase
+        .from('tax_rates')
+        .delete()
+        .eq('id', id)
+    if (error) throw error
+}
+
+// ============ UNITS OF MEASURE CRUD ============
+export async function getUnitsOfMeasure() {
+    const { data, error } = await supabase
+        .from('units_of_measure')
+        .select('*')
+        .order('name')
+    if (error) throw error
+    return data
+}
+
+export async function createUnitOfMeasure(unit: { name: string; abbreviation: string }) {
+    const { data, error } = await supabase
+        .from('units_of_measure')
+        .insert([unit])
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function updateUnitOfMeasure(id: string, updates: { name?: string; abbreviation?: string }) {
+    const { data, error } = await supabase
+        .from('units_of_measure')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
+export async function deleteUnitOfMeasure(id: string) {
+    const { error } = await supabase
+        .from('units_of_measure')
+        .delete()
+        .eq('id', id)
+    if (error) throw error
+}

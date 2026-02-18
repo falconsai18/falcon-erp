@@ -175,29 +175,70 @@ export async function updateQualityCheckStatus(
     notes?: string,
     userId?: string
 ): Promise<void> {
-    // MINIMAL payload - only update "result" column
-    const payload: Record<string, any> = { result: status }
-
+    // 1. Update QC result
     const { error } = await supabase
         .from('quality_checks')
-        .update(payload)
+        .update({ result: status })
         .eq('id', id)
 
     if (error) throw error
 
-    // If QC passed, update related records
-    if (status === 'pass') {
-        const qc = await getQualityCheckById(id)
+    // 2. Get the full QC record to find linked batch
+    const { data: qc } = await supabase
+        .from('quality_checks')
+        .select('batch_id, batch_number, work_order_id')
+        .eq('id', id)
+        .single()
 
-        if (qc.batch_number) {
+    if (!qc) return
+
+    // 3. Update batch status based on QC result
+    const batchUpdate: any = {
+        quality_status: status,
+        status: status === 'pass' ? 'available' : status === 'fail' ? 'rejected' : 'quarantine',
+        updated_at: new Date().toISOString(),
+    }
+
+    // Try batch_id first (most reliable), then batch_number
+    if (qc.batch_id) {
+        await supabase
+            .from('batches')
+            .update(batchUpdate)
+            .eq('id', qc.batch_id)
+
+        // Also sync inventory
+        const { data: batch } = await supabase
+            .from('batches')
+            .select('batch_number, product_id')
+            .eq('id', qc.batch_id)
+            .single()
+
+        if (batch) {
             await supabase
-                .from('batches')
-                .update({
-                    quality_status: 'pass',
-                    status: 'available'
-                })
-                .eq('batch_number', qc.batch_number)
+                .from('inventory')
+                .update({ status: status === 'pass' ? 'available' : status === 'fail' ? 'rejected' : 'quarantine' })
+                .eq('batch_number', batch.batch_number)
+                .eq('product_id', batch.product_id)
         }
+    } else if (qc.batch_number) {
+        await supabase
+            .from('batches')
+            .update(batchUpdate)
+            .eq('batch_number', qc.batch_number)
+
+        // Also sync inventory
+        await supabase
+            .from('inventory')
+            .update({ status: status === 'pass' ? 'available' : status === 'fail' ? 'rejected' : 'quarantine' })
+            .eq('batch_number', qc.batch_number)
+    }
+
+    // 4. If QC linked to work order, also find batch via work_order_id
+    if (qc.work_order_id && !qc.batch_id && !qc.batch_number) {
+        await supabase
+            .from('batches')
+            .update(batchUpdate)
+            .eq('work_order_id', qc.work_order_id)
     }
 }
 

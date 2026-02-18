@@ -20,6 +20,7 @@ import {
     getDispatchableSOs, getSOItemsForChallan,
     type DeliveryChallan, type ChallanItem, type ChallanFormData, EMPTY_CHALLAN_FORM,
 } from '@/services/challanService'
+import { getSmartBatchSelection } from '@/services/batchService'
 import { exportToCSV } from '@/services/exportService'
 
 // ============ CHALLAN STATUS BADGE ============
@@ -113,7 +114,7 @@ function ChallanDetail({ challanId, onClose, onRefresh }: {
                     {challan.status === 'delivered' && (
                         <Button size="sm" variant="secondary" onClick={handleDownloadPDF} icon={<Printer size={14} />}>Download PDF</Button>
                     )}
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -227,6 +228,7 @@ export function ChallansPage() {
     const [soItems, setSoItems] = useState<any[]>([])
     const [isSaving, setIsSaving] = useState(false)
     const [stats, setStats] = useState({ total: 0, draft: 0, dispatched: 0, delivered: 0, cancelled: 0 })
+    const [selectingBatch, setSelectingBatch] = useState<string | null>(null)
 
     const fetchDispatchableSOs = async () => {
         try {
@@ -320,6 +322,43 @@ export function ChallansPage() {
             items[index] = { ...items[index], [field]: value }
             return { ...p, items }
         })
+    }
+
+    async function handleAutoSelectBatch(itemIndex: number, productId: string, quantity: number) {
+        if (!productId || !quantity) {
+            toast.error('Select product and quantity first')
+            return
+        }
+        try {
+            setSelectingBatch(itemIndex.toString())
+            const result = await getSmartBatchSelection(productId, quantity)
+
+            if (result.batches.length === 0) {
+                toast.error('No available batches found for this product')
+                return
+            }
+
+            if (!result.fullyAllocated) {
+                toast.warning(`⚠️ Only ${result.totalAllocated} units available across all batches. Required: ${quantity}`)
+            }
+
+            // Auto-fill batch number from first (oldest) batch
+            const primaryBatch = result.batches[0]
+
+            // Update the item's batch_number in form state
+            updateItem(itemIndex, 'batch_number', primaryBatch.batch_number)
+
+            // Show what was selected
+            const expiryInfo = primaryBatch.expiry_date
+                ? ` (Expires: ${new Date(primaryBatch.expiry_date).toLocaleDateString('en-IN')})`
+                : ''
+            toast.success(`✅ Auto-selected: ${primaryBatch.batch_number}${expiryInfo}`)
+
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to select batch')
+        } finally {
+            setSelectingBatch(null)
+        }
     }
 
     const handleExport = () => {
@@ -425,7 +464,7 @@ export function ChallansPage() {
                                             <td className="px-3 py-3">
                                                 {challan.status === 'draft' && (
                                                     <button onClick={(e) => { e.stopPropagation(); setDeletingChallan(challan) }}
-                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
+                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200" title="Delete"><Trash2 size={14} /></button>
                                                 )}
                                             </td>
                                         </tr>
@@ -468,9 +507,9 @@ export function ChallansPage() {
                     {/* SO Selection */}
                     <Select label="Sales Order *" value={formData.sales_order_id}
                         onChange={(e) => setFormData(p => ({ ...p, sales_order_id: e.target.value }))}
-                        options={dispatchableSOs.map(so => ({ 
-                            value: so.id, 
-                            label: `${so.order_number} - ${so.customer_name} (${formatDate(new Date().toISOString())})` 
+                        options={dispatchableSOs.map(so => ({
+                            value: so.id,
+                            label: `${so.order_number} - ${so.customer_name} (${formatDate(new Date().toISOString())})`
                         }))}
                         placeholder="Select sales order" />
 
@@ -509,7 +548,7 @@ export function ChallansPage() {
                                                 <p className="text-xs text-brand-400">Remaining: {soItems[idx]?.remaining_quantity}</p>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="grid grid-cols-2 gap-3">
                                             <Input label="Dispatch Qty" type="number" value={item.quantity}
                                                 onChange={(e) => {
@@ -520,13 +559,26 @@ export function ChallansPage() {
                                                     }
                                                 }}
                                                 max={soItems[idx]?.remaining_quantity || 0} />
-                                            <Select label="Batch Number" value={item.batch_number}
-                                                onChange={(e) => updateItem(idx, 'batch_number', e.target.value)}
-                                                options={(soItems[idx]?.available_batches || []).map((batch: any) => ({
-                                                    value: batch.batch_number,
-                                                    label: `${batch.batch_number} (Qty: ${batch.available_quantity})`
-                                                }))}
-                                                placeholder="Select batch" />
+                                            <div className="flex items-end gap-2">
+                                                <div className="flex-1">
+                                                    <Select label="Batch Number" value={item.batch_number}
+                                                        onChange={(e) => updateItem(idx, 'batch_number', e.target.value)}
+                                                        options={(soItems[idx]?.available_batches || []).map((batch: any) => ({
+                                                            value: batch.batch_number,
+                                                            label: `${batch.batch_number} (Qty: ${batch.available_quantity})`
+                                                        }))}
+                                                        placeholder="Select batch" />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAutoSelectBatch(idx, item.product_id, item.quantity)}
+                                                    disabled={selectingBatch === idx.toString()}
+                                                    title="Auto-select batch using FEFO (oldest expiry first)"
+                                                    className="px-3 py-2.5 rounded-lg text-xs font-medium bg-brand-500/20 text-brand-600 dark:text-brand-400 hover:bg-brand-500/30 transition-colors disabled:opacity-50 whitespace-nowrap mb-0.5"
+                                                >
+                                                    {selectingBatch === idx.toString() ? '...' : '🎯 Auto'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

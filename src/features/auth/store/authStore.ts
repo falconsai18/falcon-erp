@@ -1,23 +1,28 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase } from '@/lib/supabase'
+import { UserRole } from '@/config/permissions'
 
-interface User {
+interface AuthUser {
     id: string
     email: string
     full_name: string
-    role: string
+    role: UserRole
+    phone?: string
     avatar_url?: string
     company_id?: string
+    is_active: boolean
+    department?: string
+    permissions: Record<string, unknown>
 }
 
 interface AuthStore {
-    user: User | null
+    user: AuthUser | null
     isLoading: boolean
     isAuthenticated: boolean
     login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
     logout: () => Promise<void>
-    setUser: (user: User | null) => void
+    setUser: (user: AuthUser | null) => void
     checkSession: () => Promise<void>
 }
 
@@ -43,26 +48,39 @@ export const useAuthStore = create<AuthStore>()(
                     }
 
                     if (data.user) {
-                        // Try to fetch profile, but don't fail if table doesn't exist
+                        // Fetch full profile from public.users
                         let profile = null
                         try {
-                            const { data: profileData } = await supabase
+                            const { data: profileData, error: profileError } = await supabase
                                 .from('users')
                                 .select('*')
                                 .eq('id', data.user.id)
                                 .single()
+
+                            if (profileError) throw profileError
                             profile = profileData
-                        } catch {
-                            // users table might not exist yet - that's OK
+                        } catch (err) {
+                            console.error('Error fetching user profile:', err)
+                            // Fallback if profile doesn't exist yet, but enforce strict typing later
                         }
 
-                        const user: User = {
+                        if (profile && !profile.is_active) {
+                            await supabase.auth.signOut()
+                            set({ isLoading: false, user: null })
+                            return { success: false, error: 'Account is deactivated. Contact administrator.' }
+                        }
+
+                        const user: AuthUser = {
                             id: data.user.id,
                             email: data.user.email || '',
-                            full_name: profile?.full_name || data.user.email?.split('@')[0] || 'Admin',
-                            role: profile?.role || 'admin',
+                            full_name: profile?.full_name || data.user.email?.split('@')[0] || 'User',
+                            role: (profile?.role as UserRole) || 'viewer',
+                            phone: profile?.phone,
                             avatar_url: profile?.avatar_url,
                             company_id: profile?.company_id,
+                            is_active: profile?.is_active ?? true,
+                            department: profile?.department,
+                            permissions: profile?.permissions || {},
                         }
 
                         set({ user, isAuthenticated: true, isLoading: false })
@@ -101,17 +119,27 @@ export const useAuthStore = create<AuthStore>()(
                                 .single()
                             profile = profileData
                         } catch {
-                            // OK if no profile yet
+                            // User might not exist in public.users yet
+                        }
+
+                        if (profile && !profile.is_active) {
+                            await supabase.auth.signOut()
+                            set({ user: null, isAuthenticated: false, isLoading: false })
+                            return
                         }
 
                         set({
                             user: {
                                 id: session.user.id,
                                 email: session.user.email || '',
-                                full_name: profile?.full_name || session.user.email || 'Admin',
-                                role: profile?.role || 'admin',
+                                full_name: profile?.full_name || session.user.email || 'User',
+                                role: (profile?.role as UserRole) || 'viewer',
+                                phone: profile?.phone,
                                 avatar_url: profile?.avatar_url,
                                 company_id: profile?.company_id,
+                                is_active: profile?.is_active ?? true,
+                                department: profile?.department,
+                                permissions: profile?.permissions || {},
                             },
                             isAuthenticated: true,
                             isLoading: false,

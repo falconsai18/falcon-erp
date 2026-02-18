@@ -1,0 +1,200 @@
+[
+  {
+    "file": "src\\features\\auth\\pages\\LoginPage.tsx",
+    "line": 170,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                                    key={demo.role}\r\n                                    on..."
+  },
+  {
+    "file": "src\\features\\batches\\pages\\BatchesPage.tsx",
+    "line": 147,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={onClose} className=\"p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200..."
+  },
+  {
+    "file": "src\\features\\batches\\pages\\BatchesPage.tsx",
+    "line": 530,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={(e) => { e.stopPropagation(); setDeletingBatch(batch) }}\n                          ..."
+  },
+  {
+    "file": "src\\features\\customers\\pages\\CustomersPage.tsx",
+    "line": 181,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={onClose} className=\"p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200..."
+  },
+  {
+    "file": "src\\features\\customers\\pages\\CustomersPage.tsx",
+    "line": 252,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                                onClick={() => handleDeleteAddress(addr.id)}\r\n             ..."
+  },
+  {
+    "file": "src\\features\\customers\\pages\\CustomersPage.tsx",
+    "line": 490,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => setViewMode('table')}\r\n                        className={cn('p-2 transition-..."
+  },
+  {
+    "file": "src\\features\\customers\\pages\\CustomersPage.tsx",
+    "line": 494,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => setViewMode('grid')}\r\n                        className={cn('p-2 transition-c..."
+  },
+  {
+    "file": "src\\features\\dashboard\\pages\\DashboardPage.tsx",
+    "line": 426,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\n                                key={action.label}\n                                onClick={..."
+  },
+  {
+    "file": "src\\features\\formulations\\pages\\FormulationsPage.tsx",
+    "line": 315,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => { setEditingIngredient(item); setIngredientForm({ raw_material_id: item.raw_m..."
+  },
+  {
+    "file": "src\\features\\formulations\\pages\\FormulationsPage.tsx",
+    "line": 379,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => { setEditingStep(step); setStepForm({ step_number: step.step_number, title: s..."
+  },
+  {
+    "file": "src\\features\\inventory\\pages\\InventoryPage.tsx",
+    "line": 393,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={(e) => { e.stopPropagation(); openAdjust(item) }}\r\n                                ..."
+  },
+  {
+    "file": "src\\features\\invoices\\pages\\InvoicesPage.tsx",
+    "line": 365,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button key={so.id} onClick={() => setSelectedSOId(so.id)}\r\n                                    clas..."
+  },
+  {
+    "file": "src\\features\\products\\pages\\ProductsPage.tsx",
+    "line": 398,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                        onClick={(e) => { e.stopPropagation(); setViewProduct(item) }}\r\n   ..."
+  },
+  {
+    "file": "src\\features\\products\\pages\\ProductsPage.tsx",
+    "line": 404,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                        onClick={(e) => { e.stopPropagation(); handleEdit(item) }}\r\n       ..."
+  },
+  {
+    "file": "src\\features\\products\\pages\\ProductsPage.tsx",
+    "line": 410,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                        onClick={(e) => {\r\n                            e.stopPropagation()\r..."
+  },
+  {
+    "file": "src\\features\\purchase\\pages\\PurchasePage.tsx",
+    "line": 312,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button key={m.id} onClick={() => addMaterial(m)}\r\n                                className=\"w-full..."
+  },
+  {
+    "file": "src\\features\\purchase\\pages\\PurchasePage.tsx",
+    "line": 336,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => removeItem(idx)} className=\"p-1 rounded text-dark-500 hover:text-red-400\">..."
+  },
+  {
+    "file": "src\\features\\quality-checks\\pages\\QualityChecksPage.tsx",
+    "line": 564,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={(e) => { e.stopPropagation(); handleDelete((check as any).id) }}\n                  ..."
+  },
+  {
+    "file": "src\\features\\raw-materials\\pages\\RawMaterialsPage.tsx",
+    "line": 81,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={onClose} className=\"p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200..."
+  },
+  {
+    "file": "src\\features\\reports\\pages\\ReportsPage.tsx",
+    "line": 478,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                                                        key={a.range}\r\n                    ..."
+  },
+  {
+    "file": "src\\features\\sales\\pages\\SalesPage.tsx",
+    "line": 175,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={onClose} className=\"p-2 rounded-lg text-gray-500 dark:text-dark-500 hover:text-gray..."
+  },
+  {
+    "file": "src\\features\\sales\\pages\\SalesPage.tsx",
+    "line": 420,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button key={p.id} onClick={() => addProduct(p)}\r\n                                className=\"w-full ..."
+  },
+  {
+    "file": "src\\features\\sales\\pages\\SalesPage.tsx",
+    "line": 448,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => removeItem(idx)}\r\n                                                className=\"..."
+  },
+  {
+    "file": "src\\features\\supplier-payments\\pages\\SupplierPaymentsPage.tsx",
+    "line": 277,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button \n                                            onClick={() => handleDeletePayment(payment.id)}..."
+  },
+  {
+    "file": "src\\features\\supplier-payments\\pages\\SupplierPaymentsPage.tsx",
+    "line": 633,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button \n                                            onClick={() => setFormData(p => ({\n            ..."
+  },
+  {
+    "file": "src\\features\\suppliers\\pages\\SuppliersPage.tsx",
+    "line": 50,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button key={i} type=\"button\" disabled={readonly}\r\n                    onClick={() => onChange?.(i)}..."
+  },
+  {
+    "file": "src\\features\\suppliers\\pages\\SuppliersPage.tsx",
+    "line": 270,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => setViewMode('table')}\r\n                        className={cn('p-2', viewMode ..."
+  },
+  {
+    "file": "src\\features\\suppliers\\pages\\SuppliersPage.tsx",
+    "line": 274,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={() => setViewMode('grid')}\r\n                        className={cn('p-2', viewMode =..."
+  },
+  {
+    "file": "src\\features\\suppliers\\pages\\SuppliersPage.tsx",
+    "line": 355,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={(e) => { e.stopPropagation(); handleEdit(s) }}\r\n                                   ..."
+  },
+  {
+    "file": "src\\features\\suppliers\\pages\\SuppliersPage.tsx",
+    "line": 357,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button onClick={(e) => { e.stopPropagation(); setDeletingSupplier(s); setIsDeleteModalOpen(true) }}..."
+  },
+  {
+    "file": "src\\components\\layout\\Sidebar.tsx",
+    "line": 204,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\n                                    onClick={() => toggleSection(section.title)}\n           ..."
+  },
+  {
+    "file": "src\\components\\layout\\Topbar.tsx",
+    "line": 58,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                onClick={() => setSearchOpen(true)}\r\n                className=\"flex items-..."
+  },
+  {
+    "file": "src\\components\\ui\\Modal.tsx",
+    "line": 66,
+    "type": "Native <button> (Icon Only)",
+    "element": "<button\r\n                        onClick={onClose}\r\n                        className=\"p-2 rounded-l..."
+  }
+]

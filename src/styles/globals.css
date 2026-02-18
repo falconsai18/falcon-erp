@@ -4,15 +4,14 @@
 
 @layer base {
   * {
-    @apply border-dark-300 dark:border-dark-300;
+    @apply border-gray-200 dark:border-dark-300;
   }
 
   body {
     @apply bg-gray-50 text-gray-900 font-sans antialiased;
   }
 
-  .dark body,
-  body.dark {
+  .dark body {
     @apply bg-dark text-white;
   }
 }

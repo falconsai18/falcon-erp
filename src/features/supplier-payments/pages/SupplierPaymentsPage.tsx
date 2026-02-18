@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Plus, Search, Download, Trash2, X, Save, ChevronLeft, ChevronRight,
     FileText, Check, Wallet, RotateCcw, Calendar, IndianRupee,
@@ -138,10 +139,10 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
     return (
         <div className="glass-card h-full flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-dark-300/50">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-300/50">
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="font-semibold text-white">{bill.bill_number}</h2>
+                        <h2 className="font-semibold text-gray-900 dark:text-white">{bill.bill_number}</h2>
                         <BillStatusBadge status={bill.status} />
                     </div>
                     <p className="text-xs text-dark-500 mt-1">{formatDate(bill.bill_date)}</p>
@@ -156,7 +157,7 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
                     {bill.status === 'cancelled' && (
                         <Button size="sm" variant="secondary" onClick={() => handleStatusChange('unpaid')} isLoading={updating} icon={<RotateCcw size={14} />}>Reopen</Button>
                     )}
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -164,31 +165,31 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
                 {/* Payment Modal Inline */}
                 {showPaymentModal && (
                     <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 space-y-3">
-                        <p className="text-sm font-semibold text-white">Record Payment</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Record Payment</p>
                         <p className="text-xs text-dark-500">Remaining: {formatCurrency(remainingBalance)}</p>
                         <div className="grid grid-cols-2 gap-3">
-                            <Input 
-                                label="Amount *" 
-                                type="number" 
+                            <Input
+                                label="Amount *"
+                                type="number"
                                 value={paymentForm.amount}
                                 onChange={(e) => setPaymentForm(p => ({ ...p, amount: Number(e.target.value) }))}
                                 max={remainingBalance}
                             />
-                            <Select 
-                                label="Payment Method *" 
+                            <Select
+                                label="Payment Method *"
                                 value={paymentForm.payment_method}
                                 onChange={(e) => setPaymentForm(p => ({ ...p, payment_method: e.target.value }))}
                                 options={paymentMethods.map(m => ({ value: m, label: m.replace('_', ' ').toUpperCase() }))}
                             />
                         </div>
-                        <Input 
-                            label="Reference Number" 
+                        <Input
+                            label="Reference Number"
                             value={paymentForm.reference_number}
                             onChange={(e) => setPaymentForm(p => ({ ...p, reference_number: e.target.value }))}
                             placeholder="UTR / Cheque No / Transaction ID"
                         />
-                        <Textarea 
-                            label="Notes" 
+                        <Textarea
+                            label="Notes"
                             value={paymentForm.notes}
                             onChange={(e) => setPaymentForm(p => ({ ...p, notes: e.target.value }))}
                             rows={2}
@@ -204,14 +205,14 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
                 {bill.purchase_order_id && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                         <p className="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Linked Purchase Order</p>
-                        <p className="text-sm font-medium text-white">{bill.po_number}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{bill.po_number}</p>
                     </div>
                 )}
 
                 {/* Supplier Info */}
                 <div className="bg-dark-200/20 rounded-xl p-4">
                     <p className="text-[10px] text-dark-500 uppercase tracking-wider mb-2">Supplier</p>
-                    <p className="text-sm font-medium text-white">{bill.supplier_name}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{bill.supplier_name}</p>
                     {bill.supplier_phone && <p className="text-xs text-dark-500">{bill.supplier_phone}</p>}
                 </div>
 
@@ -219,14 +220,14 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
                 <div className="bg-dark-200/20 rounded-xl p-4 space-y-2">
                     <div className="flex justify-between text-sm">
                         <span className="text-dark-500">Total Amount</span>
-                        <span className="font-mono text-white">{formatCurrency(bill.total_amount)}</span>
+                        <span className="font-mono text-gray-900 dark:text-white">{formatCurrency(bill.total_amount)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-dark-500">Paid Amount</span>
                         <span className="font-mono text-emerald-400">{formatCurrency(bill.paid_amount || 0)}</span>
                     </div>
                     <div className="flex justify-between text-sm pt-2 border-t border-dark-300/30">
-                        <span className="text-white font-medium">Balance</span>
+                        <span className="text-gray-900 dark:text-white font-medium">Balance</span>
                         <span className={cn('font-mono font-bold', remainingBalance > 0 ? 'text-amber-400' : 'text-emerald-400')}>
                             {formatCurrency(remainingBalance)}
                         </span>
@@ -249,11 +250,11 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
                             {(bill.items || []).map((item, idx) => (
                                 <tr key={idx}>
                                     <td className="py-2">
-                                        <p className="text-white">{item.description}</p>
+                                        <p className="text-gray-900 dark:text-white">{item.description}</p>
                                     </td>
                                     <td className="py-2 text-center text-dark-500">{item.quantity}</td>
                                     <td className="py-2 text-right font-mono text-dark-500">{formatCurrency(item.unit_price)}</td>
-                                    <td className="py-2 text-right font-mono text-white">{formatCurrency(item.total_amount)}</td>
+                                    <td className="py-2 text-right font-mono text-gray-900 dark:text-white">{formatCurrency(item.total_amount)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -268,13 +269,13 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
                             {payments.map(payment => (
                                 <div key={payment.id} className="bg-dark-200/20 rounded-lg p-3 flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-medium text-white">{payment.payment_number}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{payment.payment_number}</p>
                                         <p className="text-xs text-dark-500">{formatDate(payment.payment_date)} • {payment.payment_method.replace('_', ' ')}</p>
                                         {payment.reference_number && <p className="text-xs text-brand-400">Ref: {payment.reference_number}</p>}
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="font-mono text-emerald-400">{formatCurrency(payment.amount)}</span>
-                                        <button 
+                                        <button
                                             onClick={() => handleDeletePayment(payment.id)}
                                             className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"
                                         >
@@ -302,6 +303,7 @@ function SupplierBillDetail({ billId, onClose, onRefresh }: {
 // ============ MAIN PAGE ============
 export function SupplierPaymentsPage() {
     const { user } = useAuthStore()
+    const navigate = useNavigate()
     const [bills, setBills] = useState<SupplierBill[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -406,12 +408,12 @@ export function SupplierPaymentsPage() {
         setFormData(p => {
             const items = [...p.items]
             items[index] = { ...items[index], [field]: value }
-            
+
             // Recalculate if quantity or price changed
             if (field === 'quantity' || field === 'unit_price' || field === 'tax_rate') {
                 items[index] = calculateBillItem(items[index])
             }
-            
+
             return { ...p, items }
         })
     }
@@ -512,23 +514,29 @@ export function SupplierPaymentsPage() {
                                             className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
                                                 selectedBillId === bill.id && 'bg-brand-500/5 border-l-2 border-brand-500')}>
                                             <td className="px-3 py-3">
-                                                <p className="text-sm font-medium text-brand-400 font-mono">{bill.bill_number}</p>
+                                                <p className="text-sm font-medium text-brand-400 font-mono hover:text-brand-300 hover:underline transition-colors">
+                                                    {bill.bill_number}
+                                                </p>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <p className="text-sm text-blue-400 font-mono">{bill.po_number || '-'}</p>
+                                            <td className="px-3 py-3" onClick={(e) => { e.stopPropagation(); navigate('/purchase', { state: { highlightPO: bill.purchase_order_id } }) }}>
+                                                <p className="text-sm text-blue-400 font-mono hover:text-blue-300 hover:underline cursor-pointer transition-colors">
+                                                    {bill.po_number || '-'}
+                                                </p>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <p className="text-sm text-white">{bill.supplier_name}</p>
+                                            <td className="px-3 py-3" onClick={(e) => { e.stopPropagation(); navigate(`/suppliers/${bill.supplier_id}`) }}>
+                                                <p className="text-sm text-gray-900 dark:text-white hover:text-brand-400 hover:underline cursor-pointer transition-colors">
+                                                    {bill.supplier_name}
+                                                </p>
                                             </td>
-                                            <td className="px-3 py-3 text-sm text-dark-500">{formatDate(bill.bill_date)}</td>
-                                            <td className="px-3 py-3 text-sm font-mono text-white">{formatCurrency(bill.total_amount)}</td>
+                                            <td className="px-3 py-3 text-sm text-gray-500 dark:text-dark-500">{formatDate(bill.bill_date)}</td>
+                                            <td className="px-3 py-3 text-sm font-mono text-gray-900 dark:text-white">{formatCurrency(bill.total_amount)}</td>
                                             <td className="px-3 py-3 text-sm font-mono text-emerald-400">{formatCurrency(bill.paid_amount || 0)}</td>
                                             <td className="px-3 py-3 text-sm font-mono text-amber-400">{formatCurrency(bill.balance_amount || 0)}</td>
                                             <td className="px-3 py-3"><BillStatusBadge status={bill.status} /></td>
                                             <td className="px-3 py-3">
                                                 {bill.status !== 'paid' && bill.status !== 'cancelled' && (
                                                     <button onClick={(e) => { e.stopPropagation(); setDeletingBill(bill) }}
-                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
+                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200" title="Delete"><Trash2 size={14} /></button>
                                                 )}
                                             </td>
                                         </tr>
@@ -573,15 +581,15 @@ export function SupplierPaymentsPage() {
                         onChange={(e) => {
                             const poId = e.target.value
                             const po = unbilledPOs.find(p => p.id === poId)
-                            setFormData(p => ({ 
-                                ...p, 
+                            setFormData(p => ({
+                                ...p,
                                 purchase_order_id: poId,
                                 supplier_id: po?.supplier_id || ''
                             }))
                         }}
-                        options={unbilledPOs.map(po => ({ 
-                            value: po.id, 
-                            label: `${po.po_number} - ${po.supplier_name}` 
+                        options={unbilledPOs.map(po => ({
+                            value: po.id,
+                            label: `${po.po_number} - ${po.supplier_name}`
                         }))}
                         placeholder="Select purchase order (optional)" />
 
@@ -600,16 +608,16 @@ export function SupplierPaymentsPage() {
                     </div>
 
                     <Textarea label="Notes" value={formData.notes}
-                        onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))} 
+                        onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
                         placeholder="Enter any notes about this bill..." rows={2} />
 
                     {/* Items */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
-                            <p className="text-sm font-medium text-white">Bill Items</p>
-                            <Button 
-                                size="sm" 
-                                variant="secondary" 
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">Bill Items</p>
+                            <Button
+                                size="sm"
+                                variant="secondary"
                                 onClick={() => setFormData(p => ({
                                     ...p,
                                     items: [...p.items, { description: '', quantity: 1, unit_price: 0, tax_rate: 0, tax_amount: 0, total_amount: 0 }]
@@ -623,14 +631,14 @@ export function SupplierPaymentsPage() {
                             {formData.items.map((item, idx) => (
                                 <div key={idx} className="bg-dark-200/30 rounded-lg p-4 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <Input 
-                                            label="Description" 
+                                        <Input
+                                            label="Description"
                                             value={item.description}
                                             onChange={(e) => updateItem(idx, 'description', e.target.value)}
                                             placeholder="Item description"
                                             className="flex-1 mr-2"
                                         />
-                                        <button 
+                                        <button
                                             onClick={() => setFormData(p => ({
                                                 ...p,
                                                 items: p.items.filter((_, i) => i !== idx)
@@ -641,21 +649,21 @@ export function SupplierPaymentsPage() {
                                         </button>
                                     </div>
                                     <div className="grid grid-cols-4 gap-3">
-                                        <Input 
-                                            label="Qty" 
-                                            type="number" 
+                                        <Input
+                                            label="Qty"
+                                            type="number"
                                             value={item.quantity}
                                             onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))}
                                         />
-                                        <Input 
-                                            label="Price" 
-                                            type="number" 
+                                        <Input
+                                            label="Price"
+                                            type="number"
                                             value={item.unit_price}
                                             onChange={(e) => updateItem(idx, 'unit_price', Number(e.target.value))}
                                         />
-                                        <Input 
-                                            label="Tax %" 
-                                            type="number" 
+                                        <Input
+                                            label="Tax %"
+                                            type="number"
                                             value={item.tax_rate}
                                             onChange={(e) => updateItem(idx, 'tax_rate', Number(e.target.value))}
                                         />
@@ -680,14 +688,14 @@ export function SupplierPaymentsPage() {
                         <div className="bg-dark-200/20 rounded-xl p-4 space-y-2">
                             <div className="flex justify-between text-sm">
                                 <span className="text-dark-500">Subtotal</span>
-                                <span className="font-mono text-white">{formatCurrency(totals.subtotal)}</span>
+                                <span className="font-mono text-gray-900 dark:text-white">{formatCurrency(totals.subtotal)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-dark-500">Tax</span>
-                                <span className="font-mono text-white">{formatCurrency(totals.tax_amount)}</span>
+                                <span className="font-mono text-gray-900 dark:text-white">{formatCurrency(totals.tax_amount)}</span>
                             </div>
                             <div className="flex justify-between text-sm pt-2 border-t border-dark-300/30">
-                                <span className="text-white font-medium">Total Amount</span>
+                                <span className="text-gray-900 dark:text-white font-medium">Total Amount</span>
                                 <span className="font-mono font-bold text-brand-400">{formatCurrency(totals.total_amount)}</span>
                             </div>
                         </div>
@@ -699,7 +707,7 @@ export function SupplierPaymentsPage() {
             {deletingBill && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setDeletingBill(null)}>
                     <div className="glass-card p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-semibold text-white mb-2">Delete Bill?</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Bill?</h3>
                         <p className="text-sm text-dark-500 mb-4">
                             Delete {deletingBill.bill_number}? This cannot be undone.
                         </p>

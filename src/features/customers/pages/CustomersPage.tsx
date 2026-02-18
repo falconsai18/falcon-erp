@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Plus, Search, Download, Users, Edit2, Trash2, Eye, X, Save,
     Phone, Mail, MapPin, CreditCard, Building2, ChevronLeft, ChevronRight,
-    AlertCircle, IndianRupee, UserPlus, Filter, LayoutGrid, LayoutList,
+    AlertCircle, IndianRupee, UserPlus, Filter, LayoutGrid, LayoutList, FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -20,6 +21,7 @@ import {
     type Customer, type CustomerAddress, type CustomerFormData, type AddressFormData,
     EMPTY_CUSTOMER_FORM, EMPTY_ADDRESS_FORM,
 } from '@/services/customerService'
+import { CreditScoreCard } from '../components/CreditScoreCard'
 
 const TYPE_OPTIONS = [
     { value: 'retail', label: 'Retail' },
@@ -51,15 +53,20 @@ function CustomerCard({ customer, onView, onEdit, onDelete }: {
     onEdit: () => void
     onDelete: () => void
 }) {
+    const navigate = useNavigate()
     return (
         <Card hover onClick={onView} className="group relative">
             <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                <button onClick={(e) => { e.stopPropagation(); onEdit() }}
-                    className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-cyan-400 transition-colors">
+                <button title="View Ledger" onClick={(e) => { e.stopPropagation(); navigate(`/customers/${customer.id}/ledger`) }}
+                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-200 text-gray-500 dark:text-dark-500 hover:text-blue-400 transition-colors">
+                    <FileText size={14} />
+                </button>
+                <button title="Edit" onClick={(e) => { e.stopPropagation(); onEdit() }}
+                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-200 text-gray-500 dark:text-dark-500 hover:text-cyan-400 transition-colors">
                     <Edit2 size={14} />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); onDelete() }}
-                    className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-red-400 transition-colors">
+                <button title="Delete" onClick={(e) => { e.stopPropagation(); onDelete() }}
+                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-200 text-gray-500 dark:text-dark-500 hover:text-red-400 transition-colors">
                     <Trash2 size={14} />
                 </button>
             </div>
@@ -70,7 +77,7 @@ function CustomerCard({ customer, onView, onEdit, onDelete }: {
                 </div>
                 <div className="flex-1 min-w-0 space-y-2">
                     <div>
-                        <h3 className="font-semibold text-white truncate">{customer.name}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">{customer.name}</h3>
                         <Badge variant={customer.customer_type === 'wholesale' ? 'purple' : customer.customer_type === 'distributor' ? 'info' : 'default'} className="mt-1">
                             {customer.customer_type}
                         </Badge>
@@ -78,20 +85,20 @@ function CustomerCard({ customer, onView, onEdit, onDelete }: {
 
                     <div className="space-y-1">
                         {customer.phone && (
-                            <div className="flex items-center gap-2 text-xs text-dark-500">
+                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-500">
                                 <Phone size={12} /> {customer.phone}
                             </div>
                         )}
                         {customer.email && (
-                            <div className="flex items-center gap-2 text-xs text-dark-500 truncate">
+                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-500 truncate">
                                 <Mail size={12} /> {customer.email}
                             </div>
                         )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-dark-300/30">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-dark-300/30">
                         <div>
-                            <p className="text-[10px] text-dark-600">Outstanding</p>
+                            <p className="text-[10px] text-gray-400 dark:text-dark-600">Outstanding</p>
                             <p className={cn('text-sm font-semibold', customer.outstanding_amount > 0 ? 'text-red-400' : 'text-emerald-400')}>
                                 {formatCurrency(customer.outstanding_amount || 0)}
                             </p>
@@ -166,7 +173,7 @@ function CustomerDetail({ customer, onClose, onEdit }: {
                         {customer.name[0]?.toUpperCase()}
                     </div>
                     <div>
-                        <h2 className="font-semibold text-white">{customer.name}</h2>
+                        <h2 className="font-semibold text-gray-900 dark:text-white">{customer.name}</h2>
                         <StatusBadge status={customer.status} />
                     </div>
                 </div>
@@ -195,7 +202,7 @@ function CustomerDetail({ customer, onClose, onEdit }: {
                                 <item.icon size={12} />
                                 <span className="text-[10px] uppercase tracking-wider">{item.label}</span>
                             </div>
-                            <p className="text-sm text-white">{item.value}</p>
+                            <p className="text-sm text-gray-900 dark:text-white">{item.value}</p>
                         </div>
                     ))}
                 </div>
@@ -204,11 +211,11 @@ function CustomerDetail({ customer, onClose, onEdit }: {
                 <div className="grid grid-cols-3 gap-3">
                     <div className="bg-dark-200/30 rounded-xl p-3 text-center">
                         <p className="text-[10px] text-dark-500 uppercase">Credit Limit</p>
-                        <p className="text-lg font-bold text-white mt-1">{formatCurrency(customer.credit_limit)}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(customer.credit_limit)}</p>
                     </div>
                     <div className="bg-dark-200/30 rounded-xl p-3 text-center">
                         <p className="text-[10px] text-dark-500 uppercase">Credit Days</p>
-                        <p className="text-lg font-bold text-white mt-1">{customer.credit_days}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{customer.credit_days}</p>
                     </div>
                     <div className="bg-dark-200/30 rounded-xl p-3 text-center">
                         <p className="text-[10px] text-dark-500 uppercase">Outstanding</p>
@@ -217,6 +224,9 @@ function CustomerDetail({ customer, onClose, onEdit }: {
                         </p>
                     </div>
                 </div>
+
+                {/* Credit Score Card */}
+                <CreditScoreCard customerId={customer.id} customerName={customer.name} />
 
                 {/* Notes */}
                 {customer.notes && (
@@ -229,7 +239,7 @@ function CustomerDetail({ customer, onClose, onEdit }: {
                 {/* Addresses */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-white flex items-center gap-2">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             <MapPin size={14} className="text-cyan-400" /> Addresses
                         </p>
                         <Button size="sm" variant="ghost" onClick={() => setShowAddressForm(true)} icon={<Plus size={14} />}>
@@ -255,7 +265,7 @@ function CustomerDetail({ customer, onClose, onEdit }: {
                                 </Badge>
                                 {addr.is_default && <Badge variant="success">Default</Badge>}
                             </div>
-                            <p className="text-sm text-white">{addr.address_line1}</p>
+                            <p className="text-sm text-gray-900 dark:text-white">{addr.address_line1}</p>
                             {addr.address_line2 && <p className="text-sm text-dark-500">{addr.address_line2}</p>}
                             <p className="text-sm text-dark-500">{addr.city}, {addr.state} {addr.pincode}</p>
                         </div>
@@ -304,6 +314,7 @@ function CustomerDetail({ customer, onClose, onEdit }: {
 
 // ============ MAIN PAGE ============
 export function CustomersPage() {
+    const navigate = useNavigate()
     const [customers, setCustomers] = useState<Customer[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -373,6 +384,12 @@ export function CustomersPage() {
             credit_days: customer.credit_days,
             status: customer.status,
             notes: customer.notes || '',
+            address_line1: customer.address_line1 || '',
+            address_line2: customer.address_line2 || '',
+            city: customer.city || '',
+            state: customer.state || '',
+            pincode: customer.pincode || '',
+            country: customer.country || 'India',
         })
         setIsModalOpen(true)
     }
@@ -528,7 +545,7 @@ export function CustomersPage() {
                                                         {c.name[0]?.toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-medium text-white">{c.name}</p>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</p>
                                                         <p className="text-xs text-dark-500">{c.email || '-'}</p>
                                                     </div>
                                                 </div>
@@ -547,9 +564,11 @@ export function CustomersPage() {
                                             <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-1">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }}
+                                                    <button title="View Ledger" onClick={(e) => { e.stopPropagation(); navigate(`/customers/${c.id}/ledger`) }}
+                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-blue-400 hover:bg-dark-200"><FileText size={14} /></button>
+                                                    <button title="Edit" onClick={(e) => { e.stopPropagation(); handleEdit(c) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-cyan-400 hover:bg-dark-200"><Edit2 size={14} /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); setDeletingCustomer(c); setIsDeleteModalOpen(true) }}
+                                                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingCustomer(c); setIsDeleteModalOpen(true) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 </div>
                                             </td>
@@ -605,6 +624,25 @@ export function CustomersPage() {
                         onChange={(e) => updateForm('alt_phone', e.target.value)} placeholder="Alternative number" />
                     <Input label="Email" value={formData.email} type="email"
                         onChange={(e) => updateForm('email', e.target.value)} placeholder="email@company.com" icon={<Mail size={14} />} />
+
+                    {/* Address Fields */}
+                    <div className="md:col-span-2">
+                        <Input label="Address Line 1" value={formData.address_line1 || ''}
+                            onChange={(e) => updateForm('address_line1', e.target.value)} placeholder="Street address, building number" />
+                    </div>
+                    <div className="md:col-span-2">
+                        <Input label="Address Line 2" value={formData.address_line2 || ''}
+                            onChange={(e) => updateForm('address_line2', e.target.value)} placeholder="Apartment, suite, unit (optional)" />
+                    </div>
+                    <Input label="City" value={formData.city || ''}
+                        onChange={(e) => updateForm('city', e.target.value)} placeholder="City" />
+                    <Input label="State" value={formData.state || ''}
+                        onChange={(e) => updateForm('state', e.target.value)} placeholder="State" />
+                    <Input label="Pincode" value={formData.pincode || ''}
+                        onChange={(e) => updateForm('pincode', e.target.value)} placeholder="Pincode" />
+                    <Input label="Country" value={formData.country || 'India'}
+                        onChange={(e) => updateForm('country', e.target.value)} placeholder="Country" />
+
                     <Input label="GSTIN" value={formData.gst_number}
                         onChange={(e) => updateForm('gst_number', e.target.value.toUpperCase())} placeholder="22AAAAA0000A1Z5" />
                     <Input label="PAN" value={formData.pan_number}
@@ -632,7 +670,7 @@ export function CustomersPage() {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-red-500/5 border border-red-500/20">
                     <AlertCircle size={20} className="text-red-400 mt-0.5" />
                     <div>
-                        <p className="text-sm text-white">Delete <strong>{deletingCustomer?.name}</strong>?</p>
+                        <p className="text-sm text-gray-900 dark:text-white">Delete <strong>{deletingCustomer?.name}</strong>?</p>
                         <p className="text-xs text-dark-500 mt-1">This will also delete all addresses. Cannot be undone.</p>
                     </div>
                 </div>

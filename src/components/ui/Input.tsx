@@ -12,7 +12,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         return (
             <div className="space-y-1.5">
                 {label && (
-                    <label className="text-sm font-medium text-dark-500">{label}</label>
+                    <label className="text-sm font-medium text-gray-500 dark:text-dark-500">{label}</label>
                 )}
                 <div className="relative">
                     {icon && (
@@ -23,12 +23,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     <input
                         ref={ref}
                         className={cn(
-                            'w-full bg-dark-100 border rounded-lg px-3 py-2 text-white text-sm',
-                            'placeholder:text-dark-500',
+                            'w-full bg-white dark:bg-dark-100 border rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm',
+                            'placeholder:text-gray-500 dark:placeholder:text-dark-500',
                             'focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500',
                             'transition-all duration-200',
                             icon && 'pl-10',
-                            error ? 'border-red-500/50' : 'border-dark-300',
+                            error ? 'border-red-500/50' : 'border-gray-200 dark:border-dark-300',
                             className
                         )}
                         {...props}
@@ -55,11 +55,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
                 <textarea
                     ref={ref}
                     className={cn(
-                        'w-full bg-dark-100 border rounded-lg px-3 py-2 text-white text-sm',
-                        'placeholder:text-dark-500 resize-none',
+                        'w-full bg-white dark:bg-dark-100 border rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm',
+                        'placeholder:text-gray-500 dark:placeholder:text-dark-500 resize-none',
                         'focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500',
                         'transition-all duration-200',
-                        error ? 'border-red-500/50' : 'border-dark-300',
+                        error ? 'border-red-500/50' : 'border-gray-200 dark:border-dark-300',
                         className
                     )}
                     {...props}
@@ -87,10 +87,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 <select
                     ref={ref}
                     className={cn(
-                        'w-full bg-dark-100 border rounded-lg px-3 py-2 text-white text-sm',
+                        'w-full bg-white dark:bg-dark-100 border rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm',
                         'focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500',
                         'transition-all duration-200 appearance-none cursor-pointer',
-                        error ? 'border-red-500/50' : 'border-dark-300',
+                        error ? 'border-red-500/50' : 'border-gray-200 dark:border-dark-300',
                         className
                     )}
                     {...props}

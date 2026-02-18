@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Plus, Search, Download, Trash2, X, Save, ChevronLeft, ChevronRight,
     AlertCircle, Truck, Package, IndianRupee, Calendar, Check, ArrowRight,
@@ -20,6 +21,8 @@ import {
     deletePurchaseOrder, getPOStats, calculatePOItem, calculatePOTotals,
     type PurchaseOrder, type PurchaseOrderItem, type POFormData, EMPTY_PO_FORM,
 } from '@/services/purchaseService'
+import { createGRNFromPO } from '@/services/grnService'
+import { printPurchaseOrderPDF } from '@/utils/pdfExport'
 
 const PO_STEPS = ['draft', 'sent', 'confirmed', 'received']
 
@@ -54,6 +57,7 @@ function PODetail({ poId, onClose, onRefresh }: {
     const [po, setPO] = useState<PurchaseOrder | null>(null)
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
+    const [creatingGRN, setCreatingGRN] = useState(false)
 
     useEffect(() => { loadPO() }, [poId])
 
@@ -67,6 +71,19 @@ function PODetail({ poId, onClose, onRefresh }: {
         try { setUpdating(true); await updatePOStatus(poId, status); toast.success(`PO ${status}!`); loadPO(); onRefresh() }
         catch (err: any) { toast.error(err.message) }
         finally { setUpdating(false) }
+    }
+
+    const handleCreateGRN = async () => {
+        try {
+            setCreatingGRN(true)
+            const grn = await createGRNFromPO(poId)
+            toast.success(`GRN ${grn.grn_number} created!`)
+            loadPO(); onRefresh()
+        } catch (err: any) {
+            toast.error('Failed: ' + err.message)
+        } finally {
+            setCreatingGRN(false)
+        }
     }
 
     const getNextStatus = (): string | null => {
@@ -102,7 +119,16 @@ function PODetail({ poId, onClose, onRefresh }: {
                     {po.status === 'draft' && (
                         <Button size="sm" variant="danger" onClick={() => handleStatus('cancelled')} isLoading={updating}>Cancel</Button>
                     )}
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    {(po.status === 'confirmed' || po.status === 'partial') && (
+                        <Button size="sm" variant="secondary" onClick={handleCreateGRN} isLoading={creatingGRN}
+                            icon={<ClipboardCheck size={14} />}>
+                            Create GRN
+                        </Button>
+                    )}
+                    <Button size="sm" variant="secondary" onClick={() => printPurchaseOrderPDF(po.id)} icon={<Download size={16} />}>
+                        Print
+                    </Button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -170,7 +196,7 @@ function PODetail({ poId, onClose, onRefresh }: {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     )
 }
 
@@ -179,6 +205,7 @@ function CreatePOWizard({ isOpen, onClose, onCreated }: {
     isOpen: boolean; onClose: () => void; onCreated: () => void
 }) {
     const { user } = useAuthStore()
+    const navigate = useNavigate()
     const [step, setStep] = useState(1)
     const [formData, setFormData] = useState<POFormData>(EMPTY_PO_FORM)
     const [suppliers, setSuppliers] = useState<{ value: string; label: string }[]>([])
@@ -187,7 +214,13 @@ function CreatePOWizard({ isOpen, onClose, onCreated }: {
     const [materialSearch, setMaterialSearch] = useState('')
 
     useEffect(() => {
-        if (isOpen) { setStep(1); setFormData(EMPTY_PO_FORM); loadData() }
+        if (isOpen) {
+            setStep(1)
+            const today = new Date().toISOString().split('T')[0]
+            const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            setFormData({ ...EMPTY_PO_FORM, order_date: today, expected_date: nextWeek })
+            loadData()
+        }
     }, [isOpen])
 
     const loadData = async () => {
@@ -220,13 +253,54 @@ function CreatePOWizard({ isOpen, onClose, onCreated }: {
 
     const removeItem = (index: number) => setFormData(p => ({ ...p, items: p.items.filter((_, i) => i !== index) }))
 
+    async function checkDuplicatePO(supplierId: string, totalAmount: number): Promise<boolean> {
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+        const { data: existing } = await supabase
+            .from('purchase_orders')
+            .select('id, po_number, total_amount, order_date')
+            .eq('supplier_id', supplierId)
+            .gte('order_date', yesterday)
+            .neq('status', 'cancelled')
+            .limit(5)
+
+        if (!existing || existing.length === 0) return false
+
+        const duplicate = existing.find(po => {
+            const diff = Math.abs(po.total_amount - totalAmount) / (totalAmount || 1)
+            return diff < 0.05
+        })
+
+        return !!duplicate
+    }
+
     const handleCreate = async () => {
         if (!formData.supplier_id) { toast.error('Select supplier'); setStep(1); return }
         if (formData.items.length === 0) { toast.error('Add materials'); setStep(2); return }
         try {
             setIsSaving(true)
-            await createPurchaseOrder(formData, user?.id)
-            toast.success('Purchase Order created!')
+
+            const isDuplicate = await checkDuplicatePO(
+                formData.supplier_id,
+                totals.total_amount || 0
+            )
+
+            if (isDuplicate) {
+                const confirmed = window.confirm(
+                    '⚠️ A similar PO for this supplier was created recently. Are you sure you want to create another one?'
+                )
+                if (!confirmed) return
+            }
+
+            const newPO = await createPurchaseOrder(formData, user?.id)
+
+            toast.success(`PO ${newPO.po_number} created!`, {
+                action: {
+                    label: 'Create GRN →',
+                    onClick: () => navigate('/goods-receipt?po_id=' + newPO.id)
+                },
+                duration: 8000,
+            })
             onCreated(); onClose()
         } catch (err: any) { toast.error(err.message) }
         finally { setIsSaving(false) }
@@ -382,6 +456,17 @@ export function PurchasePage() {
     const [totalPages, setTotalPages] = useState(1)
     const [totalCount, setTotalCount] = useState(0)
     const pageSize = 25
+    const navigate = useNavigate()
+
+    // CHANGE 3 & 4: Filters
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
+    const [filterSupplier, setFilterSupplier] = useState('')
+    const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([])
+
+    // CHANGE 5: Bulk Actions
+    const [selectedIds, setSelectedIds] = useState<string[]>([])
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
     const [showWizard, setShowWizard] = useState(false)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -390,23 +475,45 @@ export function PurchasePage() {
     const [isDeleting, setIsDeleting] = useState(false)
     const [stats, setStats] = useState({ total: 0, draft: 0, sent: 0, confirmed: 0, received: 0, totalValue: 0 })
 
+    // Load suppliers for filter
+    useEffect(() => {
+        supabase.from('suppliers').select('id, name').eq('status', 'active').order('name')
+            .then(({ data }) => setSuppliers(data || []))
+    }, [])
+
     const fetchData = useCallback(async () => {
         try {
             setIsLoading(true)
             const [result, statsData] = await Promise.all([
-                getPurchaseOrders({ page, pageSize }, { status: statusFilter, search }),
+                getPurchaseOrders({ page, pageSize }, { status: statusFilter, search, dateFrom, dateTo, supplierId: filterSupplier }),
                 getPOStats(),
             ])
             setOrders(result.data)
             setTotalPages(result.totalPages)
             setTotalCount(result.count)
             setStats(statsData)
+            setSelectedIds([]) // Clear selection on refresh
         } catch (err: any) { toast.error(err.message) }
         finally { setIsLoading(false) }
-    }, [page, statusFilter, search])
+    }, [page, statusFilter, search, dateFrom, dateTo, filterSupplier])
 
     useEffect(() => { fetchData() }, [fetchData])
     useEffect(() => { const t = setTimeout(() => { setPage(1); fetchData() }, 300); return () => clearTimeout(t) }, [search])
+
+    const handleBulkUpdate = async (status: string) => {
+        if (!confirm(`Are you sure you want to mark ${selectedIds.length} orders as ${status}?`)) return
+        try {
+            setIsBulkUpdating(true)
+            await Promise.all(selectedIds.map(id => updatePOStatus(id, status)))
+            toast.success(`${selectedIds.length} orders updated!`)
+            setSelectedIds([])
+            fetchData()
+        } catch (err: any) {
+            toast.error('Failed to update: ' + err.message)
+        } finally {
+            setIsBulkUpdating(false)
+        }
+    }
 
     const handleDelete = async () => {
         if (!deletingOrder) return
@@ -442,12 +549,48 @@ export function PurchasePage() {
                 ))}
             </div>
 
+            {/* Bulk Action Bar */}
+            {selectedIds.length > 0 && (
+                <div className="bg-indigo-500 text-white px-4 py-2 rounded-lg flex items-center justify-between animate-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold">{selectedIds.length}</span> orders selected
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => handleBulkUpdate('confirmed')} isLoading={isBulkUpdating}>
+                            Confirm Selected
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={() => handleBulkUpdate('cancelled')} isLoading={isBulkUpdating}>
+                            Cancel Selected
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex-1 max-w-md">
                     <Input placeholder="Search by PO number..." value={search}
                         onChange={(e) => setSearch(e.target.value)} icon={<Search size={16} />} />
                 </div>
+
+                {/* Filters */}
                 <div className="flex items-center gap-2">
+                    <select
+                        className="input-field text-sm py-1.5 px-3 min-w-[150px]"
+                        value={filterSupplier}
+                        onChange={(e) => { setFilterSupplier(e.target.value); setPage(1) }}
+                    >
+                        <option value="">All Suppliers</option>
+                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+
+                    <div className="flex items-center gap-1 bg-dark-200/50 rounded-lg p-1 border border-dark-300/30">
+                        <input type="date" className="bg-transparent border-none text-xs text-white p-1 focus:ring-0"
+                            value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                        <span className="text-dark-500">-</span>
+                        <input type="date" className="bg-transparent border-none text-xs text-white p-1 focus:ring-0"
+                            value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                    </div>
+
                     {['all', ...PO_STEPS, 'cancelled'].map(s => (
                         <button key={s} onClick={() => { setStatusFilter(s); setPage(1) }}
                             className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
@@ -471,27 +614,50 @@ export function PurchasePage() {
                         <div className="glass-card overflow-hidden">
                             <table className="w-full">
                                 <thead><tr className="border-b border-dark-300/50">
+                                    <th className="w-8 px-4 py-3">
+                                        <input type="checkbox"
+                                            checked={orders.length > 0 && selectedIds.length === orders.length}
+                                            onChange={(e) => {
+                                                if (e.target.checked) setSelectedIds(orders.map(o => o.id))
+                                                else setSelectedIds([])
+                                            }}
+                                            className="rounded border-dark-400 bg-dark-300 text-indigo-500 focus:ring-indigo-500/30"
+                                        />
+                                    </th>
                                     {['PO Number', 'Supplier', 'Date', 'Expected', 'Status', 'Total', ''].map(h => (
                                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-dark-500 uppercase">{h}</th>
                                     ))}
                                 </tr></thead>
                                 <tbody className="divide-y divide-dark-300/30">
                                     {orders.map(o => (
-                                        <tr key={o.id} onClick={() => setSelectedPOId(o.id)}
+                                        <tr key={o.id} onClick={() => setSelectedIds(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
                                             className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
-                                                selectedPOId === o.id && 'bg-indigo-500/5 border-l-2 border-indigo-500')}>
-                                            <td className="px-4 py-3"><p className="text-sm font-medium text-indigo-400 font-mono">{o.po_number}</p></td>
-                                            <td className="px-4 py-3">
+                                                selectedIds.includes(o.id) && 'bg-indigo-500/10',
+                                                selectedPOId === o.id && 'border-l-2 border-indigo-500 bg-indigo-500/5')}>
+                                            <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                                <input type="checkbox"
+                                                    checked={selectedIds.includes(o.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedIds(p => [...p, o.id])
+                                                        else setSelectedIds(p => p.filter(id => id !== o.id))
+                                                    }}
+                                                    className="rounded border-dark-400 bg-dark-300 text-indigo-500 focus:ring-indigo-500/30"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3" onClick={(e) => { e.stopPropagation(); setSelectedPOId(o.id) }}>
+                                                <p className="text-sm font-medium text-indigo-400 font-mono">{o.po_number}</p>
+                                            </td>
+                                            <td className="px-4 py-3" onClick={(e) => { e.stopPropagation(); setSelectedPOId(o.id) }}>
                                                 <p className="text-sm text-white">{o.supplier_name}</p>
                                                 <p className="text-xs text-dark-500">{o.supplier_phone}</p>
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-dark-500">{formatDate(o.order_date)}</td>
-                                            <td className="px-4 py-3 text-sm text-dark-500">{o.expected_date ? formatDate(o.expected_date) : '-'}</td>
-                                            <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
-                                            <td className="px-4 py-3"><span className="text-sm font-mono font-semibold text-white">{formatCurrency(o.total_amount)}</span></td>
+                                            <td className="px-4 py-3 text-sm text-dark-500" onClick={(e) => { e.stopPropagation(); setSelectedPOId(o.id) }}>{formatDate(o.order_date)}</td>
+                                            <td className="px-4 py-3 text-sm text-dark-500" onClick={(e) => { e.stopPropagation(); setSelectedPOId(o.id) }}>{o.expected_date ? formatDate(o.expected_date) : '-'}</td>
+                                            <td className="px-4 py-3" onClick={(e) => { e.stopPropagation(); setSelectedPOId(o.id) }}><StatusBadge status={o.status} /></td>
+                                            <td className="px-4 py-3" onClick={(e) => { e.stopPropagation(); setSelectedPOId(o.id) }}><span className="text-sm font-mono font-semibold text-white">{formatCurrency(o.total_amount)}</span></td>
                                             <td className="px-4 py-3">
                                                 {o.status === 'draft' && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
+                                                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 )}
                                             </td>

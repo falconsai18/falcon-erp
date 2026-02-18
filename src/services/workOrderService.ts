@@ -316,8 +316,7 @@ export async function completeWorkOrder(
 
     if (error) throw error
 
-    // 2. Automatically deduct materials if they were not already issued
-    // This allows for "one-click" completion without manual issuance
+    // 2. Deduct raw materials
     const { data: woMaterials } = await supabase
         .from('work_order_materials')
         .select('*')
@@ -325,11 +324,9 @@ export async function completeWorkOrder(
 
     if (woMaterials && woMaterials.length > 0) {
         for (const mat of woMaterials) {
-            // Only deduct what has been issued
-            const qtyToDeduct = mat.issued_quantity || 0
+            const qtyToDeduct = mat.issued_quantity || mat.required_quantity || 0
 
             if (qtyToDeduct > 0) {
-                // Fetch current stock from raw_materials
                 const { data: rm } = await supabase
                     .from('raw_materials')
                     .select('current_stock')
@@ -337,7 +334,6 @@ export async function completeWorkOrder(
                     .single()
 
                 if (rm) {
-                    // Update raw_materials stock
                     await supabase.from('raw_materials').update({
                         current_stock: Math.max(0, rm.current_stock - qtyToDeduct),
                         updated_at: new Date().toISOString(),
@@ -348,41 +344,43 @@ export async function completeWorkOrder(
     }
 
     // 3. Create batch record
-    const insertData = {
-        batch_number: batchNumber,
-        product_id: wo.product_id,
-        manufacturing_date: new Date().toISOString().split('T')[0],
-        expiry_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default 1 year
-        produced_qty: actualOutputQty,
-        available_qty: actualOutputQty,
-        batch_size: actualOutputQty,
-        quality_status: 'pending',
-        status: 'quarantine',
-        grade: 'A',
-        created_by: userId || null,
-    }
+    const mfgDate = new Date().toISOString().split('T')[0]
+    const expiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
     const { data: batch, error: batchError } = await supabase
         .from('batches')
-        .insert(insertData)
+        .insert({
+            batch_number: batchNumber,
+            product_id: wo.product_id,
+            manufacturing_date: mfgDate,
+            expiry_date: expiryDate,
+            produced_qty: actualOutputQty,
+            available_qty: actualOutputQty,
+            batch_size: actualOutputQty,
+            quality_status: 'pending',
+            status: 'quarantine',
+            grade: 'A',
+            work_order_id: id,
+            created_by: userId || null,
+        })
         .select()
         .single()
 
     if (batchError) throw batchError
 
-    // 4. Create inventory record for finished good
+    // 4. Create inventory record
     await supabase.from('inventory').insert({
         product_id: wo.product_id,
         batch_number: batchNumber,
-        manufacturing_date: insertData.manufacturing_date,
-        expiry_date: insertData.expiry_date,
+        manufacturing_date: mfgDate,
+        expiry_date: expiryDate,
         quantity: actualOutputQty,
         available_quantity: actualOutputQty,
         reserved_quantity: 0,
         status: 'quarantine',
     })
 
-    // 5. Add movement for finished good addition
+    // 5. Log movement
     await supabase.from('inventory_movements').insert({
         product_id: wo.product_id,
         batch_number: batchNumber,
@@ -393,6 +391,89 @@ export async function completeWorkOrder(
         notes: `Produced from Work Order ${wo.work_order_number}`,
         created_by: userId || null,
     })
+
+    // 6. Auto-create QC check
+    const { data: qcCheck, error: qcError } = await supabase
+        .from('quality_checks')
+        .insert({
+            work_order_id: id,
+            batch_id: batch.id,
+            batch_number: batchNumber,
+            parameter: 'Overall Quality',
+            expected_value: 'Production Standards',
+            actual_value: '-',
+            result: 'pending',
+            checked_by: userId || null,
+            checked_at: new Date().toISOString(),
+            notes: `Auto-generated QC for ${wo.work_order_number} - Batch ${batchNumber}`,
+        })
+        .select()
+        .single()
+
+    if (!qcError && qcCheck) {
+        await supabase.from('quality_check_items').insert([
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Appearance',
+                specification: 'As per standard',
+                method: 'Visual inspection',
+                min_value: null,
+                max_value: null,
+                actual_value: null,
+                unit: null,
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Odor',
+                specification: 'Characteristic',
+                method: 'Sensory evaluation',
+                min_value: null,
+                max_value: null,
+                actual_value: null,
+                unit: null,
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'pH Level',
+                specification: '5.5 - 7.5',
+                method: 'pH meter',
+                min_value: 5.5,
+                max_value: 7.5,
+                actual_value: null,
+                unit: 'pH',
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Moisture Content',
+                specification: 'Not more than 10%',
+                method: 'Loss on drying',
+                min_value: 0,
+                max_value: 10,
+                actual_value: null,
+                unit: '%',
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Microbial Load',
+                specification: 'Within limits',
+                method: 'Total plate count',
+                min_value: 0,
+                max_value: 1000,
+                actual_value: null,
+                unit: 'CFU/g',
+                result: 'pending',
+                notes: null,
+            },
+        ])
+    }
 }
 
 export async function deleteWorkOrder(id: string): Promise<void> {

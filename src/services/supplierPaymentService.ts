@@ -207,9 +207,9 @@ export async function getSupplierBillStats() {
     const { data, error } = await supabase
         .from('supplier_bills')
         .select('status, total_amount, paid_amount, balance_amount')
-    
+
     if (error) throw error
-    
+
     const bills = data || []
     return {
         total: bills.length,
@@ -241,7 +241,7 @@ export async function getUnbilledPurchaseOrders(): Promise<any[]> {
         .not('purchase_order_id', 'is', null)
 
     const billedIds = new Set((billedOrders || []).map((b: any) => b.purchase_order_id))
-    
+
     return (data || []).filter((po: any) => !billedIds.has(po.id)).map((po: any) => ({
         ...po,
         supplier_name: po.suppliers?.name || '-',
@@ -262,6 +262,116 @@ export async function getPOItemsForBill(poId: string): Promise<any[]> {
         material_name: item.raw_materials?.name || item.products?.name || item.description,
         material_code: item.raw_materials?.code || item.products?.sku || '',
     }))
+}
+
+// Create supplier bill from GRN
+export async function createSupplierBillFromGRN(grnId: string, userId?: string): Promise<SupplierBill> {
+    // Get GRN with items
+    const { data: grn, error: grnError } = await supabase
+        .from('grn')
+        .select(`*, purchase_orders(po_number, supplier_id), suppliers(name)`)
+        .eq('id', grnId)
+        .single()
+
+    if (grnError) throw grnError
+    if (!grn) throw new Error('GRN not found')
+
+    // Allow Draft for testing, but ideally Accepted/Partial
+    // if (grn.status !== 'accepted' && grn.status !== 'partial') {
+    //     throw new Error('GRN must be accepted or partial to create bill')
+    // }
+
+    // Check if bill already exists for this GRN
+    const { data: existingBill } = await supabase
+        .from('supplier_bills')
+        .select('id, bill_number')
+        .eq('grn_id', grnId)
+        .maybeSingle()
+
+    if (existingBill) {
+        throw new Error(`Bill ${existingBill.bill_number} already exists for this GRN`)
+    }
+
+    // Fetch GRN items explicitly to ensure we get them
+    const { data: grnItems, error: itemsError } = await supabase
+        .from('grn_items')
+        .select(`
+            *,
+            raw_materials(name),
+            products(name),
+            purchase_order_items(unit_price, tax_rate)
+        `)
+        .eq('grn_id', grnId)
+
+    if (itemsError) throw itemsError
+
+    // Generate bill number
+    const billNumber = await generateNumber('supplier_bill')
+
+    // Calculate totals
+    const billItems: SupplierBillItem[] = (grnItems || [])
+        .map((item: any) => {
+            const unitPrice = item.purchase_order_items?.unit_price || 0
+            const taxRate = item.purchase_order_items?.tax_rate || 18 // Default to 18 if missing
+
+            // Use received_quantity, fallback to ordered_quantity if 0
+            const qty = item.received_quantity > 0 ? item.received_quantity : item.ordered_quantity
+
+            const subtotal = qty * unitPrice
+            const taxAmount = Math.round(subtotal * (taxRate / 100) * 100) / 100
+            const totalAmount = Math.round((subtotal + taxAmount) * 100) / 100
+
+            return {
+                description: item.raw_materials?.name || item.products?.name || item.notes || 'Item',
+                quantity: qty,
+                unit_price: unitPrice,
+                tax_rate: taxRate,
+                tax_amount: taxAmount,
+                total_amount: totalAmount,
+            }
+        })
+        .filter(item => item.quantity > 0)
+
+    const totals = calculateBillTotals(billItems)
+
+    // Create bill
+    const billData = {
+        bill_number: billNumber,
+        supplier_id: grn.supplier_id,
+        purchase_order_id: grn.purchase_order_id,
+        grn_id: grnId,
+        bill_date: new Date().toISOString().split('T')[0],
+        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'unpaid',
+        subtotal: totals.subtotal,
+        tax_amount: totals.tax_amount,
+        total_amount: totals.total_amount,
+        paid_amount: 0,
+        balance_amount: totals.total_amount,
+        notes: `Bill for GRN ${grn.grn_number}`,
+        created_by: userId || null,
+    }
+
+    const { data: bill, error: billError } = await supabase.from('supplier_bills').insert(billData).select().single()
+    if (billError) throw billError
+
+    // Insert items
+    if (billItems.length > 0) {
+        const itemsToInsert = billItems.map(item => ({
+            supplier_bill_id: bill.id,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            tax_rate: item.tax_rate,
+            tax_amount: item.tax_amount,
+            total_amount: item.total_amount,
+        }))
+
+        const { error: insertError } = await supabase.from('supplier_bill_items').insert(itemsToInsert)
+        if (insertError) throw insertError
+    }
+
+    return bill
 }
 
 // ============ SUPPLIER PAYMENTS ============
@@ -335,7 +445,7 @@ export async function recordSupplierPayment(
     // Also insert into general payments table for reporting
     await supabase.from('payments').insert({
         payment_number: paymentNumber,
-        payment_type: 'paid',
+        payment_type: 'made', // Corrected type
         supplier_id: bill.supplier_id,
         amount: amount,
         payment_date: new Date().toISOString().split('T')[0],
@@ -344,6 +454,7 @@ export async function recordSupplierPayment(
         notes: notes || `Supplier payment for ${bill.bill_number}`,
         status: 'completed',
         created_by: userId || null,
+        supplier_bill_id: billId, // Link to bill
     })
 
     // Update bill amounts

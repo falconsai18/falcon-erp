@@ -22,8 +22,8 @@ export function KPICard({ title, value, change, icon, color, bgColor, format = '
         <div className="glass-card p-5 hover:border-dark-200 transition-all duration-300">
             <div className="flex items-start justify-between">
                 <div className="space-y-3">
-                    <p className="text-sm text-dark-500 font-medium">{title}</p>
-                    <p className="text-2xl font-bold text-white">{formattedValue}</p>
+                    <p className="text-sm text-gray-500 dark:text-dark-500 font-medium">{title}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{formattedValue}</p>
                     {change !== undefined && (
                         <div className="flex items-center gap-1.5">
                             {change >= 0 ? (
@@ -34,7 +34,7 @@ export function KPICard({ title, value, change, icon, color, bgColor, format = '
                             <span className={cn('text-xs font-semibold', change >= 0 ? 'text-emerald-400' : 'text-red-400')}>
                                 {Math.abs(change)}%
                             </span>
-                            <span className="text-xs text-dark-600">vs last month</span>
+                            <span className="text-xs text-gray-400 dark:text-dark-600">vs last month</span>
                         </div>
                     )}
                 </div>

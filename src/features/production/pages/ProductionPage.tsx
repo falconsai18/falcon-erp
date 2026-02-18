@@ -110,7 +110,7 @@ function ProdOrderDetail({ orderId, onClose, onRefresh }: {
                     {order.status === 'planned' && (
                         <Button size="sm" variant="danger" onClick={() => handleStatus('cancelled')} isLoading={updating}>Cancel</Button>
                     )}
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -358,7 +358,7 @@ export function ProductionPage() {
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         {o.status === 'planned' && (
-                                                            <button onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
+                                                            <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
                                                                 className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
                                                         )}
                                                     </td>

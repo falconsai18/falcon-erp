@@ -10,28 +10,34 @@ export interface Batch {
     product_id: string
     manufacturing_date: string
     expiry_date: string
-    best_before_date: string | null
+    batch_size: number
+    actual_yield: number | null
     produced_qty: number
     available_qty: number
     reserved_qty: number
     rejected_qty: number
     unit_cost: number
     total_cost: number
-    quality_status: string  // pending, pass, fail
-    grade: string | null  // A, B, C
+    quality_status: string
+    grade: string | null
     warehouse_id: string | null
     warehouse_location_id: string | null
     status: string
     manufacturing_notes: string | null
     is_expired: boolean
     is_near_expiry: boolean
+    shelf_life_months: number | null
+    work_order_id: string | null
+    unit: string | null
+    created_by: string | null
     created_at: string
     updated_at: string
     product_name?: string
     product_sku?: string
     warehouse_name?: string
     location_code?: string
-    work_order_id?: string
+    work_order_number?: string
+    qc_count?: number
 }
 
 export interface BatchFormData {
@@ -45,6 +51,14 @@ export const BATCH_STATUSES = [
     { value: 'pending', label: 'Pending QC', color: 'warning' },
     { value: 'pass', label: 'Passed', color: 'success' },
     { value: 'fail', label: 'Failed', color: 'danger' },
+]
+
+export const BATCH_LIFECYCLE = [
+    { value: 'quarantine', label: 'Quarantine', color: 'warning' },
+    { value: 'available', label: 'Available', color: 'success' },
+    { value: 'rejected', label: 'Rejected', color: 'danger' },
+    { value: 'planned', label: 'Planned', color: 'info' },
+    { value: 'consumed', label: 'Consumed', color: 'default' },
 ]
 
 export const QUALITY_GRADES = [
@@ -73,12 +87,10 @@ export async function getBatches(
         .from('batches')
         .select('*, products(name, sku), warehouses(name), warehouse_locations(location_code)', { count: 'exact' })
 
-    // Apply filters
     filterArr.forEach(f => {
         query = query.eq(f.column, f.value)
     })
 
-    // Expiry filter
     if (filters?.expiryFilter === 'expired') {
         query = query.eq('is_expired', true)
     } else if (filters?.expiryFilter === 'near_expiry') {
@@ -87,12 +99,10 @@ export async function getBatches(
         query = query.eq('is_expired', false)
     }
 
-    // Search
     if (filters?.search) {
         query = query.ilike('batch_number', `%${filters.search}%`)
     }
 
-    // Pagination
     const from = (params.page - 1) * params.pageSize
     const to = from + params.pageSize - 1
     query = query.range(from, to).order('created_at', { ascending: false })
@@ -101,6 +111,22 @@ export async function getBatches(
 
     if (error) throw error
 
+    // Get QC counts for each batch
+    const batchIds = (data || []).map((b: any) => b.id)
+    let qcMap = new Map<string, number>()
+
+    if (batchIds.length > 0) {
+        const { data: qcData } = await supabase
+            .from('quality_checks')
+            .select('batch_id')
+            .in('batch_id', batchIds)
+
+        qcData?.forEach((qc: any) => {
+            const current = qcMap.get(qc.batch_id) || 0
+            qcMap.set(qc.batch_id, current + 1)
+        })
+    }
+
     return {
         data: (data || []).map((b: any) => ({
             ...b,
@@ -108,6 +134,7 @@ export async function getBatches(
             product_sku: b.products?.sku || '-',
             warehouse_name: b.warehouses?.name || '-',
             location_code: b.warehouse_locations?.location_code || '-',
+            qc_count: qcMap.get(b.id) || 0,
         })),
         count: count || 0,
         page: params.page,
@@ -119,11 +146,18 @@ export async function getBatches(
 export async function getBatchById(id: string): Promise<Batch> {
     const { data, error } = await supabase
         .from('batches')
-        .select('*, products(name, sku), warehouses(name), warehouse_locations(location_code)')
+        .select('*, products(name, sku), warehouses(name), warehouse_locations(location_code), work_orders!batches_work_order_id_fkey(work_order_number)')
         .eq('id', id)
         .single()
 
     if (error) throw error
+
+    // Get QC checks for this batch
+    const { data: qcData } = await supabase
+        .from('quality_checks')
+        .select('id, result, checked_at')
+        .or(`batch_id.eq.${id},batch_number.eq.${data.batch_number}`)
+        .order('created_at', { ascending: false })
 
     return {
         ...data,
@@ -131,14 +165,14 @@ export async function getBatchById(id: string): Promise<Batch> {
         product_sku: data.products?.sku || '-',
         warehouse_name: data.warehouses?.name || '-',
         location_code: data.warehouse_locations?.location_code || '-',
+        work_order_number: data.work_orders?.work_order_number || null,
+        qc_count: qcData?.length || 0,
     }
 }
 
 export async function createBatch(data: BatchFormData, userId?: string): Promise<Batch> {
-    // 1. Auto-generate batch number
     const batchNumber = await generateNumber('batch')
 
-    // 2. Fetch product details for shelf life
     const { data: product } = await supabase
         .from('products')
         .select('shelf_life_days')
@@ -157,7 +191,7 @@ export async function createBatch(data: BatchFormData, userId?: string): Promise
         batch_size: data.produced_qty,
         manufacturing_date: data.manufacturing_date,
         expiry_date: expiryDate,
-        status: 'planned',
+        status: 'quarantine',
         quality_status: 'pending',
         grade: 'A',
         manufacturing_notes: data.manufacturing_notes || null,
@@ -172,30 +206,117 @@ export async function createBatch(data: BatchFormData, userId?: string): Promise
 
     if (error) throw error
 
-    // Create inventory record for this batch
+    // Create inventory record
     await supabase.from('inventory').insert({
         product_id: data.product_id,
         batch_number: batchNumber,
         quantity: data.produced_qty,
         available_quantity: data.produced_qty,
+        reserved_quantity: 0,
         manufacturing_date: data.manufacturing_date,
         expiry_date: expiryDate,
         status: 'quarantine',
     })
+
+    // Auto-create QC check for this batch
+    await supabase.from('quality_checks').insert({
+        batch_id: batch.id,
+        batch_number: batchNumber,
+        parameter: 'Overall Quality',
+        expected_value: 'Ayurvedic Pharmacopoeia Standards',
+        actual_value: '-',
+        result: 'pending',
+        checked_by: userId || null,
+        checked_at: new Date().toISOString(),
+        notes: `Auto-generated QC for batch ${batchNumber}`,
+    })
+
+    // Auto-create QC checklist items
+    const { data: qcCheck } = await supabase
+        .from('quality_checks')
+        .select('id')
+        .eq('batch_id', batch.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+    if (qcCheck) {
+        await supabase.from('quality_check_items').insert([
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Appearance',
+                specification: 'As per standard',
+                method: 'Visual inspection',
+                min_value: null,
+                max_value: null,
+                actual_value: null,
+                unit: null,
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Odor',
+                specification: 'Characteristic',
+                method: 'Sensory evaluation',
+                min_value: null,
+                max_value: null,
+                actual_value: null,
+                unit: null,
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'pH Level',
+                specification: '5.5 - 7.5',
+                method: 'pH meter',
+                min_value: 5.5,
+                max_value: 7.5,
+                actual_value: null,
+                unit: 'pH',
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Moisture Content',
+                specification: 'Not more than 10%',
+                method: 'Loss on drying',
+                min_value: 0,
+                max_value: 10,
+                actual_value: null,
+                unit: '%',
+                result: 'pending',
+                notes: null,
+            },
+            {
+                quality_check_id: qcCheck.id,
+                parameter_name: 'Microbial Load',
+                specification: 'Within limits',
+                method: 'Total plate count',
+                min_value: 0,
+                max_value: 1000,
+                actual_value: null,
+                unit: 'CFU/g',
+                result: 'pending',
+                notes: null,
+            },
+        ])
+    }
 
     return batch
 }
 
 export async function updateBatchStatus(
     id: string,
-    status: string,
+    qualityStatus: string,
     grade?: string,
     notes?: string,
-    userId?: string
 ): Promise<void> {
     const updates: any = {
-        quality_status: status,
-        status: (status === 'pass') ? 'available' : status === 'fail' ? 'rejected' : 'quarantine',
+        quality_status: qualityStatus,
+        status: qualityStatus === 'pass' ? 'available' : qualityStatus === 'fail' ? 'rejected' : 'quarantine',
         updated_at: new Date().toISOString(),
     }
 
@@ -209,12 +330,18 @@ export async function updateBatchStatus(
 
     if (error) throw error
 
-    // Update inventory status if passed
-    if (status === 'pass') {
-        const batch = await getBatchById(id)
+    // Sync inventory status
+    const batch = await getBatchById(id)
+    if (qualityStatus === 'pass') {
         await supabase
             .from('inventory')
             .update({ status: 'available' })
+            .eq('batch_number', batch.batch_number)
+            .eq('product_id', batch.product_id)
+    } else if (qualityStatus === 'fail') {
+        await supabase
+            .from('inventory')
+            .update({ status: 'rejected' })
             .eq('batch_number', batch.batch_number)
             .eq('product_id', batch.product_id)
     }
@@ -223,14 +350,12 @@ export async function updateBatchStatus(
 export async function deleteBatch(id: string): Promise<void> {
     const batch = await getBatchById(id)
 
-    // Delete inventory record
     await supabase
         .from('inventory')
         .delete()
         .eq('batch_number', batch.batch_number)
         .eq('product_id', batch.product_id)
 
-    // Delete batch
     return deleteRecord('batches', id)
 }
 
@@ -250,8 +375,8 @@ export async function getBatchStats() {
     }
 }
 
-// ============ GET PRODUCTS FOR BATCH ============
-export async function getProductsForBatch(): Promise<{ id: string; name: string; sku: string; track_batches: boolean }[]> {
+// ============ DROPDOWNS ============
+export async function getProductsForBatch(): Promise<{ id: string; name: string; sku: string; track_batches?: boolean }[]> {
     const { data, error } = await supabase
         .from('products')
         .select('id, name, sku, track_batches')
@@ -259,11 +384,9 @@ export async function getProductsForBatch(): Promise<{ id: string; name: string;
         .order('name')
 
     if (error) throw error
-
     return data || []
 }
 
-// ============ GET WAREHOUSES FOR BATCH ============
 export async function getWarehousesForBatch(): Promise<{ id: string; name: string }[]> {
     const { data, error } = await supabase
         .from('warehouses')
@@ -272,19 +395,75 @@ export async function getWarehousesForBatch(): Promise<{ id: string; name: strin
         .order('name')
 
     if (error) throw error
-
     return data || []
 }
 
-// ============ GET LOCATIONS FOR WAREHOUSE ============
-export async function getLocationsForWarehouse(warehouseId: string): Promise<{ id: string; code: string }[]> {
+export async function getLocationsForWarehouse(warehouseId: string): Promise<{ id: string; location_code: string }[]> {
     const { data, error } = await supabase
         .from('warehouse_locations')
-        .select('id, code')
+        .select('id, location_code')
         .eq('warehouse_id', warehouseId)
-        .order('code')
+        .eq('is_active', true)
+        .order('location_code')
+
+    if (error) throw error
+    return data || []
+}
+
+// ============ SMART BATCH SELECTION (FEFO/FIFO) ============
+export async function getSmartBatchSelection(
+    productId: string,
+    requiredQuantity: number
+): Promise<{
+    batches: Array<{
+        batch_number: string;
+        available_qty: number;
+        expiry_date: string | null;
+        manufacturing_date: string | null;
+        allocated_qty: number;
+    }>;
+    totalAllocated: number;
+    fullyAllocated: boolean;
+    shortfall: number;
+}> {
+    // Fetch available batches sorted FEFO (expiry first, then manufacturing date)
+    const { data: batches, error } = await supabase
+        .from('batches')
+        .select('batch_number, available_qty, expiry_date, manufacturing_date, product_id, status, quality_status')
+        .eq('product_id', productId)
+        .eq('status', 'available')
+        .eq('quality_status', 'pass')
+        .gt('available_qty', 0)
+        .order('expiry_date', { ascending: true, nullsFirst: false })
+        .order('manufacturing_date', { ascending: true })
 
     if (error) throw error
 
-    return data || []
+    // FEFO allocation logic
+    let remainingQty = requiredQuantity
+    const allocatedBatches = []
+
+    for (const batch of batches || []) {
+        if (remainingQty <= 0) break
+
+        const allocateQty = Math.min(batch.available_qty, remainingQty)
+        allocatedBatches.push({
+            batch_number: batch.batch_number,
+            available_qty: batch.available_qty,
+            expiry_date: batch.expiry_date,
+            manufacturing_date: batch.manufacturing_date,
+            allocated_qty: allocateQty
+        })
+
+        remainingQty -= allocateQty
+    }
+
+    const totalAllocated = requiredQuantity - remainingQty
+
+    return {
+        batches: allocatedBatches,
+        totalAllocated,
+        fullyAllocated: remainingQty <= 0,
+        shortfall: Math.max(remainingQty, 0)
+    }
 }

@@ -53,15 +53,15 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
 
             {/* Modal */}
             <div className={cn(
-                'relative w-full bg-dark-50 border border-dark-300/50 rounded-2xl shadow-2xl',
+                'relative w-full bg-white dark:bg-dark-50 border border-gray-200 dark:border-dark-300/50 rounded-2xl shadow-2xl',
                 'flex flex-col max-h-[85vh]',
                 SIZES[size]
             )}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-dark-300/50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-300/50">
                     <div>
-                        <h2 className="text-lg font-semibold text-white">{title}</h2>
-                        {description && <p className="text-sm text-dark-500 mt-0.5">{description}</p>}
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+                        {description && <p className="text-sm text-gray-500 dark:text-dark-500 mt-0.5">{description}</p>}
                     </div>
                     <button
                         onClick={onClose}

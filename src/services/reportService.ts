@@ -25,7 +25,24 @@ export interface FinancialReport {
     totalPending: number
     totalPurchases: number
     grossProfit: number
-    invoiceAging: { range: string; count: number; amount: number }[]
+    invoiceAging: {
+        range: string
+        count: number
+        amount: number
+        invoices: {
+            id: string
+            invoice_number: string
+            customer_name: string
+            customer_id: string
+            invoice_date: string
+            due_date: string
+            total_amount: number
+            paid_amount: number
+            balance_amount: number
+            days_overdue: number
+            status: string
+        }[]
+    }[]
     monthlyInOut: { month: string; income: number; expense: number }[]
 }
 
@@ -189,20 +206,44 @@ export async function getFinancialReport(): Promise<FinancialReport> {
     const totalPending = invoices.reduce((s: number, i: any) => s + (i.balance_amount || 0), 0)
     const totalPurchases = purchases.reduce((s: number, p: any) => s + (p.total_amount || 0), 0)
 
-    // Invoice aging
-    const aging = [
-        { range: '0-30 days', count: 0, amount: 0 },
-        { range: '31-60 days', count: 0, amount: 0 },
-        { range: '61-90 days', count: 0, amount: 0 },
-        { range: '90+ days', count: 0, amount: 0 },
+    // Invoice aging - based on due_date (not invoice_date)
+    const agingBuckets = [
+        { range: '0-30 days', count: 0, amount: 0, invoices: [] as any[] },
+        { range: '31-60 days', count: 0, amount: 0, invoices: [] as any[] },
+        { range: '61-90 days', count: 0, amount: 0, invoices: [] as any[] },
+        { range: '90+ days', count: 0, amount: 0, invoices: [] as any[] },
     ]
 
-    invoices.filter((i: any) => i.balance_amount > 0).forEach((inv: any) => {
-        const days = Math.ceil((today.getTime() - new Date(inv.invoice_date).getTime()) / (1000 * 60 * 60 * 24))
-        const bucket = days <= 30 ? 0 : days <= 60 ? 1 : days <= 90 ? 2 : 3
-        aging[bucket].count += 1
-        aging[bucket].amount += inv.balance_amount || 0
-    })
+    // Fetch invoices with customer names for aging detail
+    const { data: agingInvoices } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, invoice_date, due_date, total_amount, paid_amount, balance_amount, status, customer_id, customers(name)')
+        .gt('balance_amount', 0)
+
+        ; (agingInvoices || []).forEach((inv: any) => {
+            const dueDate = inv.due_date ? new Date(inv.due_date) : new Date(inv.invoice_date)
+            const daysOverdue = Math.max(0, Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)))
+            const bucket = daysOverdue <= 30 ? 0 : daysOverdue <= 60 ? 1 : daysOverdue <= 90 ? 2 : 3
+
+            agingBuckets[bucket].count += 1
+            agingBuckets[bucket].amount += inv.balance_amount || 0
+            agingBuckets[bucket].invoices.push({
+                id: inv.id,
+                invoice_number: inv.invoice_number,
+                customer_name: inv.customers?.name || '-',
+                customer_id: inv.customer_id,
+                invoice_date: inv.invoice_date,
+                due_date: inv.due_date || inv.invoice_date,
+                total_amount: inv.total_amount,
+                paid_amount: inv.paid_amount,
+                balance_amount: inv.balance_amount,
+                days_overdue: daysOverdue,
+                status: inv.status,
+            })
+        })
+
+    // Sort invoices within each bucket by days_overdue descending
+    agingBuckets.forEach(b => b.invoices.sort((a: any, b: any) => b.days_overdue - a.days_overdue))
 
     // Monthly income vs expense
     const monthMap = new Map<string, { income: number; expense: number }>()
@@ -237,7 +278,7 @@ export async function getFinancialReport(): Promise<FinancialReport> {
         totalPending,
         totalPurchases,
         grossProfit: totalInvoiced - totalPurchases,
-        invoiceAging: aging,
+        invoiceAging: agingBuckets,
         monthlyInOut,
     }
 }
@@ -273,4 +314,188 @@ export async function getProductionReport(): Promise<ProductionReport> {
         efficiency: totalPlanned ? Math.round((totalProduced / totalPlanned) * 100) : 0,
         materialUsage: Array.from(matMap.entries()).map(([name, data]) => ({ name, ...data })).slice(0, 15),
     }
+}
+
+// ============ NEW REPORTS (E1 - E4) ============
+
+// E1: Date-filtered sales data (used by all reports)
+export async function getSalesReportByDateRange(
+    fromDate: string,
+    toDate: string
+) {
+    const { data, error } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, customer_id, invoice_date, total_amount, paid_amount, balance_amount, status, customers(name, phone)')
+        .gte('invoice_date', fromDate)
+        .lte('invoice_date', toDate)
+        .order('invoice_date', { ascending: false })
+
+    if (error) throw error
+    return data || []
+}
+
+// E2: Customer-wise sales report
+export async function getCustomerSalesReport(
+    fromDate: string,
+    toDate: string
+) {
+    const { data, error } = await supabase
+        .from('invoices')
+        .select('customer_id, total_amount, paid_amount, balance_amount, status, customers(id, name, phone)')
+        .gte('invoice_date', fromDate)
+        .lte('invoice_date', toDate)
+
+    if (error) throw error
+
+    // Group by customer client-side
+    const customerMap = new Map<string, {
+        customer_id: string;
+        name: string;
+        phone: string;
+        total_invoiced: number;
+        total_paid: number;
+        total_outstanding: number;
+        invoice_count: number;
+    }>()
+
+    for (const inv of data || []) {
+        const custId = inv.customer_id
+        const existing = customerMap.get(custId)
+        if (existing) {
+            existing.total_invoiced += inv.total_amount || 0
+            existing.total_paid += inv.paid_amount || 0
+            existing.total_outstanding += inv.balance_amount || 0
+            existing.invoice_count += 1
+        } else {
+            customerMap.set(custId, {
+                customer_id: custId,
+                name: (inv.customers as any)?.name || 'Unknown',
+                phone: (inv.customers as any)?.phone || '-',
+                total_invoiced: inv.total_amount || 0,
+                total_paid: inv.paid_amount || 0,
+                total_outstanding: inv.balance_amount || 0,
+                invoice_count: 1
+            })
+        }
+    }
+
+    return Array.from(customerMap.values())
+        .sort((a, b) => b.total_invoiced - a.total_invoiced)
+}
+
+// E3: Product-wise P&L report
+export async function getProductPLReport(
+    fromDate: string,
+    toDate: string
+) {
+    // Get sales order items with product details
+    const { data: soItems, error: soError } = await supabase
+        .from('sales_order_items')
+        .select(`
+      product_id,
+      quantity,
+      unit_price,
+      total_amount,
+      tax_amount,
+      sales_orders!inner(order_date, status)
+    `)
+        .gte('sales_orders.order_date', fromDate)
+        .lte('sales_orders.order_date', toDate)
+        .neq('sales_orders.status', 'cancelled')
+
+    if (soError) throw soError
+
+    // Get products for cost info
+    const { data: products, error: prodError } = await supabase
+        .from('products')
+        .select('id, name, sku, cost_price, selling_price')
+
+    if (prodError) throw prodError
+
+    const productMap = new Map(products?.map(p => [p.id, p]) || [])
+
+    // Group by product
+    const plMap = new Map<string, {
+        product_id: string;
+        name: string;
+        sku: string;
+        qty_sold: number;
+        revenue: number;
+        cost: number;
+        profit: number;
+        margin_percent: number;
+    }>()
+
+    for (const item of soItems || []) {
+        const product = productMap.get(item.product_id)
+        if (!product) continue
+
+        const revenue = item.total_amount || 0
+        const cost = (product.cost_price || 0) * (item.quantity || 0)
+        const profit = revenue - cost
+
+        const existing = plMap.get(item.product_id)
+        if (existing) {
+            existing.qty_sold += item.quantity || 0
+            existing.revenue += revenue
+            existing.cost += cost
+            existing.profit += profit
+            existing.margin_percent = existing.revenue > 0
+                ? (existing.profit / existing.revenue) * 100
+                : 0
+        } else {
+            plMap.set(item.product_id, {
+                product_id: item.product_id,
+                name: product.name,
+                sku: product.sku,
+                qty_sold: item.quantity || 0,
+                revenue,
+                cost,
+                profit,
+                margin_percent: revenue > 0 ? (profit / revenue) * 100 : 0
+            })
+        }
+    }
+
+    return Array.from(plMap.values())
+        .sort((a, b) => b.profit - a.profit)
+}
+
+// E4: Stock Valuation Report
+export async function getStockValuationReport() {
+    const { data, error } = await supabase
+        .from('inventory')
+        .select('product_id, available_quantity, unit_cost, products(id, name, sku, cost_price, selling_price, tax_rate)')
+        .gt('available_quantity', 0)
+
+    if (error) throw error
+
+    const items = (data || []).map(inv => {
+        const product = inv.products as any
+        const costPrice = inv.unit_cost || product?.cost_price || 0
+        const sellingPrice = product?.selling_price || 0
+        const qty = inv.available_quantity || 0
+        const costValue = qty * costPrice
+        const retailValue = qty * sellingPrice
+
+        return {
+            product_id: inv.product_id,
+            name: product?.name || 'Unknown',
+            sku: product?.sku || '-',
+            available_qty: qty,
+            unit_cost: costPrice,
+            selling_price: sellingPrice,
+            cost_value: costValue,
+            retail_value: retailValue,
+            potential_profit: retailValue - costValue
+        }
+    })
+
+    const totals = {
+        total_cost_value: items.reduce((sum, i) => sum + i.cost_value, 0),
+        total_retail_value: items.reduce((sum, i) => sum + i.retail_value, 0),
+        total_potential_profit: items.reduce((sum, i) => sum + i.potential_profit, 0)
+    }
+
+    return { items: items.sort((a, b) => b.cost_value - a.cost_value), totals }
 }

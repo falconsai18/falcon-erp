@@ -141,3 +141,103 @@ export async function getSupplierStats() {
         avgRating: suppliers.length ? +(suppliers.reduce((sum, s) => sum + (s.rating || 0), 0) / suppliers.length).toFixed(1) : 0,
     }
 }
+
+
+export interface LedgerEntry {
+    id: string
+    date: string
+    type: 'bill' | 'payment' | 'debit_note'
+    reference: string
+    description: string
+    debit: number
+    credit: number
+    balance: number
+    status: string
+    amount: number
+    balance_due?: number
+}
+
+export async function getSupplierLedger(supplierId: string): Promise<LedgerEntry[]> {
+    // Fetch all transaction types in parallel
+    const [bills, payments, debitNotes] = await Promise.all([
+        supabase
+            .from('supplier_bills')
+            .select('id, bill_number, bill_date, total_amount, balance_amount, status')
+            .eq('supplier_id', supplierId)
+            .neq('status', 'cancelled')
+            .order('bill_date', { ascending: true }),
+
+        supabase
+            .from('payments')
+            .select('id, payment_number, payment_date, amount, payment_method, reference_number, supplier_bill_id')
+            .eq('supplier_id', supplierId)
+            .eq('payment_type', 'paid')
+            .order('payment_date', { ascending: true }),
+
+        supabase
+            .from('debit_notes')
+            .select('id, debit_note_number, issue_date, total_amount, status')
+            .eq('supplier_id', supplierId)
+            .neq('status', 'cancelled')
+            .order('issue_date', { ascending: true })
+    ]);
+
+    if (bills.error) throw bills.error;
+    if (payments.error) throw payments.error;
+    if (debitNotes.error) throw debitNotes.error;
+
+    // Transform into unified ledger entries
+    const ledgerEntries: LedgerEntry[] = [
+        ...(bills.data || []).map(bill => ({
+            id: bill.id,
+            date: bill.bill_date,
+            type: 'bill' as const,
+            reference: bill.bill_number,
+            description: `Bill ${bill.bill_number}`,
+            debit: 0,
+            credit: bill.total_amount, // Bills INCREASE what we owe (Credit)
+            balance: 0, // Will calculate below
+            status: bill.status,
+            amount: bill.total_amount,
+            balance_due: bill.balance_amount
+        })),
+        ...(payments.data || []).map(pay => ({
+            id: pay.id,
+            date: pay.payment_date,
+            type: 'payment' as const,
+            reference: pay.payment_number || pay.reference_number || `PAY-${pay.id.slice(0, 8)}`,
+            description: `Payment via ${pay.payment_method}${pay.reference_number ? ` (${pay.reference_number})` : ''}`,
+            debit: pay.amount, // Payments DECREASE what we owe (Debit)
+            credit: 0,
+            balance: 0,
+            status: 'completed',
+            amount: pay.amount
+        })),
+        ...(debitNotes.data || []).map(dn => ({
+            id: dn.id,
+            date: dn.issue_date,
+            type: 'debit_note' as const,
+            reference: dn.debit_note_number,
+            description: `Debit Note ${dn.debit_note_number}`,
+            debit: dn.total_amount, // Debit Notes DECREASE what we owe (Debit)
+            credit: 0,
+            balance: 0,
+            status: dn.status,
+            amount: dn.total_amount
+        }))
+    ];
+
+    // Sort by date (oldest first for balance calculation)
+    ledgerEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Calculate running balance (Credit increases, Debit decreases)
+    let runningBalance = 0;
+    ledgerEntries.forEach(entry => {
+        runningBalance += entry.credit - entry.debit;
+        entry.balance = runningBalance;
+    });
+
+    // Reverse to show newest first
+    return ledgerEntries.reverse();
+}
+

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-    Plus, Search, Download, X, Save, ChevronLeft, ChevronRight,
+    Plus, Search, Download, X, Save, TrendingUp, ChevronLeft, ChevronRight,
     AlertCircle, Warehouse, Package, AlertTriangle, Calendar,
     IndianRupee, ArrowUpCircle, ArrowDownCircle, RefreshCw,
     Clock, XCircle, CheckCircle, Filter, History,
@@ -22,7 +22,7 @@ import {
 
 // ============ EXPIRY BADGE ============
 function ExpiryBadge({ days }: { days: number | null }) {
-    if (days === null) return <span className="text-xs text-dark-600">No expiry</span>
+    if (days === null) return <span className="text-xs text-gray-400 dark:text-dark-600">No expiry</span>
     if (days < 0) return <Badge variant="danger" dot>Expired</Badge>
     if (days <= 30) return <Badge variant="danger" dot>{days}d left</Badge>
     if (days <= 90) return <Badge variant="warning" dot>{days}d left</Badge>
@@ -39,7 +39,7 @@ function MovementIcon({ type }: { type: string }) {
         production: { icon: Package, color: 'text-purple-400' },
         return: { icon: ArrowUpCircle, color: 'text-cyan-400' },
     }
-    const c = config[type] || { icon: RefreshCw, color: 'text-dark-500' }
+    const c = config[type] || { icon: RefreshCw, color: 'text-gray-500 dark:text-dark-500' }
     return <c.icon size={16} className={c.color} />
 }
 
@@ -62,7 +62,7 @@ function StockDetail({ item, onClose, onAdjust }: {
 
     return (
         <div className="glass-card h-full flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-dark-300/50">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-300/50">
                 <div className="flex items-center gap-3">
                     <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center',
                         item.days_to_expiry !== null && (item.days_to_expiry ?? 999) <= 30
@@ -73,22 +73,22 @@ function StockDetail({ item, onClose, onAdjust }: {
                     <div>
                         <h2 className="font-semibold text-white">{item.product_name}</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-dark-500">{item.product_sku}</span>
+                            <span className="text-xs text-gray-500 dark:text-dark-500">{item.product_sku}</span>
                             {item.batch_number && <Badge variant="default">{item.batch_number}</Badge>}
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button size="sm" variant="secondary" onClick={onAdjust} icon={<RefreshCw size={14} />}>Adjust</Button>
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    <Button size="sm" variant="secondary" onClick={onAdjust} icon={<RefreshCw size={14} />} title="Adjust Stock">Adjust</Button>
+                    <button onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200" title="Close"><X size={16} /></button>
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
                 {/* Stock Summary */}
                 <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-dark-200/20 rounded-xl p-3 text-center">
-                        <p className="text-[10px] text-dark-500 uppercase">Total Qty</p>
+                    <div className="bg-gray-100 dark:bg-dark-200/20 rounded-xl p-3 text-center">
+                        <p className="text-[10px] text-gray-500 dark:text-dark-500 uppercase">Total Qty</p>
                         <p className="text-xl font-bold text-white mt-1">{item.quantity}</p>
                     </div>
                     <div className="bg-dark-200/20 rounded-xl p-3 text-center">
@@ -112,7 +112,7 @@ function StockDetail({ item, onClose, onAdjust }: {
                         { label: 'Status', value: item.status, icon: CheckCircle },
                     ].map(d => (
                         <div key={d.label} className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-dark-600">
+                            <div className="flex items-center gap-1.5 text-gray-400 dark:text-dark-600">
                                 <d.icon size={12} /><span className="text-[10px] uppercase tracking-wider">{d.label}</span>
                             </div>
                             <p className="text-sm text-white">{d.value}</p>
@@ -131,7 +131,7 @@ function StockDetail({ item, onClose, onAdjust }: {
                             <p className="text-sm font-medium text-white">
                                 {(item.days_to_expiry ?? 999) < 0 ? 'EXPIRED' : `Expiring in ${item.days_to_expiry} days`}
                             </p>
-                            <p className="text-xs text-dark-500 mt-0.5">
+                            <p className="text-xs text-gray-500 dark:text-dark-500 mt-0.5">
                                 {(item.days_to_expiry ?? 999) < 0 ? 'Remove from saleable stock immediately' : 'Consider FEFO allocation for upcoming orders'}
                             </p>
                         </div>
@@ -279,7 +279,7 @@ export function InventoryPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Inventory"
+            <PageHeader title="Stock"
                 description={`${stats.totalBatches} batches • Value: ${formatCurrency(stats.totalValue)}`}
                 actions={<div className="flex items-center gap-3">
                     <Button variant="secondary" icon={<Download size={16} />} size="sm">Export</Button>
@@ -356,7 +356,7 @@ export function InventoryPage() {
                                     {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-14 bg-dark-200 rounded-lg" />)}
                                 </div></div>
                             ) : items.length === 0 ? (
-                                <EmptyState icon={<Warehouse size={48} />} title="No inventory"
+                                <EmptyState icon={<Warehouse size={48} />} title="No stock"
                                     description="Add stock to get started" actionLabel="Add Stock" onAction={() => setShowAddStock(true)} />
                             ) : (
                                 <div className="glass-card overflow-hidden">
@@ -369,7 +369,7 @@ export function InventoryPage() {
                                         <tbody className="divide-y divide-dark-300/30">
                                             {items.map(item => (
                                                 <tr key={item.id} onClick={() => setSelectedItem(item)}
-                                                className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
+                                                    className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
                                                         selectedItem?.id === item.id && 'bg-orange-500/5 border-l-2 border-orange-500',
                                                         item.days_to_expiry !== null && (item.days_to_expiry ?? 999) <= 0 && 'bg-red-500/5')}>
                                                     <td className="px-3 py-3">
@@ -389,11 +389,11 @@ export function InventoryPage() {
                                                     <td className="px-3 py-3 text-sm font-mono text-dark-500">{formatCurrency(item.unit_cost)}</td>
                                                     <td className="px-3 py-3 text-sm font-mono text-orange-400">{formatCurrency(item.quantity * item.unit_cost)}</td>
                                                     <td className="px-3 py-3"><ExpiryBadge days={item.days_to_expiry ?? null} /></td>
-                                                    <td className="px-3 py-3">
-                                                        <button onClick={(e) => { e.stopPropagation(); openAdjust(item) }}
-                                                            className="p-1.5 rounded-lg text-dark-500 hover:text-orange-400 hover:bg-dark-200">
-                                                            <RefreshCw size={14} />
-                                                        </button>
+                                                    <td className="px-3 py-3 flex items-center gap-1">
+                                                        <button title="View History" onClick={(e) => { e.stopPropagation(); setSelectedItem(item) }}
+                                                            className="p-1.5 rounded-lg text-dark-500 hover:text-cyan-400 hover:bg-dark-200"><History size={14} /></button>
+                                                        <button title="Adjust Stock" onClick={(e) => { e.stopPropagation(); openAdjust(item) }}
+                                                            className="p-1.5 rounded-lg text-dark-500 hover:text-amber-400 hover:bg-dark-200"><TrendingUp size={14} /></button>
                                                     </td>
                                                 </tr>
                                             ))}

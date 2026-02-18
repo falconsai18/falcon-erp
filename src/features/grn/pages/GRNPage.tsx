@@ -20,6 +20,7 @@ import {
     getReceivablePOs, getPOItemsForGRN,
     type GRN, type GRNItem, type GRNFormData, EMPTY_GRN_FORM,
 } from '@/services/grnService'
+import { createSupplierBillFromGRN } from '@/services/supplierPaymentService'
 import { exportToCSV } from '@/services/exportService'
 
 // ============ GRN STATUS BADGE ============
@@ -43,6 +44,7 @@ function GRNDetail({ grnId, onClose, onRefresh }: {
     const [grn, setGrn] = useState<GRN | null>(null)
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
+    const [creatingBill, setCreatingBill] = useState(false)
 
     useEffect(() => { loadGRN() }, [grnId])
 
@@ -72,6 +74,19 @@ function GRNDetail({ grnId, onClose, onRefresh }: {
             loadGRN(); onRefresh()
         } catch (err: any) { toast.error(err.message) }
         finally { setUpdating(false) }
+    }
+
+    const handleCreateBill = async () => {
+        try {
+            setCreatingBill(true)
+            const bill = await createSupplierBillFromGRN(grnId, user?.id)
+            toast.success(`Supplier Bill ${bill.bill_number} created!`)
+            loadGRN(); onRefresh()
+        } catch (err: any) {
+            toast.error('Failed: ' + err.message)
+        } finally {
+            setCreatingBill(false)
+        }
     }
 
     if (loading) return (
@@ -109,7 +124,13 @@ function GRNDetail({ grnId, onClose, onRefresh }: {
                     {grn.status === 'rejected' && (
                         <Button size="sm" variant="secondary" onClick={() => handleStatusChange('draft')} isLoading={updating} icon={<RotateCcw size={14} />}>Reopen</Button>
                     )}
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
+                    {(grn.status === 'accepted' || grn.status === 'partial') && (
+                        <Button size="sm" variant="secondary" onClick={handleCreateBill} isLoading={creatingBill}
+                            icon={<IndianRupee size={14} />}>
+                            Create Bill
+                        </Button>
+                    )}
+                    <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
 
@@ -406,7 +427,7 @@ export function GRNPage() {
                                             <td className="px-3 py-3"><GRNStatusBadge status={g.status} /></td>
                                             <td className="px-3 py-3">
                                                 {g.status === 'draft' && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setDeletingGRN(g) }}
+                                                    <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingGRN(g) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 )}
                                             </td>

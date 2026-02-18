@@ -8,28 +8,80 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import {
     getQualityChecks, getQualityCheckById, createQualityCheck, deleteQualityCheck,
-    getQCStats, getGRNItemsForQC, updateQualityCheckStatus, updateQualityCheckItem,
+    getQCStats, updateQualityCheckStatus, updateQualityCheckItem,
     passAllQCItems, failAllQCItems,
     type QualityCheck, type QualityCheckFormData, EMPTY_QC_FORM, QC_STATUSES, QC_ITEM_RESULTS
 } from '@/services/qualityCheckService'
-import { getWorkOrders } from '@/services/workOrderService'
-import { getInventory } from '@/services/inventoryService'
 import { exportToCSV } from '@/services/exportService'
+
+// ============ REFERENCE RESOLVER ============
+// Cache work order numbers and batch numbers to avoid repeated DB calls
+const referenceCache = new Map<string, string>()
+
+async function resolveReference(qc: QualityCheck): Promise<string> {
+    // Priority: batch_number > work_order_id > batch_id > parameter
+    if (qc.batch_number) return qc.batch_number
+
+    if (qc.work_order_id) {
+        const cached = referenceCache.get(qc.work_order_id)
+        if (cached) return cached
+
+        const { data } = await supabase
+            .from('work_orders')
+            .select('work_order_number')
+            .eq('id', qc.work_order_id)
+            .single()
+
+        const num = data?.work_order_number || qc.work_order_id.slice(0, 8)
+        referenceCache.set(qc.work_order_id, num)
+        return num
+    }
+
+    if (qc.batch_id) {
+        const cached = referenceCache.get(qc.batch_id)
+        if (cached) return cached
+
+        const { data } = await supabase
+            .from('batches')
+            .select('batch_number')
+            .eq('id', qc.batch_id)
+            .single()
+
+        const num = data?.batch_number || qc.batch_id.slice(0, 8)
+        referenceCache.set(qc.batch_id, num)
+        return num
+    }
+
+    if (qc.production_order_id) {
+        const cached = referenceCache.get(qc.production_order_id)
+        if (cached) return cached
+
+        const { data } = await supabase
+            .from('production_orders')
+            .select('order_number')
+            .eq('id', qc.production_order_id)
+            .single()
+
+        const num = data?.order_number || qc.production_order_id.slice(0, 8)
+        referenceCache.set(qc.production_order_id, num)
+        return num
+    }
+
+    return qc.parameter || '-'
+}
 
 function QCStatusBadge({ status }: { status: string }) {
     const config = QC_STATUSES.find(s => s.value === status) || QC_STATUSES[0]
-    const colorMap: Record<string, any> = {
+    const colorMap: Record<string, string> = {
         'default': 'text-dark-400 bg-dark-200/50',
         'success': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
         'danger': 'text-red-400 bg-red-500/10 border-red-500/20',
-        'warning': 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-        'info': 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-        'purple': 'text-purple-400 bg-purple-500/10 border-purple-500/20'
     }
-    return <Badge className={cn('font-medium', colorMap[config.color])}>{config.label}</Badge>
+    return <Badge className={cn('font-medium', colorMap[config.color] || colorMap['default'])}>{config.label}</Badge>
 }
 
 // ============ QC DETAIL PANEL ============
@@ -42,11 +94,12 @@ function QualityCheckDetail({ qcId, onClose, onRefresh }: {
     const [updating, setUpdating] = useState(false)
     const [editingItem, setEditingItem] = useState<string | null>(null)
     const [itemData, setItemData] = useState({ actual_value: 0, result: 'pending', notes: '' })
+    const [resolvedRef, setResolvedRef] = useState('-')
 
     const resolveName = (id: string | null | undefined, fallback: string | undefined) => {
         if (!id) return 'System'
         if (id === user?.id) return user.full_name || 'Me'
-        if (!fallback || fallback === id || fallback === 'System' || (fallback && fallback.length > 20)) return 'Inspector'
+        if (!fallback || fallback === id || (fallback && fallback.length > 20)) return 'Inspector'
         return fallback
     }
 
@@ -55,6 +108,8 @@ function QualityCheckDetail({ qcId, onClose, onRefresh }: {
             setLoading(true)
             const data = await getQualityCheckById(qcId)
             setQC(data)
+            const ref = await resolveReference(data)
+            setResolvedRef(ref)
         } catch (err: any) { toast.error(err.message) }
         finally { setLoading(false) }
     }, [qcId])
@@ -119,14 +174,12 @@ function QualityCheckDetail({ qcId, onClose, onRefresh }: {
             <div className="flex items-center justify-between p-4 border-b border-dark-300/50">
                 <div>
                     <div className="flex items-center gap-3">
-                        <h2 className="font-semibold text-white font-mono">{(qc as any).id?.slice(0, 8)}</h2>
+                        <h2 className="font-semibold text-white font-mono">{resolvedRef}</h2>
                         <QCStatusBadge status={qc.result} />
                     </div>
                     <p className="text-xs text-dark-500 mt-1">{formatDate(qc.checked_at)}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
-                </div>
+                <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -147,25 +200,48 @@ function QualityCheckDetail({ qcId, onClose, onRefresh }: {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="glass-card p-3 bg-dark-200/20">
                         <p className="text-[10px] text-dark-500 uppercase tracking-wider">Reference</p>
-                        <p className="text-sm font-medium text-white truncate">{qc.work_order_id?.slice(0, 8) || qc.production_order_id?.slice(0, 8) || qc.batch_number || qc.batch_id?.slice(0, 8) || qc.parameter || '-'}</p>
+                        <p className="text-sm font-medium text-white font-mono">{resolvedRef}</p>
+                    </div>
+                    <div className="glass-card p-3 bg-dark-200/20">
+                        <p className="text-[10px] text-dark-500 uppercase tracking-wider">Type</p>
+                        <p className="text-sm font-medium text-white capitalize">
+                            {qc.work_order_id ? 'Work Order' : qc.batch_id ? 'Batch' : qc.production_order_id ? 'Production' : 'Manual'}
+                        </p>
                     </div>
                     <div className="glass-card p-3 bg-dark-200/20">
                         <p className="text-[10px] text-dark-500 uppercase tracking-wider">Inspector</p>
                         <p className="text-sm font-medium text-white truncate">{resolveName(qc.checked_by, qc.checked_by_name)}</p>
                     </div>
+                    <div className="glass-card p-3 bg-dark-200/20">
+                        <p className="text-[10px] text-dark-500 uppercase tracking-wider">Date</p>
+                        <p className="text-sm font-medium text-white">{formatDate(qc.checked_at)}</p>
+                    </div>
                 </div>
 
                 {/* Items */}
                 <div className="space-y-3">
-                    <p className="text-[10px] text-dark-500 uppercase tracking-wider px-1">Checklist Items</p>
-                    {(qc.items || []).map(item => (
+                    <p className="text-[10px] text-dark-500 uppercase tracking-wider px-1">
+                        Checklist Items ({qc.items?.length || 0})
+                    </p>
+                    {(!qc.items || qc.items.length === 0) ? (
+                        <div className="glass-card p-4 bg-dark-200/20 text-center">
+                            <p className="text-sm text-dark-500">No checklist items added yet</p>
+                        </div>
+                    ) : qc.items.map(item => (
                         <div key={item.id} className="glass-card p-4 bg-dark-200/20 space-y-3">
                             <div className="flex items-start justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-white">{item.parameter_name}</p>
                                     <p className="text-xs text-dark-500 italic">Spec: {item.specification}</p>
+                                    {item.unit && <p className="text-xs text-dark-600">Unit: {item.unit}</p>}
+                                    {(item.min_value !== null || item.max_value !== null) && (
+                                        <p className="text-xs text-dark-600">
+                                            Range: {item.min_value ?? '-'} to {item.max_value ?? '-'}
+                                        </p>
+                                    )}
                                 </div>
-                                <Badge variant={item.result === 'pass' ? 'success' : item.result === 'fail' ? 'danger' : 'default'} className="uppercase text-[10px]">
+                                <Badge variant={item.result === 'pass' ? 'success' : item.result === 'fail' ? 'danger' : 'default'}
+                                    className="uppercase text-[10px]">
                                     {item.result}
                                 </Badge>
                             </div>
@@ -239,17 +315,19 @@ function QualityCheckDetail({ qcId, onClose, onRefresh }: {
     )
 }
 
+// ============ MAIN PAGE ============
 export function QualityChecksPage() {
     const { user } = useAuthStore()
-    const [checks, setChecks] = useState<QualityCheck[]>([])
+    const [checks, setChecks] = useState<(QualityCheck & { resolvedReference?: string })[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     const resolveName = (id: string | null | undefined, fallback: string | undefined) => {
         if (!id) return 'System'
         if (id === user?.id) return user.full_name || 'Me'
-        if (!fallback || fallback === id || fallback === 'System' || (fallback && fallback.length > 20)) return 'Inspector'
+        if (!fallback || fallback === id || (fallback && fallback.length > 20)) return 'Inspector'
         return fallback
     }
+
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [page, setPage] = useState(1)
@@ -262,7 +340,7 @@ export function QualityChecksPage() {
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [formData, setFormData] = useState<QualityCheckFormData>(EMPTY_QC_FORM)
-    const [references, setReferences] = useState<{ id: string, label: string }[]>([])
+    const [references, setReferences] = useState<{ id: string; label: string }[]>([])
 
     const fetchData = useCallback(async () => {
         try {
@@ -271,7 +349,16 @@ export function QualityChecksPage() {
                 getQualityChecks({ page, pageSize }, { status: statusFilter, search }),
                 getQCStats()
             ])
-            setChecks(result.data)
+
+            // Resolve all references in parallel
+            const checksWithRefs = await Promise.all(
+                result.data.map(async (qc) => {
+                    const ref = await resolveReference(qc)
+                    return { ...qc, resolvedReference: ref }
+                })
+            )
+
+            setChecks(checksWithRefs)
             setTotalPages(result.totalPages)
             setTotalCount(result.count)
             setStats(statsData)
@@ -285,11 +372,31 @@ export function QualityChecksPage() {
         const loadReferences = async () => {
             try {
                 if (formData.reference_type === 'production') {
-                    const res = await getWorkOrders({ page: 1, pageSize: 100 }, { status: 'completed' })
-                    setReferences(res.data.map((o: any) => ({ id: o.id, label: `${o.work_order_number} (${o.product_name})` })))
+                    const { data, error } = await supabase
+                        .from('work_orders')
+                        .select('id, work_order_number, products(name)')
+                        .eq('status', 'completed')
+                        .order('created_at', { ascending: false })
+                        .limit(100)
+
+                    if (error) throw error
+                    setReferences((data || []).map((o: any) => ({
+                        id: o.id,
+                        label: `${o.work_order_number} (${o.products?.name || '-'})`
+                    })))
                 } else {
-                    const res = await getInventory({ page: 1, pageSize: 100 })
-                    setReferences(res.data.map((i: any) => ({ id: i.batch_number || i.id, label: `${i.batch_number} (${i.product_name})` })))
+                    const { data, error } = await supabase
+                        .from('batches')
+                        .select('id, batch_number, products(name)')
+                        .eq('quality_status', 'pending')
+                        .order('created_at', { ascending: false })
+                        .limit(100)
+
+                    if (error) throw error
+                    setReferences((data || []).map((b: any) => ({
+                        id: b.id,
+                        label: `${b.batch_number} (${b.products?.name || '-'})`
+                    })))
                 }
             } catch (err: any) { console.error(err) }
         }
@@ -302,7 +409,17 @@ export function QualityChecksPage() {
             setIsSaving(true)
             await createQualityCheck({
                 ...formData,
-                items: [{ parameter_name: 'Overall', specification: 'Standard', actual_value: 0, min_value: null, max_value: null, result: 'pending', notes: '', product_id: '', batch_id: '' }]
+                batch_id: formData.reference_type === 'batch' ? formData.reference_id : undefined,
+                work_order_id: formData.reference_type === 'production' ? formData.reference_id : undefined,
+                items: [{
+                    parameter_name: 'Overall Quality',
+                    specification: 'Must meet Ayurvedic Pharmacopoeia standards',
+                    actual_value: null,
+                    min_value: null,
+                    max_value: null,
+                    result: 'pending',
+                    notes: '',
+                }]
             }, user?.id)
             toast.success('Quality check created!')
             setShowCreateModal(false)
@@ -312,20 +429,29 @@ export function QualityChecksPage() {
         finally { setIsSaving(false) }
     }
 
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteQualityCheck(id)
+            toast.success('QC check deleted')
+            if (selectedQCId === id) setSelectedQCId(null)
+            fetchData()
+        } catch (err: any) { toast.error(err.message) }
+    }
+
     const handleExport = () => {
         const rows = checks.map(c => ({
-            check_number: (c as any).id?.slice(0, 8),
-            reference: c.work_order_id?.slice(0, 8) || c.production_order_id?.slice(0, 8) || c.batch_number || c.batch_id?.slice(0, 8) || c.parameter || '-',
+            reference: c.resolvedReference || '-',
+            type: c.work_order_id ? 'Work Order' : c.batch_id ? 'Batch' : c.production_order_id ? 'Production' : 'Manual',
             checked_at: formatDate(c.checked_at),
             result: c.result === 'pass' ? 'Pass' : c.result === 'fail' ? 'Fail' : 'Pending',
-            checked_by: resolveName(c.checked_by, c.checked_by_name)
+            checked_by: resolveName(c.checked_by, c.checked_by_name),
         }))
         exportToCSV(rows, [
-            { key: 'check_number', label: 'QC #' },
             { key: 'reference', label: 'Reference' },
+            { key: 'type', label: 'Type' },
             { key: 'checked_at', label: 'Date' },
             { key: 'result', label: 'Result' },
-            { key: 'checked_by', label: 'Checked By' }
+            { key: 'checked_by', label: 'Checked By' },
         ], 'quality_checks')
         toast.success('Exported!')
     }
@@ -347,15 +473,39 @@ export function QualityChecksPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                     { label: 'Total', value: stats.total, color: 'text-blue-400' },
-                    { label: 'Pending', value: stats.pending, color: 'text-dark-500' },
+                    { label: 'Pending', value: stats.pending, color: 'text-amber-400' },
                     { label: 'Passed', value: stats.passed, color: 'text-emerald-400' },
-                    { label: 'Failed', value: stats.failed, color: 'text-red-400' }
+                    { label: 'Failed', value: stats.failed, color: 'text-red-400' },
                 ].map(k => (
                     <div key={k.label} className="glass-card p-3">
                         <p className="text-[10px] text-dark-500 uppercase">{k.label}</p>
                         <p className={cn('text-lg font-bold mt-0.5', k.color)}>{k.value}</p>
                     </div>
                 ))}
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex-1 max-w-md">
+                    <Input placeholder="Search..." value={search}
+                        onChange={(e) => { setSearch(e.target.value); setPage(1) }} icon={<Search size={16} />} />
+                </div>
+                <div className="flex items-center gap-2">
+                    {[
+                        { value: 'all', label: 'All' },
+                        { value: 'pending', label: 'Pending' },
+                        { value: 'pass', label: 'Passed' },
+                        { value: 'fail', label: 'Failed' },
+                    ].map(s => (
+                        <button key={s.value} onClick={() => { setStatusFilter(s.value); setPage(1) }}
+                            className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                                statusFilter === s.value
+                                    ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30'
+                                    : 'text-dark-500 hover:text-white hover:bg-dark-200 border border-transparent')}>
+                            {s.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Split View */}
@@ -368,13 +518,18 @@ export function QualityChecksPage() {
                             </div>
                         </div>
                     ) : checks.length === 0 ? (
-                        <EmptyState icon={<ClipboardCheck size={48} />} title="No quality checks" description="Create a quality check for GRN or production batches" />
+                        <EmptyState icon={<ClipboardCheck size={48} />} title="No quality checks"
+                            description="Create a QC check from Batches or here"
+                            actionLabel="New QC Check" onAction={() => setShowCreateModal(true)} />
                     ) : (
                         <div className="glass-card overflow-hidden">
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-dark-300/50">
-                                        {['QC #', 'Reference', 'Type', 'Date', 'Result', 'Checked By'].map(h => (
+                                        {(selectedQCId
+                                            ? ['Reference', 'Type', 'Result']
+                                            : ['Reference', 'Type', 'Date', 'Result', 'Checked By', '']
+                                        ).map(h => (
                                             <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-dark-500 uppercase">{h}</th>
                                         ))}
                                     </tr>
@@ -388,19 +543,47 @@ export function QualityChecksPage() {
                                                 selectedQCId === (check as any).id && 'bg-brand-500/5 border-l-2 border-brand-500'
                                             )}>
                                             <td className="px-3 py-3">
-                                                <p className="text-sm font-medium text-brand-400 font-mono">{(check as any).id?.slice(0, 8)}</p>
+                                                <p className="text-sm font-medium text-brand-400 font-mono">
+                                                    {check.resolvedReference || '-'}
+                                                </p>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <p className="text-sm text-white truncate max-w-[150px]">{check.work_order_id || check.batch_number || '-'}</p>
+                                            <td className="px-3 py-3 text-sm text-dark-500 capitalize">
+                                                {check.work_order_id ? 'Work Order' : check.batch_id ? 'Batch' : check.production_order_id ? 'Production' : 'Manual'}
                                             </td>
-                                            <td className="px-3 py-3 text-sm text-dark-500 capitalize">{check.work_order_id ? 'Work Order' : 'Batch'}</td>
-                                            <td className="px-3 py-3 text-sm text-dark-500">{formatDate(check.checked_at)}</td>
+                                            {!selectedQCId && (
+                                                <td className="px-3 py-3 text-sm text-dark-500">{formatDate(check.checked_at)}</td>
+                                            )}
                                             <td className="px-3 py-3"><QCStatusBadge status={check.result} /></td>
-                                            <td className="px-3 py-3 text-sm text-dark-500">{resolveName(check.checked_by, check.checked_by_name)}</td>
+                                            {!selectedQCId && (
+                                                <>
+                                                    <td className="px-3 py-3 text-sm text-dark-500">
+                                                        {resolveName(check.checked_by, check.checked_by_name)}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {check.result === 'pending' && (
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDelete((check as any).id) }}
+                                                                className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200">
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-4">
+                            <p className="text-xs text-dark-500">{(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount}</p>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" variant="ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Prev</Button>
+                                <span className="text-sm text-dark-500">{page}/{totalPages}</span>
+                                <Button size="sm" variant="ghost" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -416,6 +599,7 @@ export function QualityChecksPage() {
                 )}
             </div>
 
+            {/* Create Modal */}
             <Modal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
@@ -431,8 +615,8 @@ export function QualityChecksPage() {
                         value={formData.reference_type}
                         onChange={(e) => setFormData(p => ({ ...p, reference_type: e.target.value, reference_id: '' }))}
                         options={[
-                            { value: 'production', label: 'Production Order' },
-                            { value: 'batch', label: 'Inventory Batch' },
+                            { value: 'production', label: 'Work Order (Completed)' },
+                            { value: 'batch', label: 'Batch (Pending QC)' },
                         ]}
                     />
 
@@ -441,7 +625,10 @@ export function QualityChecksPage() {
                         value={formData.reference_id}
                         onChange={(e) => setFormData(p => ({ ...p, reference_id: e.target.value }))}
                         options={references.map(r => ({ value: r.id, label: r.label }))}
-                        placeholder={`Select ${formData.reference_type === 'production' ? 'Order' : 'Batch'}`}
+                        placeholder={references.length === 0
+                            ? `No ${formData.reference_type === 'production' ? 'completed work orders' : 'pending batches'} found`
+                            : `Select ${formData.reference_type === 'production' ? 'Work Order' : 'Batch'}`
+                        }
                     />
 
                     <Input
@@ -452,7 +639,7 @@ export function QualityChecksPage() {
                     />
 
                     <Textarea
-                        label="Initial Notes"
+                        label="Notes (Optional)"
                         value={formData.notes}
                         onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
                         placeholder="Optional notes about this check..."
