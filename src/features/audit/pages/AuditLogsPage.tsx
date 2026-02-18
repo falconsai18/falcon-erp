@@ -52,9 +52,9 @@ function CustomDropdown({ label, value, options, onChange, width = 'w-full' }: C
   }, [isOpen])
 
   return (
-    <div className={`space-y-1 ${width}`} ref={dropdownRef}>
+    <div className={`space-y-1 ${width} relative z-50`} ref={dropdownRef}>
       <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block uppercase">{label}</label>
-      <div className="relative">
+      <div>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
@@ -70,10 +70,10 @@ function CustomDropdown({ label, value, options, onChange, width = 'w-full' }: C
         </button>
         {isOpen && (
           <div className={cn(
-            'absolute z-50 w-full mt-1 rounded-xl',
+            'absolute z-[9999] w-full mt-1 rounded-xl',
             'bg-white dark:bg-dark-200',
-            'shadow-xl border border-gray-200 dark:border-dark-300',
-            'max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2'
+            'shadow-2xl border border-gray-200 dark:border-dark-300',
+            'max-h-60 overflow-y-auto'
           )}>
             {options.map((option) => (
               <div
@@ -268,8 +268,8 @@ export default function AuditLogsPage() {
             </div>
 
             {/* Filters */}
-            <Card className="p-4">
-                <div className="flex flex-wrap gap-4">
+            <Card className="p-4 overflow-visible">
+                <div className="flex flex-wrap gap-4 relative">
                     <CustomDropdown
                         label="User"
                         value={userId}
