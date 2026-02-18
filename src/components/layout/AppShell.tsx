@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
@@ -9,6 +9,15 @@ export function AppShell() {
     // Mobile sidebar state
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
+    // Stable callbacks - no stale closure issues
+    const openSidebar = useCallback(() => {
+        setMobileSidebarOpen(true)
+    }, [])
+
+    const closeSidebar = useCallback(() => {
+        setMobileSidebarOpen(false)
+    }, [])
+
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-dark">
             {/* Desktop Sidebar - Always visible on desktop */}
@@ -17,16 +26,16 @@ export function AppShell() {
             </div>
 
             {/* Mobile Sidebar - Drawer that slides in */}
-            <Sidebar 
+            <Sidebar
                 isMobile={true}
                 mobileOpen={mobileSidebarOpen}
-                onMobileClose={() => setMobileSidebarOpen(false)}
+                onMobileClose={closeSidebar}
             />
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Mobile Header - Only visible on mobile */}
-                <MobileHeader onMenuClick={() => setMobileSidebarOpen(true)} />
+                <MobileHeader onMenuClick={openSidebar} />
 
                 {/* Desktop Topbar - Only visible on desktop */}
                 <div className="hidden lg:block">
