@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
     Search, Filter, Calendar as CalendarIcon,
@@ -16,6 +16,85 @@ import { fetchAuditLogs, type AuditLog, type AuditLog as AuditLogType } from '@/
 import { getUsers, type User } from '@/services/userService'
 import { toast } from 'sonner'
 import { AuditStats } from '@/features/audit/components/AuditStats'
+import { cn } from '@/lib/utils'
+
+// Custom Dropdown Component
+interface DropdownOption {
+  value: string
+  label: string
+}
+
+interface CustomDropdownProps {
+  label: string
+  value: string
+  options: DropdownOption[]
+  onChange: (value: string) => void
+  width?: string
+}
+
+function CustomDropdown({ label, value, options, onChange, width = 'w-full' }: CustomDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const selectedOption = options.find((o) => o.value === value)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className={`space-y-1 ${width}`} ref={dropdownRef}>
+      <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block uppercase">{label}</label>
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            'w-full flex items-center justify-between px-3 py-2 rounded-lg',
+            'glass-card bg-white/50 dark:bg-dark-100/50 backdrop-blur-md',
+            'border border-gray-200 dark:border-dark-300',
+            'text-sm text-gray-900 dark:text-white',
+            'hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all'
+          )}
+        >
+          <span>{selectedOption?.label || 'Select...'}</span>
+          <ChevronDown size={16} className={cn('text-gray-400 transition-transform', isOpen && 'rotate-180')} />
+        </button>
+        {isOpen && (
+          <div className={cn(
+            'absolute z-50 w-full mt-1 rounded-xl',
+            'bg-white dark:bg-dark-200',
+            'shadow-xl border border-gray-200 dark:border-dark-300',
+            'max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2'
+          )}>
+            {options.map((option) => (
+              <div
+                key={option.value}
+                onClick={() => { onChange(option.value); setIsOpen(false); }}
+                className={cn(
+                  'px-4 py-2 cursor-pointer text-sm',
+                  'text-gray-900 dark:text-white',
+                  'hover:bg-gray-100 dark:hover:bg-dark-300',
+                  value === option.value && 'bg-indigo-500/10 text-indigo-500'
+                )}
+              >
+                {option.label}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // Helper to format date relative to now
 const formatRelativeTime = (date: string) => {
@@ -191,49 +270,39 @@ export default function AuditLogsPage() {
             {/* Filters */}
             <Card className="p-4">
                 <div className="flex flex-wrap gap-4">
-                    <div className="w-full md:w-64">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">User</label>
-                        <select
-                            className="w-full p-2 rounded-lg border border-gray-200 dark:border-dark-300 bg-transparent text-sm"
-                            value={userId}
-                            onChange={(e) => setUserId(e.target.value)}
-                        >
-                            <option value="all">All Users</option>
-                            {users.map(u => (
-                                <option key={u.id} value={u.id}>{u.full_name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="w-40">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">Entity Type</label>
-                        <select
-                            className="w-full p-2 rounded-lg border border-gray-200 dark:border-dark-300 bg-transparent text-sm"
-                            value={entityType}
-                            onChange={(e) => setEntityType(e.target.value)}
-                        >
-                            <option value="all">All Entities</option>
-                            <option value="sales_order">Sales Order</option>
-                            <option value="invoice">Invoice</option>
-                            <option value="purchase_order">Purchase Order</option>
-                            <option value="user">User</option>
-                            <option value="product">Product</option>
-                        </select>
-                    </div>
-
-                    <div className="w-40">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">Time Range</label>
-                        <select
-                            className="w-full p-2 rounded-lg border border-gray-200 dark:border-dark-300 bg-transparent text-sm"
-                            value={dateRange}
-                            onChange={(e) => setDateRange(e.target.value as any)}
-                        >
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                            <option value="all">All Time</option>
-                        </select>
-                    </div>
+                    <CustomDropdown
+                        label="User"
+                        value={userId}
+                        options={[{ value: 'all', label: 'All Users' }, ...users.map(u => ({ value: u.id, label: u.full_name }))]}
+                        onChange={(value) => setUserId(value)}
+                        width="w-full md:w-64"
+                    />
+                    <CustomDropdown
+                        label="Entity Type"
+                        value={entityType}
+                        options={[
+                            { value: 'all', label: 'All Entities' },
+                            { value: 'sales_order', label: 'Sales Order' },
+                            { value: 'invoice', label: 'Invoice' },
+                            { value: 'purchase_order', label: 'Purchase Order' },
+                            { value: 'user', label: 'User' },
+                            { value: 'product', label: 'Product' },
+                        ]}
+                        onChange={(value) => setEntityType(value)}
+                        width="w-40"
+                    />
+                    <CustomDropdown
+                        label="Time Range"
+                        value={dateRange}
+                        options={[
+                            { value: 'today', label: 'Today' },
+                            { value: 'week', label: 'This Week' },
+                            { value: 'month', label: 'This Month' },
+                            { value: 'all', label: 'All Time' },
+                        ]}
+                        onChange={(value) => setDateRange(value as any)}
+                        width="w-40"
+                    />
                 </div>
             </Card>
 
