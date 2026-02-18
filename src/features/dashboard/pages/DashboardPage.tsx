@@ -161,14 +161,13 @@ function ComparisonSection({ refreshTrigger }: { refreshTrigger: number }) {
     if (loading && !data) return <div className="h-40 glass-card animate-pulse" />
     if (!data) return null
 
-    const renderCard = (title: string, current: number, previous: number, change: number, isCurrency: boolean = true) => {
+    const renderCard = (title: string, current: number, previous: number, change: number, isCurrency: boolean = true, navigateTo?: string) => {
         const isPositive = change > 0
         const isNeutral = change === 0
         const Arrow = isNeutral ? RefreshCw : (isPositive ? TrendingUp : TrendingUp) // Use same icon, rotate it
 
-        return (
-            <div className="glass-card p-4 border-l-4 border-l-brand-500/50">
-                <p className="text-xs text-gray-400 uppercase font-bold mb-1">{title}</p>
+        const cardContent = (
+            <>
                 <div className="flex items-end justify-between">
                     <div>
                         <p className="text-xl font-bold text-white">
@@ -189,6 +188,28 @@ function ComparisonSection({ refreshTrigger }: { refreshTrigger: number }) {
                         )} />
                     </div>
                 </div>
+            </>
+        )
+
+        if (navigateTo) {
+            return (
+                <div 
+                    className="glass-card p-4 border-l-4 border-l-brand-500/50 cursor-pointer hover:bg-white/5 dark:hover:bg-dark-200/50 transition-colors group"
+                    onClick={() => navigate(navigateTo)}
+                >
+                    <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-gray-400 uppercase font-bold">{title}</p>
+                        <span className="text-xs text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
+                    </div>
+                    {cardContent}
+                </div>
+            )
+        }
+
+        return (
+            <div className="glass-card p-4 border-l-4 border-l-brand-500/50">
+                <p className="text-xs text-gray-400 uppercase font-bold mb-1">{title}</p>
+                {cardContent}
             </div>
         )
     }
@@ -203,10 +224,10 @@ function ComparisonSection({ refreshTrigger }: { refreshTrigger: number }) {
                     </h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {renderCard('Sales', data.sales.current, data.sales.previous, data.sales.change)}
-                    {renderCard('Invoices', data.invoices.current, data.invoices.previous, data.invoices.change, false)}
-                    {renderCard('Purchase', data.purchase.current, data.purchase.previous, data.purchase.change)}
-                    {renderCard('Payments', data.payments.current, data.payments.previous, data.payments.change)}
+                    {renderCard('Sales', data.sales.current, data.sales.previous, data.sales.change, true, '/sales')}
+                    {renderCard('Invoices', data.invoices.current, data.invoices.previous, data.invoices.change, false, '/invoices')}
+                    {renderCard('Purchase', data.purchase.current, data.purchase.previous, data.purchase.change, true, '/purchase')}
+                    {renderCard('Payments', data.payments.current, data.payments.previous, data.payments.change, true, '/supplier-payments')}
                 </div>
             </div>
 
