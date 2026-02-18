@@ -16,6 +16,8 @@ import {
     ChevronLeft,
     ChevronRight,
     AlertCircle,
+    Camera,
+    Scan,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -25,6 +27,8 @@ import { Table } from '@/components/ui/Table'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { SmartCamera } from '@/components/ui/SmartCamera'
+import { ImageTrainingSystem, TrainingStats } from '@/components/smart-camera/ImageTrainingSystem'
 import { cn, formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -132,6 +136,9 @@ export function ProductsPage() {
     const [isSaving, setIsSaving] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [viewProduct, setViewProduct] = useState<Product | null>(null)
+    const [isSmartCameraOpen, setIsSmartCameraOpen] = useState(false)
+    const [isTrainingOpen, setIsTrainingOpen] = useState(false)
+    const [trainingProducts, setTrainingProducts] = useState<any[]>([])
 
     // ============ FETCH DATA ============
     const fetchProducts = async () => {
@@ -208,6 +215,23 @@ export function ProductsPage() {
         fetchProducts()
         fetchCategories()
         fetchBrands()
+        
+        // Load training data for Smart Camera
+        const loadTrainingData = async () => {
+            const { data } = await supabase
+                .from('product_training_data')
+                .select('*')
+            
+            if (data) {
+                setTrainingProducts(data.map((t: any) => ({
+                    id: t.product_id,
+                    name: t.product_name,
+                    category: t.category,
+                    trainingLabels: t.labels || []
+                })))
+            }
+        }
+        loadTrainingData()
     }, [statusFilter])
 
     useEffect(() => {
@@ -470,6 +494,25 @@ export function ProductsPage() {
                 description={`${stats.total} total products • ${stats.active} active`}
                 actions={
                     <div className="flex items-center gap-3">
+                        <Button 
+                            variant="secondary" 
+                            icon={<Camera size={16} />} 
+                            size="sm"
+                            onClick={() => setIsTrainingOpen(true)}
+                        >
+                            Train AI
+                        </Button>
+                        <SmartCamera
+                            mode="recognition"
+                            knownProducts={trainingProducts}
+                            onProductDetected={(match) => {
+                                const product = products.find(p => p.id === match.productId)
+                                if (product) {
+                                    setViewProduct(product)
+                                    toast.success(`Found: ${match.productName}`)
+                                }
+                            }}
+                        />
                         <Button variant="secondary" icon={<Download size={16} />} size="sm">
                             Export
                         </Button>
@@ -708,6 +751,12 @@ export function ProductsPage() {
                     </div>
                 </div>
             </Modal>
+
+            {/* ============ SMART CAMERA TRAINING SYSTEM ============ */}
+            <ImageTrainingSystem
+                isOpen={isTrainingOpen}
+                onClose={() => setIsTrainingOpen(false)}
+            />
         </div>
     )
 }
