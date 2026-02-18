@@ -226,7 +226,7 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                     <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-300/50">
                         <div className="flex items-center gap-3">
                             {/* FAL Oval Logo */}
-                            <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0">
+                            <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0" style={{overflow:'hidden', pointerEvents:'none'}}>
                                 <defs>
                                     <linearGradient id="falFlameSidebar" x1="0%" y1="100%" x2="0%" y2="0%">
                                         <stop offset="0%" stopColor="#dc2626">
@@ -371,7 +371,7 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
             {/* Logo */}
             <div className="h-16 flex items-center gap-3 px-4 border-b border-dark-300/50 dark:border-dark-300/50 border-gray-200">
                 {/* FAL Oval Logo — Desktop */}
-                <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0">
+                <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0" style={{overflow:'hidden', pointerEvents:'none'}}>
                     <defs>
                         <linearGradient id="falFlameDesktop" x1="0%" y1="100%" x2="0%" y2="0%">
                             <stop offset="0%" stopColor="#dc2626">

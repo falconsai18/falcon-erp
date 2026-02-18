@@ -23,7 +23,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
             {/* Center - Logo/Brand */}
             <div className="flex items-center gap-2">
                 {/* FAL Oval Logo - Mobile Header */}
-                <svg width="42" height="28" viewBox="0 0 120 80" className="flex-shrink-0">
+                <svg width="42" height="28" viewBox="0 0 120 80" className="flex-shrink-0" style={{overflow:'hidden', pointerEvents:'none'}}>
                     <defs>
                         <linearGradient id="falFlameMobileHeader" x1="0%" y1="100%" x2="0%" y2="0%">
                             <stop offset="0%" stopColor="#dc2626">

@@ -15,7 +15,7 @@ function FalconLogo({ size = 120 }: { size?: number }) {
     // Maintain aspect ratio: viewBox 120x80, so height = size * (80/120)
     const h = Math.round(size * (80 / 120))
     return (
-        <svg width={size} height={h} viewBox="0 0 120 80" className="mx-auto">
+        <svg width={size} height={h} viewBox="0 0 120 80" className="mx-auto" style={{overflow:'hidden', pointerEvents:'none'}}>
             <defs>
                 {/* Flame gradient: red(base) → orange(mid) → green(tip) — Ayurvedic colors */}
                 <linearGradient id="falFlameLogin" x1="0%" y1="100%" x2="0%" y2="0%">
