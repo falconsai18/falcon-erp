@@ -1,12 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, X, Scan, AlertCircle, CheckCircle, RefreshCw, Package, Search } from 'lucide-react';
+import { Camera, X, Scan, AlertCircle, CheckCircle, RefreshCw, Package, Search, Barcode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/offline/haptics';
-import { 
-  analyzeImage, 
-  imageToBase64, 
-  matchProduct, 
-  analyzeQuality, 
+import {
+  analyzeImage,
+  imageToBase64,
+  matchProduct,
+  analyzeQuality,
   extractBatchInfo,
   mockAnalyzeImage,
   getVisionApiUsage,
@@ -15,6 +15,7 @@ import {
   ProductMatch,
   QualityCheckResult
 } from '@/services/smartCameraService';
+import { scanAndFindProduct, BarcodeResult } from '@/services/barcodeService';
 import { MobileBottomSheet } from './MobileBottomSheet';
 
 interface SmartCameraProps {
@@ -28,6 +29,8 @@ interface SmartCameraProps {
   onProductDetected?: (match: ProductMatch, imageUrl: string) => void;
   onQualityCheck?: (result: QualityCheckResult, imageUrl: string) => void;
   onInventoryCount?: (count: number, imageUrl: string) => void;
+  onBarcodeDetected?: (result: BarcodeResult) => void;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -37,6 +40,8 @@ export function SmartCamera({
   onProductDetected,
   onQualityCheck,
   onInventoryCount,
+  onBarcodeDetected,
+  onClose,
   className
 }: SmartCameraProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,8 +53,10 @@ export function SmartCamera({
     qualityResult: QualityCheckResult | null;
     batchInfo: any;
   } | null>(null);
+  const [barcodeResult, setBarcodeResult] = useState<BarcodeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
 
   const handleCapture = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -122,12 +129,57 @@ export function SmartCamera({
     }
   }, [mode, knownProducts, onProductDetected, onQualityCheck]);
 
+  const handleBarcodeCapture = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    haptics.medium();
+    setError(null);
+    setIsAnalyzing(true);
+
+    try {
+      const result = await scanAndFindProduct(file);
+      if (result) {
+        setBarcodeResult(result);
+        haptics.success();
+        if (onBarcodeDetected) {
+          onBarcodeDetected(result);
+        }
+        // If product found, also fire onProductDetected for compatibility
+        if (result.productId && onProductDetected) {
+          onProductDetected(
+            {
+              productId: result.productId,
+              productName: result.productName || result.barcode,
+              confidence: 1.0,
+              matchedLabels: [result.sku || result.barcode],
+            },
+            ''
+          );
+        }
+      } else {
+        setError('No barcode found in image. Try a clearer photo.');
+        haptics.error();
+      }
+    } catch {
+      setError('Barcode scan failed. Try again.');
+      haptics.error();
+    } finally {
+      setIsAnalyzing(false);
+      if (barcodeInputRef.current) barcodeInputRef.current.value = '';
+    }
+  }, [onBarcodeDetected, onProductDetected]);
+
   const handleReset = useCallback(() => {
     setCapturedImage(null);
     setAnalysisResult(null);
+    setBarcodeResult(null);
     setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+    if (barcodeInputRef.current) {
+      barcodeInputRef.current.value = '';
     }
   }, []);
 
@@ -168,6 +220,7 @@ export function SmartCamera({
         onClose={() => {
           setIsOpen(false);
           handleReset();
+          onClose?.();
         }}
         title={getModeTitle()}
       >
@@ -177,7 +230,7 @@ export function SmartCamera({
             {getModeDescription()}
           </p>
 
-          {/* Hidden File Input */}
+          {/* Hidden File Inputs */}
           <input
             ref={fileInputRef}
             type="file"
@@ -186,10 +239,20 @@ export function SmartCamera({
             onChange={handleCapture}
             className="hidden"
           />
+          {mode === 'inventory' && (
+            <input
+              ref={barcodeInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleBarcodeCapture}
+              className="hidden"
+            />
+          )}
 
           {/* Capture Area */}
           {!capturedImage ? (
-            <div className="relative">
+            <div className="relative space-y-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full aspect-square rounded-xl border-2 border-dashed border-gray-600 hover:border-brand-500 transition-colors flex flex-col items-center justify-center gap-3 bg-dark-200/50"
@@ -200,12 +263,38 @@ export function SmartCamera({
                 <span className="text-gray-400">Tap to capture photo</span>
               </button>
 
+              {mode === 'inventory' && (
+                <button
+                  onClick={() => barcodeInputRef.current?.click()}
+                  disabled={isAnalyzing}
+                  className="w-full py-3 px-4 rounded-xl border border-dashed border-amber-500/50 hover:border-amber-400 transition-colors flex items-center justify-center gap-3 bg-amber-500/5 hover:bg-amber-500/10 disabled:opacity-50"
+                >
+                  <Barcode size={20} className="text-amber-400" />
+                  <span className="text-amber-300 text-sm font-medium">
+                    {isAnalyzing ? 'Scanning barcode...' : 'Scan Barcode'}
+                  </span>
+                </button>
+              )}
+
+              {barcodeResult && (
+                <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                  <p className="text-xs text-amber-400 font-medium">Barcode Detected</p>
+                  <p className="text-sm text-white font-mono mt-0.5">{barcodeResult.barcode}</p>
+                  {barcodeResult.productName && (
+                    <p className="text-xs text-emerald-400 mt-1">{barcodeResult.productName}</p>
+                  )}
+                  {!barcodeResult.productId && (
+                    <p className="text-xs text-amber-500 mt-1">Product not found in system. Select manually.</p>
+                  )}
+                </div>
+              )}
+
               {/* API Usage Warning */}
               {(() => {
                 const usage = getVisionApiUsage();
                 if (usage.remainingFree < 100) {
                   return (
-                    <div className="absolute -bottom-2 left-0 right-0 text-center">
+                    <div className="text-center">
                       <span className="text-xs text-amber-400">
                         ⚠️ {usage.remainingFree} free scans remaining today
                       </span>

@@ -3,7 +3,7 @@ import {
     Plus, Search, Download, X, Save, TrendingUp, ChevronLeft, ChevronRight,
     AlertCircle, Warehouse, Package, AlertTriangle, Calendar,
     IndianRupee, ArrowUpCircle, ArrowDownCircle, RefreshCw,
-    Clock, XCircle, CheckCircle, Filter, History,
+    Clock, XCircle, CheckCircle, Filter, History, ScanLine,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { SmartCamera } from '@/components/ui/SmartCamera'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -194,6 +195,7 @@ export function InventoryPage() {
     // Modals
     const [showAddStock, setShowAddStock] = useState(false)
     const [showAdjust, setShowAdjust] = useState(false)
+    const [showSmartCamera, setShowSmartCamera] = useState(false)
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
     const [adjustItem, setAdjustItem] = useState<InventoryItem | null>(null)
     const [adjustQty, setAdjustQty] = useState('')
@@ -283,6 +285,7 @@ export function InventoryPage() {
                 description={`${stats.totalBatches} batches • Value: ${formatCurrency(stats.totalValue)}`}
                 actions={<div className="flex items-center gap-3">
                     <Button variant="secondary" icon={<Download size={16} />} size="sm">Export</Button>
+                    <Button variant="secondary" size="sm" icon={<ScanLine size={16} />} onClick={() => setShowSmartCamera(true)}>Scan & Add</Button>
                     <Button icon={<Plus size={16} />} onClick={() => setShowAddStock(true)}>Add Stock</Button>
                 </div>} />
 
@@ -475,6 +478,38 @@ export function InventoryPage() {
                         </table>
                     </div>
                 </>
+            )}
+
+            {/* Smart Camera - Inventory/Barcode Mode */}
+            {showSmartCamera && (
+                <SmartCamera
+                    mode="inventory"
+                    onProductDetected={(match) => {
+                        // Pre-select detected product in Add Stock form
+                        const matchedProduct = products.find(p => p.value === match.productId)
+                        if (matchedProduct) {
+                            updateForm('product_id', match.productId)
+                            toast.success(`Product identified: ${match.productName}`)
+                        } else {
+                            toast.info(`Product "${match.productName}" detected. Select manually.`)
+                        }
+                        setShowSmartCamera(false)
+                        setShowAddStock(true)
+                    }}
+                    onBarcodeDetected={(result) => {
+                        if (result.productId) {
+                            updateForm('product_id', result.productId)
+                            toast.success(`Barcode scanned: ${result.productName}`)
+                            setShowSmartCamera(false)
+                            setShowAddStock(true)
+                        } else {
+                            toast.info(`Barcode: ${result.barcode} - Select product manually`)
+                            setShowSmartCamera(false)
+                            setShowAddStock(true)
+                        }
+                    }}
+                    onClose={() => setShowSmartCamera(false)}
+                />
             )}
 
             {/* Add Stock Modal */}

@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, Download, Trash2, ClipboardCheck, CheckCircle, XCircle, Save, X } from 'lucide-react'
+import { Plus, Search, Download, Trash2, ClipboardCheck, CheckCircle, XCircle, Save, X, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { SmartCamera } from '@/components/ui/SmartCamera'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -338,6 +339,7 @@ export function QualityChecksPage() {
     const [stats, setStats] = useState({ total: 0, pending: 0, passed: 0, failed: 0 })
     const [selectedQCId, setSelectedQCId] = useState<string | null>(null)
     const [showCreateModal, setShowCreateModal] = useState(false)
+    const [showSmartCamera, setShowSmartCamera] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [formData, setFormData] = useState<QualityCheckFormData>(EMPTY_QC_FORM)
     const [references, setReferences] = useState<{ id: string; label: string }[]>([])
@@ -464,6 +466,7 @@ export function QualityChecksPage() {
                 actions={
                     <div className="flex items-center gap-3">
                         <Button variant="secondary" size="sm" icon={<Download size={16} />} onClick={handleExport}>Export</Button>
+                        <Button variant="secondary" size="sm" icon={<Camera size={16} />} onClick={() => setShowSmartCamera(true)}>Smart QC Scan</Button>
                         <Button icon={<Plus size={16} />} onClick={() => setShowCreateModal(true)}>New QC Check</Button>
                     </div>
                 }
@@ -598,6 +601,26 @@ export function QualityChecksPage() {
                     </div>
                 )}
             </div>
+
+            {/* Smart Camera - Quality Check Mode */}
+            {showSmartCamera && (
+                <SmartCamera
+                    mode="quality"
+                    onQualityCheck={(result) => {
+                        if (result.issues.length > 0) {
+                            const issueText = `AI Scan: ${result.issues.join(', ')}`
+                            setFormData(p => ({ ...p, notes: issueText }))
+                            toast.info(`Quality issues detected: ${result.issues.join(', ')}`)
+                        } else {
+                            setFormData(p => ({ ...p, notes: 'AI Scan: No issues detected' }))
+                            toast.success('AI scan: Quality looks good!')
+                        }
+                        setShowSmartCamera(false)
+                        setShowCreateModal(true)
+                    }}
+                    onClose={() => setShowSmartCamera(false)}
+                />
+            )}
 
             {/* Create Modal */}
             <Modal
