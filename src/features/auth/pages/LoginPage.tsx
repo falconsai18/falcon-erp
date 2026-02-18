@@ -10,63 +10,95 @@ const DEMO_USERS = [
     { email: 'viewer@falcon.com', password: 'viewer123', role: 'Viewer', icon: BarChart3, color: 'text-purple-400' },
 ]
 
-// Logo Component
+// FAL Oval Logo Component — Inspired by FAL letterhead (Since 1989)
 function FalconLogo({ size = 120 }: { size?: number }) {
+    // Maintain aspect ratio: viewBox 120x80, so height = size * (80/120)
+    const h = Math.round(size * (80 / 120))
     return (
-        <svg width={size} height={size} viewBox="0 0 100 100" className="mx-auto">
+        <svg width={size} height={h} viewBox="0 0 120 80" className="mx-auto">
             <defs>
-                <linearGradient id="flameGradientLogin" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#22c55e">
-                        <animate attributeName="stop-color" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
+                {/* Flame gradient: red(base) → orange(mid) → green(tip) — Ayurvedic colors */}
+                <linearGradient id="falFlameLogin" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#dc2626">
+                        <animate attributeName="stop-color" values="#dc2626;#ea580c;#16a34a;#dc2626" dur="3s" repeatCount="indefinite" />
                     </stop>
-                    <stop offset="50%" stopColor="#3b82f6">
-                        <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#ef4444;#22c55e;#3b82f6" dur="4s" repeatCount="indefinite" />
+                    <stop offset="50%" stopColor="#ea580c">
+                        <animate attributeName="stop-color" values="#ea580c;#16a34a;#dc2626;#ea580c" dur="3s" repeatCount="indefinite" />
                     </stop>
-                    <stop offset="100%" stopColor="#8b5cf6">
-                        <animate attributeName="stop-color" values="#8b5cf6;#ef4444;#22c55e;#3b82f6;#8b5cf6" dur="4s" repeatCount="indefinite" />
+                    <stop offset="100%" stopColor="#16a34a">
+                        <animate attributeName="stop-color" values="#16a34a;#dc2626;#ea580c;#16a34a" dur="3s" repeatCount="indefinite" />
                     </stop>
                 </linearGradient>
-                <filter id="glow">
-                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                {/* Green oval border gradient */}
+                <linearGradient id="ovalGradLogin" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#16a34a" />
+                    <stop offset="50%" stopColor="#22c55e" />
+                    <stop offset="100%" stopColor="#15803d" />
+                </linearGradient>
+                {/* Glow filter */}
+                <filter id="falGlowLogin" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
                     <feMerge>
                         <feMergeNode in="coloredBlur"/>
                         <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                 </filter>
+                {/* Flame shadow */}
+                <filter id="flameShadowLogin" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#ea580c" floodOpacity="0.4"/>
+                </filter>
             </defs>
-            {/* Hexagon frame */}
-            <polygon 
-                points="50,5 90,25 90,75 50,95 10,75 10,25" 
-                fill="none" 
-                stroke="url(#flameGradientLogin)" 
-                strokeWidth="2"
-                filter="url(#glow)"
+
+            {/* Outer oval border — green */}
+            <ellipse cx="60" cy="38" rx="57" ry="34"
+                fill="none"
+                stroke="url(#ovalGradLogin)"
+                strokeWidth="2.5"
+                filter="url(#falGlowLogin)"
             />
-            {/* Inner hexagon */}
-            <polygon 
-                points="50,15 80,30 80,70 50,85 20,70 20,30" 
-                fill="none" 
-                stroke="url(#flameGradientLogin)" 
-                strokeWidth="1"
-                opacity="0.5"
+            {/* Inner oval — subtle decorative */}
+            <ellipse cx="60" cy="38" rx="49" ry="27"
+                fill="none"
+                stroke="#16a34a"
+                strokeWidth="0.8"
+                opacity="0.3"
             />
-            {/* FAL text */}
-            <text 
-                x="50" 
-                y="58" 
-                textAnchor="middle" 
-                fill="#3b82f6" 
-                fontSize="28" 
-                fontWeight="bold" 
-                fontFamily="system-ui"
-                filter="url(#glow)"
-            >
-                FAL
-            </text>
-            {/* Decorative dots */}
-            <circle cx="50" cy="8" r="2" fill="#22c55e">
-                <animate attributeName="fill" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
-            </circle>
+
+            {/* Flame / Leaf shape — teardrop upward */}
+            <path
+                d="M60,10 C65,17 71,26 69,35 C67,43 63,49 60,51 C57,49 53,43 51,35 C49,26 55,17 60,10 Z"
+                fill="url(#falFlameLogin)"
+                filter="url(#flameShadowLogin)"
+                opacity="0.92"
+            />
+            {/* Inner highlight on flame */}
+            <path
+                d="M60,16 C63,22 66,29 64,36 C63,40 61,44 60,46 C59,44 57,40 56,36 C54,29 57,22 60,16 Z"
+                fill="white"
+                opacity="0.13"
+            />
+
+            {/* FAL text — bold orange */}
+            <text
+                x="60" y="41"
+                textAnchor="middle"
+                fill="#ea580c"
+                fontSize="17"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, Arial, sans-serif"
+                filter="url(#falGlowLogin)"
+                letterSpacing="1"
+            >FAL</text>
+
+            {/* Since 1989 — below oval */}
+            <text
+                x="60" y="70"
+                textAnchor="middle"
+                fill="#9ca3af"
+                fontSize="6.5"
+                fontFamily="system-ui, -apple-system, Arial, sans-serif"
+                letterSpacing="0.5"
+            >Since 1989</text>
         </svg>
     )
 }
@@ -128,7 +160,7 @@ export function LoginPage() {
                         <span className="text-brand-400">FALCON</span>
                         <span className="text-white"> ERP</span>
                     </h1>
-                    <p className="text-xl text-dark-500">Enterprise Resource Planning</p>
+                    <p className="text-xl text-dark-500">Ayurvedic Products Management</p>
                     <p className="text-sm text-dark-600">Since 1989</p>
 
                     <div className="grid grid-cols-2 gap-4 mt-12 max-w-md mx-auto">
@@ -248,7 +280,7 @@ export function LoginPage() {
                     </div>
 
                     <p className="text-center text-xs text-dark-600">
-                        FALCON ERP v2.0 • Powered by Alien Tech
+                        FALCON ERP v2.0 • falconherbs.com
                     </p>
                 </div>
             </div>

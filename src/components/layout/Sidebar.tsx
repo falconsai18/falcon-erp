@@ -208,7 +208,7 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                 {/* Backdrop */}
                 <div
                     className={cn(
-                        'fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300',
+                        'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden transition-opacity duration-300',
                         mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                     )}
                     onClick={onMobileClose}
@@ -217,7 +217,7 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                 {/* Mobile Drawer */}
                 <aside
                     className={cn(
-                        'fixed inset-y-0 left-0 z-50 w-[280px] bg-white dark:bg-dark-50 border-r border-gray-200 dark:border-dark-300/50',
+                        'fixed inset-y-0 left-0 z-[60] w-[280px] bg-white dark:bg-dark-50 border-r border-gray-200 dark:border-dark-300/50',
                         'transform transition-transform duration-300 ease-out lg:hidden',
                         mobileOpen ? 'translate-x-0' : '-translate-x-full'
                     )}
@@ -225,23 +225,33 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                     {/* Mobile Header with Close Button */}
                     <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-300/50">
                         <div className="flex items-center gap-3">
-                            {/* Logo */}
-                            <svg width="32" height="32" viewBox="0 0 100 100" className="flex-shrink-0">
+                            {/* FAL Oval Logo */}
+                            <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0">
                                 <defs>
-                                    <linearGradient id="flameGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                                        <stop offset="0%" stopColor="#22c55e">
-                                            <animate attributeName="stop-color" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
+                                    <linearGradient id="falFlameSidebar" x1="0%" y1="100%" x2="0%" y2="0%">
+                                        <stop offset="0%" stopColor="#dc2626">
+                                            <animate attributeName="stop-color" values="#dc2626;#ea580c;#16a34a;#dc2626" dur="3s" repeatCount="indefinite" />
                                         </stop>
-                                        <stop offset="50%" stopColor="#3b82f6">
-                                            <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#ef4444;#22c55e;#3b82f6" dur="4s" repeatCount="indefinite" />
+                                        <stop offset="50%" stopColor="#ea580c">
+                                            <animate attributeName="stop-color" values="#ea580c;#16a34a;#dc2626;#ea580c" dur="3s" repeatCount="indefinite" />
                                         </stop>
-                                        <stop offset="100%" stopColor="#8b5cf6">
-                                            <animate attributeName="stop-color" values="#8b5cf6;#ef4444;#22c55e;#3b82f6;#8b5cf6" dur="4s" repeatCount="indefinite" />
+                                        <stop offset="100%" stopColor="#16a34a">
+                                            <animate attributeName="stop-color" values="#16a34a;#dc2626;#ea580c;#16a34a" dur="3s" repeatCount="indefinite" />
                                         </stop>
                                     </linearGradient>
+                                    <linearGradient id="ovalGradSidebar" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#16a34a" />
+                                        <stop offset="100%" stopColor="#22c55e" />
+                                    </linearGradient>
+                                    <filter id="falGlowSidebar" x="-20%" y="-20%" width="140%" height="140%">
+                                        <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                    </filter>
                                 </defs>
-                                <polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="none" stroke="url(#flameGradient)" strokeWidth="2"/>
-                                <text x="50" y="62" textAnchor="middle" fill="#3b82f6" fontSize="32" fontWeight="bold" fontFamily="system-ui">FAL</text>
+                                <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="url(#ovalGradSidebar)" strokeWidth="2.5" filter="url(#falGlowSidebar)"/>
+                                <ellipse cx="60" cy="38" rx="49" ry="27" fill="none" stroke="#16a34a" strokeWidth="0.8" opacity="0.3"/>
+                                <path d="M60,10 C65,17 71,26 69,35 C67,43 63,49 60,51 C57,49 53,43 51,35 C49,26 55,17 60,10 Z" fill="url(#falFlameSidebar)" opacity="0.9"/>
+                                <text x="60" y="41" textAnchor="middle" fill="#ea580c" fontSize="17" fontWeight="900" fontFamily="system-ui" filter="url(#falGlowSidebar)" letterSpacing="1">FAL</text>
                             </svg>
                             <div>
                                 <h1 className="text-sm font-bold text-gray-900 dark:text-white">FALCON ERP</h1>
@@ -360,25 +370,33 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
         >
             {/* Logo */}
             <div className="h-16 flex items-center gap-3 px-4 border-b border-dark-300/50 dark:border-dark-300/50 border-gray-200">
-                {/* New Logo SVG */}
-                <svg width="32" height="32" viewBox="0 0 100 100" className="flex-shrink-0">
+                {/* FAL Oval Logo — Desktop */}
+                <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0">
                     <defs>
-                        <linearGradient id="flameGradientDesktop" x1="0%" y1="100%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="#22c55e">
-                                <animate attributeName="stop-color" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
+                        <linearGradient id="falFlameDesktop" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stopColor="#dc2626">
+                                <animate attributeName="stop-color" values="#dc2626;#ea580c;#16a34a;#dc2626" dur="3s" repeatCount="indefinite" />
                             </stop>
-                            <stop offset="50%" stopColor="#3b82f6">
-                                <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#ef4444;#22c55e;#3b82f6" dur="4s" repeatCount="indefinite" />
+                            <stop offset="50%" stopColor="#ea580c">
+                                <animate attributeName="stop-color" values="#ea580c;#16a34a;#dc2626;#ea580c" dur="3s" repeatCount="indefinite" />
                             </stop>
-                            <stop offset="100%" stopColor="#8b5cf6">
-                                <animate attributeName="stop-color" values="#8b5cf6;#ef4444;#22c55e;#3b82f6;#8b5cf6" dur="4s" repeatCount="indefinite" />
+                            <stop offset="100%" stopColor="#16a34a">
+                                <animate attributeName="stop-color" values="#16a34a;#dc2626;#ea580c;#16a34a" dur="3s" repeatCount="indefinite" />
                             </stop>
                         </linearGradient>
+                        <linearGradient id="ovalGradDesktop" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#16a34a" />
+                            <stop offset="100%" stopColor="#22c55e" />
+                        </linearGradient>
+                        <filter id="falGlowDesktop" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
                     </defs>
-                    {/* Hexagon frame */}
-                    <polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="none" stroke="url(#flameGradientDesktop)" strokeWidth="2"/>
-                    {/* FAL text */}
-                    <text x="50" y="62" textAnchor="middle" fill="#3b82f6" fontSize="32" fontWeight="bold" fontFamily="system-ui">FAL</text>
+                    <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="url(#ovalGradDesktop)" strokeWidth="2.5" filter="url(#falGlowDesktop)"/>
+                    <ellipse cx="60" cy="38" rx="49" ry="27" fill="none" stroke="#16a34a" strokeWidth="0.8" opacity="0.3"/>
+                    <path d="M60,10 C65,17 71,26 69,35 C67,43 63,49 60,51 C57,49 53,43 51,35 C49,26 55,17 60,10 Z" fill="url(#falFlameDesktop)" opacity="0.9"/>
+                    <text x="60" y="41" textAnchor="middle" fill="#ea580c" fontSize="17" fontWeight="900" fontFamily="system-ui" filter="url(#falGlowDesktop)" letterSpacing="1">FAL</text>
                 </svg>
                 {!collapsed && (
                     <div className="overflow-hidden">
