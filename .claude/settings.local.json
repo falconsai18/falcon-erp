@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(git -C \"F:\\\\FSG ERP\\\\falcon-super-gold-erp\" remote -v)",
+      "Bash(findstr:*)",
+      "Bash(test:*)",
+      "Bash(powershell -Command \"cd ''F:\\\\FSG ERP\\\\falcon-super-gold-erp''; git remote -v\")",
+      "Bash(grep:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git merge origin/feature/phase3-alien-tech --no-ff -m \"$\\(cat <<''EOF''\nfeat: Merge Phase 3 & 4 - Offline ERP + Smart Camera + Barcode Scanning\n\nPhase 3 - Offline-First Mobile ERP:\n- IndexedDB offline storage with sync queue\n- Mobile UI components \\(swipe cards, bottom sheets, FAB\\)\n- Smart QR workflows, PWA installable\n- Haptic feedback, Windows 7 compatible\n\nPhase 4 - Smart Camera + AI:\n- Google Vision API integration \\(product recognition, quality check, OCR\\)\n- Barcode scanning with @ericblade/quagga2\n- SmartCamera integrated in Products, Quality Checks, Inventory pages\n- Image training system for custom products\n- API usage tracking \\(1000 free/month\\)\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git merge origin/feature/phase3-alien-tech --allow-unrelated-histories --no-ff -m \"$\\(cat <<''EOF''\nfeat: Merge Phase 3 & 4 - Offline ERP + Smart Camera + Barcode Scanning\n\nPhase 3 - Offline-First Mobile ERP:\n- IndexedDB offline storage with sync queue\n- Mobile UI components \\(swipe cards, bottom sheets, FAB\\)\n- Smart QR workflows, PWA installable\n- Haptic feedback, Windows 7 compatible\n\nPhase 4 - Smart Camera + AI:\n- Google Vision API integration \\(product recognition, quality check, OCR\\)\n- Barcode scanning with @ericblade/quagga2\n- SmartCamera integrated in Products, Quality Checks, Inventory pages\n- Image training system for custom products\n- API usage tracking \\(1000 free/month\\)\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git merge:*)",
+      "Bash(ls \"F:\\\\FSG ERP\\\\falcon-super-gold-erp\\\\src\\\\services\"\" && ls \"F:FSG ERPfalcon-super-gold-erpsrccomponentsui\"\")",
+      "Bash(gh api:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git commit:*)",
+      "Bash(vercel env add:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel:*)"
+    ]
+  }
+}

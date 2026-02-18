@@ -10,6 +10,67 @@ const DEMO_USERS = [
     { email: 'viewer@falcon.com', password: 'viewer123', role: 'Viewer', icon: BarChart3, color: 'text-purple-400' },
 ]
 
+// Logo Component
+function FalconLogo({ size = 120 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 100 100" className="mx-auto">
+            <defs>
+                <linearGradient id="flameGradientLogin" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#22c55e">
+                        <animate attributeName="stop-color" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="50%" stopColor="#3b82f6">
+                        <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#ef4444;#22c55e;#3b82f6" dur="4s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="100%" stopColor="#8b5cf6">
+                        <animate attributeName="stop-color" values="#8b5cf6;#ef4444;#22c55e;#3b82f6;#8b5cf6" dur="4s" repeatCount="indefinite" />
+                    </stop>
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            {/* Hexagon frame */}
+            <polygon 
+                points="50,5 90,25 90,75 50,95 10,75 10,25" 
+                fill="none" 
+                stroke="url(#flameGradientLogin)" 
+                strokeWidth="2"
+                filter="url(#glow)"
+            />
+            {/* Inner hexagon */}
+            <polygon 
+                points="50,15 80,30 80,70 50,85 20,70 20,30" 
+                fill="none" 
+                stroke="url(#flameGradientLogin)" 
+                strokeWidth="1"
+                opacity="0.5"
+            />
+            {/* FAL text */}
+            <text 
+                x="50" 
+                y="58" 
+                textAnchor="middle" 
+                fill="#3b82f6" 
+                fontSize="28" 
+                fontWeight="bold" 
+                fontFamily="system-ui"
+                filter="url(#glow)"
+            >
+                FAL
+            </text>
+            {/* Decorative dots */}
+            <circle cx="50" cy="8" r="2" fill="#22c55e">
+                <animate attributeName="fill" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
+            </circle>
+        </svg>
+    )
+}
+
 export function LoginPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -58,15 +119,17 @@ export function LoginPage() {
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-dark via-dark-50 to-dark relative overflow-hidden items-center justify-center">
                 {/* Background glow */}
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-ayurvedic-neem/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-success-500/10 rounded-full blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-premium-500/5 rounded-full blur-3xl" />
 
                 <div className="relative z-10 text-center space-y-8 px-12">
-                    <div className="text-8xl">🦅</div>
+                    <FalconLogo size={140} />
                     <h1 className="text-5xl font-bold">
-                        <span className="text-brand-400">Falcon</span>
-                        <span className="text-white"> Super Gold</span>
+                        <span className="text-brand-400">FALCON</span>
+                        <span className="text-white"> ERP</span>
                     </h1>
                     <p className="text-xl text-dark-500">Enterprise Resource Planning</p>
+                    <p className="text-sm text-dark-600">Since 1989</p>
 
                     <div className="grid grid-cols-2 gap-4 mt-12 max-w-md mx-auto">
                         {[
@@ -88,9 +151,13 @@ export function LoginPage() {
             <div className="flex-1 flex items-center justify-center p-8">
                 <div className="w-full max-w-md space-y-8">
                     {/* Mobile logo */}
-                    <div className="lg:hidden text-center space-y-2">
-                        <div className="text-5xl">🦅</div>
-                        <h1 className="text-2xl font-bold text-brand-400">Falcon Super Gold</h1>
+                    <div className="lg:hidden text-center space-y-4">
+                        <FalconLogo size={100} />
+                        <h1 className="text-3xl font-bold">
+                            <span className="text-brand-400">FALCON</span>
+                            <span className="text-white"> ERP</span>
+                        </h1>
+                        <p className="text-sm text-dark-600">Since 1989</p>
                     </div>
 
                     <div className="space-y-2">
@@ -181,7 +248,7 @@ export function LoginPage() {
                     </div>
 
                     <p className="text-center text-xs text-dark-600">
-                        Falcon Super Gold ERP v1.0 • Powered by Falcon Herbs
+                        FALCON ERP v2.0 • Powered by Alien Tech
                     </p>
                 </div>
             </div>

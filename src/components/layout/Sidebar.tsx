@@ -27,6 +27,7 @@ import {
     ClipboardCheck,
     Wallet,
     Shield,
+    X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -106,7 +107,14 @@ const NAV_SECTIONS: NavSection[] = [
 
 const STORAGE_KEY = 'sidebar-sections'
 
-export function Sidebar() {
+// ============ PROPS INTERFACE ============
+interface SidebarProps {
+    isMobile?: boolean
+    mobileOpen?: boolean
+    onMobileClose?: () => void
+}
+
+export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }: SidebarProps) {
     const [collapsed, setCollapsed] = useState(false)
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
     const { user, logout } = useAuthStore()
@@ -129,7 +137,6 @@ export function Sidebar() {
             try {
                 setExpandedSections(JSON.parse(stored))
             } catch {
-                // If parsing fails, default to all expanded
                 const defaultExpanded: Record<string, boolean> = {}
                 filteredSections.forEach(section => {
                     defaultExpanded[section.title] = true
@@ -137,14 +144,13 @@ export function Sidebar() {
                 setExpandedSections(defaultExpanded)
             }
         } else {
-            // Default: all sections expanded
             const defaultExpanded: Record<string, boolean> = {}
             filteredSections.forEach(section => {
                 defaultExpanded[section.title] = true
             })
             setExpandedSections(defaultExpanded)
         }
-    }, [filteredSections]) // Added dependency on filteredSections
+    }, [filteredSections])
 
     // Save to localStorage whenever expandedSections changes
     useEffect(() => {
@@ -170,6 +176,13 @@ export function Sidebar() {
         }
     }, [location.pathname, filteredSections])
 
+    // Close mobile sidebar when route changes
+    useEffect(() => {
+        if (isMobile && onMobileClose) {
+            onMobileClose()
+        }
+    }, [location.pathname, isMobile, onMobileClose])
+
     const toggleSection = (title: string) => {
         setExpandedSections(prev => ({
             ...prev,
@@ -188,6 +201,156 @@ export function Sidebar() {
         return section?.title
     }, [location.pathname, filteredSections])
 
+    // ============ MOBILE SIDEBAR (DRAWER) ============
+    if (isMobile) {
+        return (
+            <>
+                {/* Backdrop */}
+                <div
+                    className={cn(
+                        'fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300',
+                        mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                    )}
+                    onClick={onMobileClose}
+                />
+
+                {/* Mobile Drawer */}
+                <aside
+                    className={cn(
+                        'fixed inset-y-0 left-0 z-50 w-[280px] bg-white dark:bg-dark-50 border-r border-gray-200 dark:border-dark-300/50',
+                        'transform transition-transform duration-300 ease-out lg:hidden',
+                        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+                    )}
+                >
+                    {/* Mobile Header with Close Button */}
+                    <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-300/50">
+                        <div className="flex items-center gap-3">
+                            {/* Logo */}
+                            <svg width="32" height="32" viewBox="0 0 100 100" className="flex-shrink-0">
+                                <defs>
+                                    <linearGradient id="flameGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                                        <stop offset="0%" stopColor="#22c55e">
+                                            <animate attributeName="stop-color" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
+                                        </stop>
+                                        <stop offset="50%" stopColor="#3b82f6">
+                                            <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#ef4444;#22c55e;#3b82f6" dur="4s" repeatCount="indefinite" />
+                                        </stop>
+                                        <stop offset="100%" stopColor="#8b5cf6">
+                                            <animate attributeName="stop-color" values="#8b5cf6;#ef4444;#22c55e;#3b82f6;#8b5cf6" dur="4s" repeatCount="indefinite" />
+                                        </stop>
+                                    </linearGradient>
+                                </defs>
+                                <polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="none" stroke="url(#flameGradient)" strokeWidth="2"/>
+                                <text x="50" y="62" textAnchor="middle" fill="#3b82f6" fontSize="32" fontWeight="bold" fontFamily="system-ui">FAL</text>
+                            </svg>
+                            <div>
+                                <h1 className="text-sm font-bold text-gray-900 dark:text-white">FALCON ERP</h1>
+                                <p className="text-[10px] text-gray-500 dark:text-dark-500">Since 1989</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={onMobileClose}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors"
+                            aria-label="Close menu"
+                        >
+                            <X size={20} className="text-gray-600 dark:text-gray-400" />
+                        </button>
+                    </div>
+
+                    {/* Navigation */}
+                    <nav className="flex-1 overflow-y-auto py-3 px-3 h-[calc(100vh-180px)]">
+                        {filteredSections.map((section, sectionIndex) => {
+                            const isExpanded = expandedSections[section.title] ?? true
+                            const isActiveSection = activeSectionTitle === section.title
+
+                            return (
+                                <div key={section.title} className={cn(sectionIndex > 0 && 'mt-2')}>
+                                    <button
+                                        onClick={() => toggleSection(section.title)}
+                                        className="w-full px-3 py-2 flex items-center justify-between text-[10px] font-medium uppercase text-gray-500 dark:text-dark-500 tracking-wider hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer transition-colors"
+                                    >
+                                        <span>{section.title}</span>
+                                        <ChevronDown
+                                            size={14}
+                                            className={cn(
+                                                'transition-transform duration-200',
+                                                !isExpanded && '-rotate-90'
+                                            )}
+                                        />
+                                    </button>
+                                    <div
+                                        className={cn(
+                                            'overflow-hidden transition-all duration-200 ease-in-out',
+                                            isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+                                        )}
+                                    >
+                                        <div className="space-y-0.5 pt-1">
+                                            {section.items.map((item) => {
+                                                const isActive = location.pathname === item.path ||
+                                                    (item.path !== '/' && location.pathname.startsWith(item.path))
+
+                                                return (
+                                                    <NavLink
+                                                        key={item.path}
+                                                        to={item.path}
+                                                        onClick={onMobileClose}
+                                                        className={cn(
+                                                            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors relative',
+                                                            isActive
+                                                                ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                                                                : 'text-gray-600 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50'
+                                                        )}
+                                                    >
+                                                        {isActive && (
+                                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-500 rounded-r-full" />
+                                                        )}
+                                                        <item.icon size={18} className="flex-shrink-0" />
+                                                        <span>{item.label}</span>
+                                                    </NavLink>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </nav>
+
+                    {/* Bottom Section */}
+                    <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-dark-300/50 bg-white dark:bg-dark-50 p-3 space-y-2">
+                        {/* Theme Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50 w-full transition-colors text-sm"
+                        >
+                            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+                        </button>
+
+                        {/* User Info */}
+                        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 dark:bg-dark-200/30">
+                            <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-bold flex-shrink-0">
+                                {user?.full_name?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
+                                <p className="text-[10px] text-gray-500 dark:text-dark-500 truncate">{user?.role || 'viewer'}</p>
+                            </div>
+                            <button
+                                onClick={logout}
+                                className="text-gray-500 dark:text-dark-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                title="Logout"
+                            >
+                                <LogOut size={16} />
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+            </>
+        )
+    }
+
+    // ============ DESKTOP SIDEBAR ============
     return (
         <aside
             className={cn(
@@ -197,11 +360,30 @@ export function Sidebar() {
         >
             {/* Logo */}
             <div className="h-16 flex items-center gap-3 px-4 border-b border-dark-300/50 dark:border-dark-300/50 border-gray-200">
-                <span className="text-2xl flex-shrink-0">🦅</span>
+                {/* New Logo SVG */}
+                <svg width="32" height="32" viewBox="0 0 100 100" className="flex-shrink-0">
+                    <defs>
+                        <linearGradient id="flameGradientDesktop" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stopColor="#22c55e">
+                                <animate attributeName="stop-color" values="#22c55e;#3b82f6;#8b5cf6;#ef4444;#22c55e" dur="4s" repeatCount="indefinite" />
+                            </stop>
+                            <stop offset="50%" stopColor="#3b82f6">
+                                <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#ef4444;#22c55e;#3b82f6" dur="4s" repeatCount="indefinite" />
+                            </stop>
+                            <stop offset="100%" stopColor="#8b5cf6">
+                                <animate attributeName="stop-color" values="#8b5cf6;#ef4444;#22c55e;#3b82f6;#8b5cf6" dur="4s" repeatCount="indefinite" />
+                            </stop>
+                        </linearGradient>
+                    </defs>
+                    {/* Hexagon frame */}
+                    <polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="none" stroke="url(#flameGradientDesktop)" strokeWidth="2"/>
+                    {/* FAL text */}
+                    <text x="50" y="62" textAnchor="middle" fill="#3b82f6" fontSize="32" fontWeight="bold" fontFamily="system-ui">FAL</text>
+                </svg>
                 {!collapsed && (
                     <div className="overflow-hidden">
-                        <h1 className="text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">Falcon Super Gold</h1>
-                        <p className="text-[10px] text-dark-500 whitespace-nowrap">Enterprise ERP</p>
+                        <h1 className="text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">FALCON ERP</h1>
+                        <p className="text-[10px] text-dark-500 whitespace-nowrap">Since 1989</p>
                     </div>
                 )}
             </div>
