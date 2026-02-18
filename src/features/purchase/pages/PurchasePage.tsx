@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
     Plus, Search, Download, Trash2, X, Save, ChevronLeft, ChevronRight,
     AlertCircle, Truck, Package, IndianRupee, Calendar, Check, ArrowRight,
@@ -201,9 +201,27 @@ function PODetail({ poId, onClose, onRefresh }: {
 }
 
 // ============ CREATE PO WIZARD ============
-function CreatePOWizard({ isOpen, onClose, onCreated }: {
-    isOpen: boolean; onClose: () => void; onCreated: () => void
-}) {
+interface CreatePOWizardProps {
+    isOpen: boolean
+    onClose: () => void
+    onCreated: () => void
+    prefillMaterialId?: string | null
+    prefillQuantity?: string | null
+    prefillMaterialName?: string | null
+    prefillCost?: string | null
+    prefillUnit?: string | null
+}
+
+function CreatePOWizard({ 
+    isOpen, 
+    onClose, 
+    onCreated,
+    prefillMaterialId,
+    prefillQuantity,
+    prefillMaterialName,
+    prefillCost,
+    prefillUnit,
+}: CreatePOWizardProps) {
     const { user } = useAuthStore()
     const navigate = useNavigate()
     const [step, setStep] = useState(1)
@@ -212,6 +230,7 @@ function CreatePOWizard({ isOpen, onClose, onCreated }: {
     const [materials, setMaterials] = useState<any[]>([])
     const [isSaving, setIsSaving] = useState(false)
     const [materialSearch, setMaterialSearch] = useState('')
+    const [hasPrefilled, setHasPrefilled] = useState(false)
 
     useEffect(() => {
         if (isOpen) {
@@ -220,8 +239,47 @@ function CreatePOWizard({ isOpen, onClose, onCreated }: {
             const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
             setFormData({ ...EMPTY_PO_FORM, order_date: today, expected_date: nextWeek })
             loadData()
+            setHasPrefilled(false)
         }
     }, [isOpen])
+
+    // Handle prefill data after materials are loaded
+    useEffect(() => {
+        if (isOpen && materials.length > 0 && prefillMaterialId && !hasPrefilled) {
+            const material = materials.find(m => m.id === prefillMaterialId)
+            if (material) {
+                const quantity = Number(prefillQuantity) || 1
+                const unitPrice = Number(prefillCost) || material.unit_cost || 0
+                
+                const newItem = calculatePOItem({
+                    raw_material_id: material.id,
+                    product_id: null,
+                    description: material.name,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    tax_rate: 12,
+                    tax_amount: 0,
+                    total_amount: 0,
+                    received_quantity: 0,
+                    material_name: material.name,
+                    material_code: material.code,
+                })
+                
+                setFormData(p => ({ 
+                    ...p, 
+                    items: [newItem]
+                }))
+                
+                toast.success('Pre-filled from Reorder suggestion ✓', {
+                    description: `${material.name} × ${quantity} ${prefillUnit || material.unit_of_measure}`,
+                })
+                
+                setHasPrefilled(true)
+                // Auto-advance to step 2 if we have a prefill
+                setStep(2)
+            }
+        }
+    }, [isOpen, materials, prefillMaterialId, prefillQuantity, prefillMaterialName, prefillCost, prefillUnit, hasPrefilled])
 
     const loadData = async () => {
         const [{ data: sup }, { data: mat }] = await Promise.all([
@@ -457,6 +515,14 @@ export function PurchasePage() {
     const [totalCount, setTotalCount] = useState(0)
     const pageSize = 25
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    
+    // Read prefill params from URL
+    const prefillMaterialId = searchParams.get('material_id')
+    const prefillQuantity = searchParams.get('quantity')
+    const prefillMaterialName = searchParams.get('material_name')
+    const prefillCost = searchParams.get('cost')
+    const prefillUnit = searchParams.get('unit')
 
     // CHANGE 3 & 4: Filters
     const [dateFrom, setDateFrom] = useState('')
@@ -474,6 +540,13 @@ export function PurchasePage() {
     const [selectedPOId, setSelectedPOId] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
     const [stats, setStats] = useState({ total: 0, draft: 0, sent: 0, confirmed: 0, received: 0, totalValue: 0 })
+
+    // Auto-open wizard if prefill params exist
+    useEffect(() => {
+        if (prefillMaterialId && prefillQuantity) {
+            setShowWizard(true)
+        }
+    }, [prefillMaterialId, prefillQuantity])
 
     // Load suppliers for filter
     useEffect(() => {
@@ -687,7 +760,16 @@ export function PurchasePage() {
                 )}
             </div>
 
-            <CreatePOWizard isOpen={showWizard} onClose={() => setShowWizard(false)} onCreated={fetchData} />
+            <CreatePOWizard 
+                isOpen={showWizard} 
+                onClose={() => setShowWizard(false)} 
+                onCreated={fetchData}
+                prefillMaterialId={prefillMaterialId}
+                prefillQuantity={prefillQuantity}
+                prefillMaterialName={prefillMaterialName}
+                prefillCost={prefillCost}
+                prefillUnit={prefillUnit}
+            />
 
             <Modal isOpen={isDeleteModalOpen} onClose={() => { setIsDeleteModalOpen(false); setDeletingOrder(null) }}
                 title="Delete Purchase Order" size="sm"

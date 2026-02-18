@@ -26,6 +26,7 @@ import {
     FileMinus,
     ClipboardCheck,
     Wallet,
+    Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -97,7 +98,7 @@ const NAV_SECTIONS: NavSection[] = [
             { label: 'Reports', icon: BarChart3, path: '/reports' },
             { label: 'GST Reports', icon: FileText, path: '/gst-reports' },
             { label: 'Users', icon: Users, path: '/users' },
-            { label: 'Audit Logs', icon: ClipboardCheck, path: '/audit-logs' },
+            { label: 'Audit Logs', icon: Shield, path: '/audit-logs' },
             { label: 'Settings', icon: Settings, path: '/settings' },
         ]
     },

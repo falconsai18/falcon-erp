@@ -37,6 +37,8 @@ export const AUDIT_ACTIONS = {
     // Production
     WORK_ORDER_CREATED: 'work_order.created',
     WORK_ORDER_COMPLETED: 'work_order.completed',
+    WORK_ORDER_SCRAP_RECORDED: 'work_order.scrap_recorded',
+    WORK_ORDER_SCRAP_DELETED: 'work_order.scrap_deleted',
 }
 
 export interface AuditLog {

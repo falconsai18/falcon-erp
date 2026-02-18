@@ -3,6 +3,7 @@ import {
     Plus, Search, Download, Trash2, X, Save, ChevronLeft, ChevronRight,
     AlertCircle, Factory, Package, Check, ArrowRight, Minus,
     Calendar, FlaskConical, Layers, Play, CheckCircle, ClipboardList,
+    BarChart3, LayoutList,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -19,9 +20,14 @@ import {
     getWorkOrders, getWorkOrderById, createWorkOrder,
     updateWorkOrderStatus, completeWorkOrder, deleteWorkOrder,
     getWorkOrderStats, getFormulationsForWO,
-    type WorkOrder, type WorkOrderFormData, type WorkOrderMaterial, WO_STATUSES, EMPTY_WO_FORM,
+    type WorkOrder, type WorkOrderFormData, WO_STATUSES, EMPTY_WO_FORM,
 } from '@/services/workOrderService'
 import { getFormulationIngredients } from '@/services/formulationService'
+
+// Manufacturing 2.0 Components
+import { ProductionKPIs } from '@/features/production/components/ProductionKPIs'
+import { GanttChart } from '@/features/production/components/GanttChart'
+import { ScrapButton } from '@/features/production/components/ScrapModal'
 
 // ============ PROGRESS BAR ============
 function ProdProgress({ current }: { current: string }) {
@@ -43,6 +49,37 @@ function ProdProgress({ current }: { current: string }) {
                     )}
                 </div>
             ))}
+        </div>
+    )
+}
+
+// ============ ORDER PROGRESS (%) ============
+function OrderProgressBar({ order }: { order: WorkOrder }) {
+    const completion = order.status === 'completed' ? 100 :
+        (order.actual_quantity && order.batch_size) 
+            ? Math.min(100, Math.round((order.actual_quantity / order.batch_size) * 100))
+            : 0
+
+    let barColor = 'bg-blue-500'
+    if (order.status === 'completed') barColor = 'bg-emerald-500'
+    else if (completion > 75) barColor = 'bg-amber-500'
+
+    const today = new Date()
+    const endDate = order.planned_end_date ? new Date(order.planned_end_date) : null
+    const isDelayed = endDate && endDate < today && order.status !== 'completed'
+
+    return (
+        <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-dark-300 rounded-full overflow-hidden">
+                <div 
+                    className={cn('h-full rounded-full transition-all duration-500', barColor)}
+                    style={{ width: `${completion}%` }}
+                />
+            </div>
+            <span className={cn('text-[10px] font-medium min-w-[32px]', isDelayed ? 'text-red-400' : 'text-dark-500')}>
+                {completion}%
+            </span>
+            {isDelayed && <AlertCircle size={12} className="text-red-400" />}
         </div>
     )
 }
@@ -109,6 +146,9 @@ function ProdOrderDetail({ orderId, onClose, onRefresh }: {
                     )}
                     {order.status === 'planned' && (
                         <Button size="sm" variant="danger" onClick={() => handleStatus('cancelled')} isLoading={updating}>Cancel</Button>
+                    )}
+                    {(order.status === 'in_progress' || order.status === 'material_issued') && (
+                        <ScrapButton workOrder={order} onScrapRecorded={loadOrder} />
                     )}
                     <button title="Close" onClick={onClose} className="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-200"><X size={16} /></button>
                 </div>
@@ -189,7 +229,7 @@ function ProdOrderDetail({ orderId, onClose, onRefresh }: {
 // ============ MAIN PAGE ============
 export function ProductionPage() {
     const { user } = useAuthStore()
-    const [activeTab, setActiveTab] = useState<'orders' | 'formulations'>('orders')
+    const [activeTab, setActiveTab] = useState<'orders' | 'formulations' | 'schedule'>('orders')
 
     // Orders state
     const [orders, setOrders] = useState<WorkOrder[]>([])
@@ -279,28 +319,41 @@ export function ProductionPage() {
                     <Button icon={<Plus size={16} />} onClick={() => setShowCreateOrder(true)}>New Production</Button>
                 </div>} />
 
-            {/* KPIs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                    { label: 'Total Orders', value: stats.total, color: 'text-purple-400' },
-                    { label: 'Planned', value: stats.planned, color: 'text-dark-500' },
-                    { label: 'In Progress', value: stats.inProgress, color: 'text-blue-400', alert: stats.inProgress > 0 },
-                    { label: 'Completed', value: stats.completed, color: 'text-emerald-400' },
-                ].map(k => (
-                    <div key={k.label} className={cn('glass-card p-3', k.alert && 'border-purple-500/30')}>
-                        <p className="text-[10px] text-dark-500 uppercase">{k.label}</p>
-                        <p className={cn('text-lg font-bold mt-0.5', k.color)}>{k.value}</p>
-                    </div>
-                ))}
-            </div>
+            {/* Manufacturing 2.0 KPIs */}
+            <ProductionKPIs orders={orders} loading={isLoading} />
 
             {/* Tabs */}
             <div className="flex items-center gap-4 border-b border-dark-300/30">
                 <button
-                    className="flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-purple-500 text-purple-400 -mb-px">
-                    <Factory size={16} /> Production Orders
+                    onClick={() => setActiveTab('orders')}
+                    className={cn(
+                        'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+                        activeTab === 'orders'
+                            ? 'border-purple-500 text-purple-400'
+                            : 'border-transparent text-dark-500 hover:text-white'
+                    )}>
+                    <LayoutList size={16} /> Production Orders
+                </button>
+                <button
+                    onClick={() => setActiveTab('schedule')}
+                    className={cn(
+                        'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+                        activeTab === 'schedule'
+                            ? 'border-purple-500 text-purple-400'
+                            : 'border-transparent text-dark-500 hover:text-white'
+                    )}>
+                    <BarChart3 size={16} /> Schedule View
                 </button>
             </div>
+
+            {/* SCHEDULE TAB - Manufacturing 2.0 Gantt Chart */}
+            {activeTab === 'schedule' && (
+                <GanttChart 
+                    orders={orders} 
+                    onOrderClick={setSelectedOrderId}
+                    loading={isLoading}
+                />
+            )}
 
             {/* ORDERS TAB */}
             {activeTab === 'orders' && (
@@ -334,7 +387,7 @@ export function ProductionPage() {
                                 <div className="glass-card overflow-hidden">
                                     <table className="w-full">
                                         <thead><tr className="border-b border-dark-300/50">
-                                            {['Order', 'Product', 'Batch', 'Planned', 'Actual', 'Status', ''].map(h => (
+                                            {['Order', 'Product', 'Progress', 'Status', ''].map(h => (
                                                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-dark-500 uppercase">{h}</th>
                                             ))}
                                         </tr></thead>
@@ -343,24 +396,35 @@ export function ProductionPage() {
                                                 <tr key={o.id} onClick={() => setSelectedOrderId(o.id)}
                                                     className={cn('hover:bg-dark-200/30 cursor-pointer transition-colors',
                                                         selectedOrderId === o.id && 'bg-purple-500/5 border-l-2 border-purple-500')}>
-                                                    <td className="px-4 py-3"><p className="text-sm font-medium text-purple-400 font-mono">{o.work_order_number}</p></td>
+                                                    <td className="px-4 py-3">
+                                                        <p className="text-sm font-medium text-purple-400 font-mono">{o.work_order_number}</p>
+                                                        <p className="text-xs text-dark-500">{o.batch_number || 'No batch'}</p>
+                                                    </td>
                                                     <td className="px-4 py-3">
                                                         <p className="text-sm text-white">{o.product_name}</p>
                                                         <p className="text-xs text-dark-500">{o.formulation_name}</p>
                                                     </td>
-                                                    <td className="px-4 py-3">{o.batch_number ? <Badge variant="default">{o.batch_number}</Badge> : <span className="text-dark-600">-</span>}</td>
-                                                    <td className="px-4 py-3 text-sm font-mono text-white">{o.batch_size}</td>
-                                                    <td className="px-4 py-3 text-sm font-mono text-emerald-400">{o.actual_quantity || '-'}</td>
+                                                    <td className="px-4 py-3 w-48">
+                                                        <OrderProgressBar order={o} />
+                                                        <p className="text-[10px] text-dark-600 mt-1">
+                                                            {o.actual_quantity || 0} / {o.batch_size} units
+                                                        </p>
+                                                    </td>
                                                     <td className="px-4 py-3">
                                                         <Badge variant={WO_STATUSES.find(s => s.value === o.status)?.color as any || 'default'}>
                                                             {WO_STATUSES.find(s => s.value === o.status)?.label || o.status}
                                                         </Badge>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        {o.status === 'planned' && (
-                                                            <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
-                                                                className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
-                                                        )}
+                                                        <div className="flex items-center gap-1">
+                                                            {(o.status === 'in_progress' || o.status === 'material_issued') && (
+                                                                <ScrapButton workOrder={o} onScrapRecorded={fetchOrders} />
+                                                            )}
+                                                            {o.status === 'planned' && (
+                                                                <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
+                                                                    className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}

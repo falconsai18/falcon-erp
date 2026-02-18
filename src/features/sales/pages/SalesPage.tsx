@@ -27,6 +27,12 @@ import {
 import { createInvoiceFromSO } from '@/services/invoiceService'
 import { calculateCreditScore, applyRecommendedLimit, type CreditScoreResult } from '@/services/creditScoringService'
 
+// Sales Intelligence Components
+import { CreditLimitBar } from '@/features/sales/components/CreditLimitBar'
+import { CustomerInsightPanel } from '@/features/sales/components/CustomerInsightPanel'
+import { SalesTrendChart } from '@/features/sales/components/SalesTrendChart'
+import { RepeatOrderButton } from '@/features/sales/components/RepeatOrderButton'
+
 // ============ STATUS PROGRESS BAR ============
 const STATUS_STEPS = ['draft', 'confirmed', 'processing', 'shipped', 'delivered']
 
@@ -510,9 +516,39 @@ function CreateOrderWizard({ isOpen, onClose, onCreated, customers }: {
                 {/* STEP 1: Customer & Details */}
                 {step === 1 && (
                     <div className="space-y-4">
-                        <Select label="Customer *" value={formData.customer_id}
-                            onChange={(e) => setFormData(p => ({ ...p, customer_id: e.target.value }))}
-                            options={customers} placeholder="Select customer" />
+                        <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                                <Select label="Customer *" value={formData.customer_id}
+                                    onChange={(e) => setFormData(p => ({ ...p, customer_id: e.target.value }))}
+                                    options={customers} placeholder="Select customer" />
+                            </div>
+                            {formData.customer_id && (
+                                <div className="pt-6">
+                                    <RepeatOrderButton 
+                                        customerId={formData.customer_id}
+                                        onRepeatOrder={(items) => {
+                                            setFormData(p => ({ ...p, items }))
+                                            setStep(2)
+                                            toast.success('Previous order items loaded')
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Credit Status */}
+                        {formData.customer_id && (
+                            <CreditLimitBar 
+                                customerId={formData.customer_id} 
+                                orderAmount={formData.items.length > 0 ? totals.total_amount : 0}
+                            />
+                        )}
+                        
+                        {/* Customer Insights */}
+                        {formData.customer_id && (
+                            <CustomerInsightPanel customerId={formData.customer_id} />
+                        )}
+                        
                         <div className="grid grid-cols-2 gap-4">
                             <Input label="Order Date" type="date" value={formData.order_date}
                                 onChange={(e) => setFormData(p => ({ ...p, order_date: e.target.value }))} />
@@ -890,6 +926,9 @@ export function SalesPage() {
                     </div>
                 ))}
             </div>
+
+            {/* Sales Intelligence - Collapsible Chart */}
+            <SalesTrendChart />
 
             {/* Filters */}
             <div className="flex items-center gap-4 flex-wrap">

@@ -15,6 +15,7 @@ import { usePermission } from '@/hooks/usePermission'
 import { fetchAuditLogs, type AuditLog, type AuditLog as AuditLogType } from '@/services/auditService'
 import { getUsers, type User } from '@/services/userService'
 import { toast } from 'sonner'
+import { AuditStats } from '@/features/audit/components/AuditStats'
 
 // Helper to format date relative to now
 const formatRelativeTime = (date: string) => {
@@ -171,15 +172,23 @@ export default function AuditLogsPage() {
             <PageHeader
                 title="Audit Logs"
                 description="Complete system activity trail"
-                actions={
-                    <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => loadLogs(true)}>
-                            <RotateCcw className="w-4 h-4 mr-2" />
-                            Refresh
-                        </Button>
-                    </div>
-                }
             />
+
+            {/* Stats Widget */}
+            <AuditStats />
+
+            {/* Refresh Button */}
+            <div className="flex justify-end">
+                <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={() => loadLogs(true)}
+                    className="glass-card gap-2 px-4 py-2 rounded-lg bg-white/50 dark:bg-dark-100/50 backdrop-blur-md border border-gray-200 dark:border-dark-300"
+                >
+                    <RotateCcw className="w-4 h-4" />
+                    Refresh
+                </Button>
+            </div>
 
             {/* Filters */}
             <Card className="p-4">

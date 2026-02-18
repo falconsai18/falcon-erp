@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
     Plus, Search, Download, Edit2, Trash2, X, Save, ChevronLeft, ChevronRight,
     AlertCircle, LayoutGrid, LayoutList, FlaskConical, AlertTriangle,
-    Thermometer, Calendar, IndianRupee, Package,
+    Thermometer, Calendar, IndianRupee, Package, Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -21,6 +21,13 @@ import {
     type RawMaterial, type RawMaterialFormData, EMPTY_RAWMATERIAL_FORM,
 } from '@/services/rawMaterialService'
 import { createPOFromLowStock, getLowStockMaterials } from '@/services/purchaseService'
+
+// Inventory Intel Components
+import { InventoryKPIs } from '@/features/inventory/components/InventoryKPIs'
+import { StockAlertBadge, StockAlertBadgeCompact } from '@/features/inventory/components/StockAlertBadge'
+import { VelocityBadge, VelocityDot } from '@/features/inventory/components/VelocityBadge'
+import { StockMovementDrawer } from '@/features/inventory/components/StockMovementDrawer'
+import { ReorderButton, ReorderButtonCompact } from '@/features/inventory/components/ReorderButton'
 
 const UNIT_OPTIONS = [
     { value: 'KG', label: 'Kilogram' }, { value: 'GM', label: 'Gram' },
@@ -129,6 +136,20 @@ function RawMaterialDetail({ item, onClose, onEdit }: {
                         <p className="text-sm text-dark-500 bg-dark-200/20 p-3 rounded-lg">{item.description}</p>
                     </div>
                 )}
+
+                {/* Inventory Intel Section */}
+                <div className="border-t border-dark-300/30 pt-4 space-y-4">
+                    <p className="text-xs text-dark-500 uppercase tracking-wider">Inventory Intelligence</p>
+                    
+                    {/* Velocity & Alerts */}
+                    <div className="flex items-center gap-3">
+                        <VelocityBadge materialId={item.id} currentStock={item.current_stock} />
+                        <StockAlertBadge materialId={item.id} currentStock={item.current_stock} reorderLevel={item.reorder_point} />
+                    </div>
+
+                    {/* Reorder Suggestion */}
+                    <ReorderButton material={item} showDetails />
+                </div>
             </div>
         </div>
     )
@@ -160,6 +181,8 @@ export function RawMaterialsPage() {
     const [stats, setStats] = useState({ total: 0, active: 0, lowStock: 0, totalValue: 0 })
     const [lowStockMaterials, setLowStockMaterials] = useState<any[]>([])
     const [creatingPO, setCreatingPO] = useState<string | null>(null)
+    const [showHistoryDrawer, setShowHistoryDrawer] = useState(false)
+    const [selectedMaterialForHistory, setSelectedMaterialForHistory] = useState<RawMaterial | null>(null)
 
     const fetchSuppliers = async () => {
         try {
@@ -269,20 +292,8 @@ export function RawMaterialsPage() {
                     <Button icon={<Plus size={16} />} onClick={handleCreate}>Add Material</Button>
                 </div>} />
 
-            {/* KPIs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[
-                    { label: 'Total Items', value: stats.total, color: 'text-lime-400' },
-                    { label: 'Active', value: stats.active, color: 'text-emerald-400' },
-                    { label: 'Low Stock', value: stats.lowStock, color: 'text-red-400', alert: stats.lowStock > 0 },
-                    { label: 'Stock Value', value: formatCurrency(stats.totalValue), color: 'text-lime-400' },
-                ].map(k => (
-                    <div key={k.label} className={cn('glass-card p-4', k.alert && 'border-red-500/30')}>
-                        <p className="text-xs text-dark-500">{k.label}</p>
-                        <p className={cn('text-xl font-bold mt-1', k.color)}>{k.value}</p>
-                    </div>
-                ))}
-            </div>
+            {/* Inventory Intelligence KPIs */}
+            <InventoryKPIs materials={items} loading={isLoading} />
 
             {/* Low Stock Alerts */}
             {lowStockMaterials.length > 0 && (
@@ -388,9 +399,25 @@ export function RawMaterialsPage() {
                                             </div>
                                         </div>
                                         <StockBar current={rm.current_stock} reorder={rm.reorder_point} min={rm.min_stock_level} />
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <VelocityBadge materialId={rm.id} currentStock={rm.current_stock} />
+                                                <StockAlertBadgeCompact materialId={rm.id} currentStock={rm.current_stock} />
+                                            </div>
+                                            <StatusBadge status={rm.status} />
+                                        </div>
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="text-dark-500">{formatCurrency(rm.unit_cost)}/{rm.unit_of_measure}</span>
-                                            <StatusBadge status={rm.status} />
+                                            <button 
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    setSelectedMaterialForHistory(rm);
+                                                    setShowHistoryDrawer(true);
+                                                }}
+                                                className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1"
+                                            >
+                                                <Clock size={12} /> History
+                                            </button>
                                         </div>
                                     </div>
                                 </Card>
@@ -400,7 +427,7 @@ export function RawMaterialsPage() {
                         <div className="glass-card overflow-hidden">
                             <table className="w-full">
                                 <thead><tr className="border-b border-dark-300/50">
-                                    {['Material', 'Category', 'Stock Level', 'Unit Cost', 'Value', 'Status', ''].map(h => (
+                                    {['Material', 'Stock', 'Velocity', 'Days Left', 'Actions'].map(h => (
                                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-dark-500 uppercase">{h}</th>
                                     ))}
                                 </tr></thead>
@@ -417,17 +444,33 @@ export function RawMaterialsPage() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-medium text-white">{rm.name}</p>
-                                                        <p className="text-xs text-dark-500">{rm.code || '-'}</p>
+                                                        <p className="text-xs text-dark-500">{rm.code || '-'} • {rm.category || 'No category'}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-dark-500">{rm.category || '-'}</td>
-                                            <td className="px-4 py-3 w-48"><StockBar current={rm.current_stock} reorder={rm.reorder_point} min={rm.min_stock_level} /></td>
-                                            <td className="px-4 py-3 text-sm font-mono text-white">{formatCurrency(rm.unit_cost)}</td>
-                                            <td className="px-4 py-3 text-sm font-mono text-lime-400">{formatCurrency(rm.current_stock * rm.unit_cost)}</td>
-                                            <td className="px-4 py-3"><StatusBadge status={rm.status} /></td>
+                                            <td className="px-4 py-3">
+                                                <StockBar current={rm.current_stock} reorder={rm.reorder_point} min={rm.min_stock_level} />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <VelocityBadge materialId={rm.id} currentStock={rm.current_stock} showLabel={false} />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <StockAlertBadgeCompact materialId={rm.id} currentStock={rm.current_stock} />
+                                            </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-1">
+                                                    <button 
+                                                        title="View History" 
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            setSelectedMaterialForHistory(rm);
+                                                            setShowHistoryDrawer(true);
+                                                        }}
+                                                        className="p-1.5 rounded-lg text-dark-500 hover:text-blue-400 hover:bg-dark-200"
+                                                    >
+                                                        <Clock size={14} />
+                                                    </button>
+                                                    <ReorderButtonCompact material={rm} />
                                                     <button title="Edit" onClick={(e) => { e.stopPropagation(); handleEdit(rm) }}
                                                         className="p-1.5 rounded-lg text-dark-500 hover:text-lime-400 hover:bg-dark-200"><Edit2 size={14} /></button>
                                                     <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingItem(rm); setIsDeleteModalOpen(true) }}
@@ -516,6 +559,16 @@ export function RawMaterialsPage() {
                     <p className="text-sm text-white">Delete <strong>{deletingItem?.name}</strong>? Cannot be undone.</p>
                 </div>
             </Modal>
+
+            {/* Stock Movement History Drawer */}
+            <StockMovementDrawer
+                isOpen={showHistoryDrawer}
+                onClose={() => {
+                    setShowHistoryDrawer(false)
+                    setSelectedMaterialForHistory(null)
+                }}
+                material={selectedMaterialForHistory}
+            />
         </div>
     )
 }
