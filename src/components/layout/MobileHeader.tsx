@@ -13,11 +13,12 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <header className="lg:hidden h-16 border-b border-gray-200 dark:border-dark-300/50 bg-white dark:bg-dark-50 flex items-center justify-between px-4 sticky top-0 z-30">
             {/* Left - Hamburger Menu */}
             <button
-                onClick={onMenuClick}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMenuClick(); }}
                 className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors"
                 aria-label="Open menu"
             >
-                <Menu size={24} className="text-gray-700 dark:text-gray-200" />
+                <Menu size={24} className="text-gray-700 dark:text-gray-200 pointer-events-none" />
             </button>
 
             {/* Center - Logo/Brand */}
