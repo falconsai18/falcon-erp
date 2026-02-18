@@ -1,96 +1,69 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80">
   <defs>
-    <!-- Flame gradient: red base → orange mid → green tip (Ayurvedic colors) -->
-    <linearGradient id="falFlame" x1="0%" y1="100%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#dc2626">
-        <animate attributeName="stop-color" values="#dc2626;#ea580c;#16a34a;#dc2626" dur="3s" repeatCount="indefinite" />
-      </stop>
-      <stop offset="50%" stop-color="#ea580c">
-        <animate attributeName="stop-color" values="#ea580c;#16a34a;#dc2626;#ea580c" dur="3s" repeatCount="indefinite" />
-      </stop>
-      <stop offset="100%" stop-color="#16a34a">
-        <animate attributeName="stop-color" values="#16a34a;#dc2626;#ea580c;#16a34a" dur="3s" repeatCount="indefinite" />
-      </stop>
-    </linearGradient>
+    <!-- Clip to flame/teardrop shape -->
+    <clipPath id="flameClip">
+      <path d="M60,8 C66,16 74,27 72,38 C70,47 65,53 60,55 C55,53 50,47 48,38 C46,27 54,16 60,8 Z"/>
+    </clipPath>
 
-    <!-- Green oval stroke gradient -->
-    <linearGradient id="ovalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#16a34a" />
-      <stop offset="50%" stop-color="#22c55e" />
-      <stop offset="100%" stop-color="#15803d" />
-    </linearGradient>
-
-    <!-- Glow filter -->
-    <filter id="falGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+    <!-- Glow filter for oval border -->
+    <filter id="ovalGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
       <feMerge>
-        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
-    </filter>
-
-    <!-- Soft shadow for flame -->
-    <filter id="flameShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#ea580c" flood-opacity="0.4"/>
     </filter>
   </defs>
 
   <!-- Outer oval border (green) -->
   <ellipse
-    cx="60" cy="40"
-    rx="57" ry="37"
+    cx="60" cy="38"
+    rx="57" ry="34"
     fill="none"
-    stroke="url(#ovalGrad)"
+    stroke="#16a34a"
     stroke-width="2.5"
-    filter="url(#falGlow)"
+    filter="url(#ovalGlow)"
   />
 
   <!-- Inner oval border (decorative, subtle) -->
   <ellipse
-    cx="60" cy="40"
-    rx="50" ry="30"
+    cx="60" cy="38"
+    rx="50" ry="28"
     fill="none"
     stroke="#16a34a"
-    stroke-width="0.8"
+    stroke-width="0.7"
     opacity="0.35"
   />
 
-  <!-- Flame / Leaf shape — teardrop pointing upward, centered -->
-  <!-- Base at y=56, tip at y=12 — Ayurvedic flame -->
-  <path
-    d="M60,12 C65,19 70,27 68,36 C66,44 62,50 60,52 C58,50 54,44 52,36 C50,27 55,19 60,12 Z"
-    fill="url(#falFlame)"
-    filter="url(#flameShadow)"
-    opacity="0.92"
-  />
+  <!-- Green stripe (top 1/3) — Indian flag top -->
+  <rect x="44" y="8" width="32" height="16" fill="#16a34a" clip-path="url(#flameClip)"/>
 
-  <!-- Small inner flame highlight -->
-  <path
-    d="M60,18 C63,24 65,30 63,37 C62,41 61,44 60,46 C59,44 58,41 57,37 C55,30 57,24 60,18 Z"
-    fill="white"
-    opacity="0.12"
-  />
+  <!-- White stripe (middle 1/3) -->
+  <rect x="44" y="24" width="32" height="15" fill="#f5f5f5" clip-path="url(#flameClip)"/>
 
-  <!-- FAL text — bold orange, sits over flame -->
+  <!-- Red stripe (bottom 1/3) — Indian flag bottom -->
+  <rect x="44" y="39" width="32" height="16" fill="#dc2626" clip-path="url(#flameClip)"/>
+
+  <!-- FAL text — bold italic dark, below flame -->
   <text
     x="60"
-    y="43"
+    y="68"
     text-anchor="middle"
-    fill="#ea580c"
-    font-size="17"
+    fill="#1a1a1a"
+    font-size="12"
     font-weight="900"
+    font-style="italic"
     font-family="system-ui, -apple-system, Arial, sans-serif"
-    filter="url(#falGlow)"
-    letter-spacing="1"
+    letter-spacing="2"
   >FAL</text>
 
-  <!-- Since 1989 — below the oval, small muted text -->
+  <!-- Since 1989 -->
   <text
     x="60"
-    y="72"
+    y="76"
     text-anchor="middle"
     fill="#6b7280"
-    font-size="6.5"
+    font-size="5.5"
     font-family="system-ui, -apple-system, Arial, sans-serif"
     letter-spacing="0.5"
   >Since 1989</text>

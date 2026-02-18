@@ -10,92 +10,54 @@ const DEMO_USERS = [
     { email: 'viewer@falcon.com', password: 'viewer123', role: 'Viewer', icon: BarChart3, color: 'text-purple-400' },
 ]
 
-// FAL Oval Logo Component — Inspired by FAL letterhead (Since 1989)
+// FAL Oval Logo Component — Faithful recreation of FAL letterhead (Since 1989)
 function FalconLogo({ size = 120 }: { size?: number }) {
-    // Maintain aspect ratio: viewBox 120x80, so height = size * (80/120)
     const h = Math.round(size * (80 / 120))
     return (
         <svg width={size} height={h} viewBox="0 0 120 80" className="mx-auto" style={{overflow:'hidden', pointerEvents:'none'}}>
             <defs>
-                {/* Flame gradient: red(base) → orange(mid) → green(tip) — Ayurvedic colors */}
-                <linearGradient id="falFlameLogin" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#dc2626">
-                        <animate attributeName="stop-color" values="#dc2626;#ea580c;#16a34a;#dc2626" dur="3s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" stopColor="#ea580c">
-                        <animate attributeName="stop-color" values="#ea580c;#16a34a;#dc2626;#ea580c" dur="3s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" stopColor="#16a34a">
-                        <animate attributeName="stop-color" values="#16a34a;#dc2626;#ea580c;#16a34a" dur="3s" repeatCount="indefinite" />
-                    </stop>
-                </linearGradient>
-                {/* Green oval border gradient */}
-                <linearGradient id="ovalGradLogin" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#16a34a" />
-                    <stop offset="50%" stopColor="#22c55e" />
-                    <stop offset="100%" stopColor="#15803d" />
-                </linearGradient>
-                {/* Glow filter */}
-                <filter id="falGlowLogin" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                    <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
-                {/* Flame shadow */}
-                <filter id="flameShadowLogin" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#ea580c" floodOpacity="0.4"/>
+                {/* Clip flame to teardrop shape */}
+                <clipPath id="flameClipLogin">
+                    <path d="M60,8 C66,16 74,27 72,38 C70,47 65,53 60,55 C55,53 50,47 48,38 C46,27 54,16 60,8 Z"/>
+                </clipPath>
+                {/* Green oval glow */}
+                <filter id="ovalGlowLogin" x="-10%" y="-10%" width="120%" height="120%">
+                    <feGaussianBlur stdDeviation="1" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                 </filter>
             </defs>
 
             {/* Outer oval border — green */}
-            <ellipse cx="60" cy="38" rx="57" ry="34"
-                fill="none"
-                stroke="url(#ovalGradLogin)"
-                strokeWidth="2.5"
-                filter="url(#falGlowLogin)"
-            />
-            {/* Inner oval — subtle decorative */}
-            <ellipse cx="60" cy="38" rx="49" ry="27"
-                fill="none"
-                stroke="#16a34a"
-                strokeWidth="0.8"
-                opacity="0.3"
-            />
+            <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="#16a34a" strokeWidth="2.5" filter="url(#ovalGlowLogin)"/>
+            {/* Inner oval — subtle */}
+            <ellipse cx="60" cy="38" rx="50" ry="28" fill="none" stroke="#16a34a" strokeWidth="0.7" opacity="0.35"/>
 
-            {/* Flame / Leaf shape — teardrop upward */}
-            <path
-                d="M60,10 C65,17 71,26 69,35 C67,43 63,49 60,51 C57,49 53,43 51,35 C49,26 55,17 60,10 Z"
-                fill="url(#falFlameLogin)"
-                filter="url(#flameShadowLogin)"
-                opacity="0.92"
-            />
-            {/* Inner highlight on flame */}
-            <path
-                d="M60,16 C63,22 66,29 64,36 C63,40 61,44 60,46 C59,44 57,40 56,36 C54,29 57,22 60,16 Z"
-                fill="white"
-                opacity="0.13"
-            />
+            {/* Flame — 3 solid stripes (Indian flag: Green top, White mid, Red bottom) */}
+            {/* Green stripe (top) */}
+            <rect x="44" y="8" width="32" height="16" fill="#16a34a" clipPath="url(#flameClipLogin)"/>
+            {/* White stripe (middle) */}
+            <rect x="44" y="24" width="32" height="15" fill="#f5f5f5" clipPath="url(#flameClipLogin)"/>
+            {/* Red stripe (bottom) */}
+            <rect x="44" y="39" width="32" height="16" fill="#dc2626" clipPath="url(#flameClipLogin)"/>
 
-            {/* FAL text — bold orange */}
+            {/* FAL text — bold italic, white (readable on dark bg) */}
             <text
-                x="60" y="41"
+                x="60" y="68"
                 textAnchor="middle"
-                fill="#ea580c"
-                fontSize="17"
+                fill="white"
+                fontSize="12"
                 fontWeight="900"
+                fontStyle="italic"
                 fontFamily="system-ui, -apple-system, Arial, sans-serif"
-                filter="url(#falGlowLogin)"
-                letterSpacing="1"
+                letterSpacing="2"
             >FAL</text>
 
-            {/* Since 1989 — below oval */}
+            {/* Since 1989 */}
             <text
-                x="60" y="70"
+                x="60" y="76"
                 textAnchor="middle"
                 fill="#9ca3af"
-                fontSize="6.5"
+                fontSize="5.5"
                 fontFamily="system-ui, -apple-system, Arial, sans-serif"
                 letterSpacing="0.5"
             >Since 1989</text>

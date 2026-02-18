@@ -26,30 +26,20 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
                 {/* FAL Oval Logo - Mobile Header */}
                 <svg width="42" height="28" viewBox="0 0 120 80" className="flex-shrink-0" style={{overflow:'hidden', pointerEvents:'none'}}>
                     <defs>
-                        <linearGradient id="falFlameMobileHeader" x1="0%" y1="100%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="#dc2626">
-                                <animate attributeName="stop-color" values="#dc2626;#ea580c;#16a34a;#dc2626" dur="3s" repeatCount="indefinite" />
-                            </stop>
-                            <stop offset="50%" stopColor="#ea580c">
-                                <animate attributeName="stop-color" values="#ea580c;#16a34a;#dc2626;#ea580c" dur="3s" repeatCount="indefinite" />
-                            </stop>
-                            <stop offset="100%" stopColor="#16a34a">
-                                <animate attributeName="stop-color" values="#16a34a;#dc2626;#ea580c;#16a34a" dur="3s" repeatCount="indefinite" />
-                            </stop>
-                        </linearGradient>
-                        <linearGradient id="ovalGradMobileHeader" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#16a34a" />
-                            <stop offset="100%" stopColor="#22c55e" />
-                        </linearGradient>
-                        <filter id="falGlowMobileHeader" x="-20%" y="-20%" width="140%" height="140%">
-                            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        <clipPath id="flameClipMobileHeader">
+                            <path d="M60,8 C66,16 74,27 72,38 C70,47 65,53 60,55 C55,53 50,47 48,38 C46,27 54,16 60,8 Z"/>
+                        </clipPath>
+                        <filter id="ovalGlowMobileHeader" x="-10%" y="-10%" width="120%" height="120%">
+                            <feGaussianBlur stdDeviation="1" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                         </filter>
                     </defs>
-                    <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="url(#ovalGradMobileHeader)" strokeWidth="2.5" filter="url(#falGlowMobileHeader)"/>
-                    <ellipse cx="60" cy="38" rx="49" ry="27" fill="none" stroke="#16a34a" strokeWidth="0.8" opacity="0.3"/>
-                    <path d="M60,10 C65,17 71,26 69,35 C67,43 63,49 60,51 C57,49 53,43 51,35 C49,26 55,17 60,10 Z" fill="url(#falFlameMobileHeader)" opacity="0.9"/>
-                    <text x="60" y="41" textAnchor="middle" fill="#ea580c" fontSize="17" fontWeight="900" fontFamily="system-ui" filter="url(#falGlowMobileHeader)" letterSpacing="1">FAL</text>
+                    <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="#16a34a" strokeWidth="2.5" filter="url(#ovalGlowMobileHeader)"/>
+                    <ellipse cx="60" cy="38" rx="50" ry="28" fill="none" stroke="#16a34a" strokeWidth="0.7" opacity="0.35"/>
+                    <rect x="44" y="8" width="32" height="16" fill="#16a34a" clipPath="url(#flameClipMobileHeader)"/>
+                    <rect x="44" y="24" width="32" height="15" fill="#f5f5f5" clipPath="url(#flameClipMobileHeader)"/>
+                    <rect x="44" y="39" width="32" height="16" fill="#dc2626" clipPath="url(#flameClipMobileHeader)"/>
+                    <text x="60" y="68" textAnchor="middle" fill="#1a1a1a" fontSize="12" fontWeight="900" fontStyle="italic" fontFamily="system-ui" letterSpacing="2">FAL</text>
                 </svg>
                 <span className="font-bold text-gray-900 dark:text-white text-lg">FALCON</span>
             </div>
