@@ -10,94 +10,15 @@ const DEMO_USERS = [
     { email: 'viewer@falcon.com', password: 'viewer123', role: 'Viewer', icon: BarChart3, color: 'text-purple-400' },
 ]
 
-// FAL Oval Logo Component — Faithful recreation of FAL letterhead (Since 1989)
-function FalconLogo({ size = 160 }: { size?: number }) {
-    const h = Math.round(size * (500 / 400))
+// TAL Logo Component
+function TALLogo({ size = 180 }: { size?: number }) {
     return (
-        <svg width={size} height={h} viewBox="0 0 400 500" className="mx-auto" style={{overflow:'visible', pointerEvents:'none'}}>
-            <defs>
-                <linearGradient id="holo1Login" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{stopColor:'#ff0080'}}/>
-                    <stop offset="25%" style={{stopColor:'#00ffff'}}/>
-                    <stop offset="50%" style={{stopColor:'#ffff00'}}/>
-                    <stop offset="75%" style={{stopColor:'#ff00ff'}}/>
-                    <stop offset="100%" style={{stopColor:'#00ff88'}}/>
-                </linearGradient>
-                <linearGradient id="chromeLogin" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" style={{stopColor:'#c0c0c0'}}/>
-                    <stop offset="50%" style={{stopColor:'#ffffff'}}/>
-                    <stop offset="100%" style={{stopColor:'#808080'}}/>
-                </linearGradient>
-                <linearGradient id="goldLeafLogin" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{stopColor:'#ffd700'}}/>
-                    <stop offset="50%" style={{stopColor:'#ffec8b'}}/>
-                    <stop offset="100%" style={{stopColor:'#daa520'}}/>
-                </linearGradient>
-                <filter id="glow2Login">
-                    <feGaussianBlur stdDeviation="4"/>
-                    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-            </defs>
-
-            {/* Sacred geometry background lines */}
-            <g opacity="0.15" stroke="#ff00ff" strokeWidth="0.3" fill="none">
-                <path d="M200 50 L100 150 L100 300 L200 400 L300 300 L300 150 Z" stroke="#00ffff"/>
-                <path d="M200 80 L120 160 L120 290 L200 370 L280 290 L280 160 Z" stroke="#ff00ff"/>
-                <path d="M200 110 L140 170 L140 280 L200 340 L260 280 L260 170 Z" stroke="#ffff00"/>
-            </g>
-
-            <g transform="translate(200, 220)">
-                {/* Holographic hexagons */}
-                <g stroke="url(#holo1Login)" strokeWidth="2" fill="none" filter="url(#glow2Login)">
-                    <path d="M0 -110 L30 -95 L30 -65 L0 -50 L-30 -65 L-30 -95 Z"/>
-                    <path d="M0 -85 L15 -75 L15 -55 L0 -45 L-15 -55 L-15 -75 Z"/>
-                    <path d="M0 -60 L10 -55 L10 -40 L0 -35 L-10 -40 L-10 -55 Z"/>
-                    <circle cx="0" cy="0" r="130" strokeDasharray="5,5" opacity="0.6"/>
-                    <circle cx="0" cy="0" r="125" strokeDasharray="3,7" opacity="0.4"/>
-                </g>
-
-                {/* Gold leaf ornaments */}
-                <g>
-                    <ellipse cx="-70" cy="-30" rx="35" ry="50" fill="none" stroke="url(#goldLeafLogin)" strokeWidth="1.5" opacity="0.8"/>
-                    <path d="M-70 -10 L-70 -70" stroke="url(#goldLeafLogin)" strokeWidth="1"/>
-                    <path d="M-70 -30 L-90 -45 M-70 -40 L-50 -55" stroke="url(#goldLeafLogin)" strokeWidth="0.8" opacity="0.6"/>
-                    <circle cx="-70" cy="-30" r="2" fill="#ffd700"/>
-
-                    <ellipse cx="70" cy="-30" rx="35" ry="50" fill="none" stroke="url(#goldLeafLogin)" strokeWidth="1.5" opacity="0.8"/>
-                    <path d="M70 -10 L70 -70" stroke="url(#goldLeafLogin)" strokeWidth="1"/>
-                    <path d="M70 -30 L50 -45 M70 -40 L90 -55" stroke="url(#goldLeafLogin)" strokeWidth="0.8" opacity="0.6"/>
-                    <circle cx="70" cy="-30" r="2" fill="#ffd700"/>
-
-                    <ellipse cx="0" cy="-50" rx="40" ry="60" fill="none" stroke="url(#goldLeafLogin)" strokeWidth="2" opacity="0.9"/>
-                    <path d="M0 -20 L0 -100" stroke="url(#goldLeafLogin)" strokeWidth="1.5"/>
-                    <path d="M0 -50 L-20 -70 M0 -65 L20 -85" stroke="url(#goldLeafLogin)" strokeWidth="1" opacity="0.7"/>
-                    <circle cx="0" cy="-50" r="3" fill="#ffd700"/>
-                </g>
-
-                {/* Chrome + holographic oval */}
-                <ellipse cx="0" cy="20" rx="135" ry="95" fill="none" stroke="url(#chromeLogin)" strokeWidth="3"/>
-                <ellipse cx="0" cy="20" rx="130" ry="90" fill="none" stroke="url(#holo1Login)" strokeWidth="1" strokeDasharray="10,5" opacity="0.7"/>
-
-                {/* Accent dots */}
-                <g opacity="0.6">
-                    <circle cx="-100" cy="-40" r="2" fill="#00ffff"/>
-                    <circle cx="100" cy="-40" r="2" fill="#ff00ff"/>
-                    <circle cx="0" cy="-90" r="2" fill="#ffff00"/>
-                    <circle cx="-90" cy="60" r="2" fill="#00ff88"/>
-                    <circle cx="90" cy="60" r="2" fill="#ff0080"/>
-                    <circle cx="-60" cy="80" r="1.5" fill="#00ffff"/>
-                    <circle cx="60" cy="80" r="1.5" fill="#ff00ff"/>
-                </g>
-
-                {/* TAL text */}
-                <text x="0" y="30" fontFamily="Arial Black, sans-serif" fontSize="44" fill="url(#chromeLogin)" textAnchor="middle" letterSpacing="6" filter="url(#glow2Login)">TAL</text>
-                <line x1="-55" y1="42" x2="55" y2="42" stroke="url(#holo1Login)" strokeWidth="2"/>
-                <text x="0" y="62" fontFamily="Courier New, monospace" fontSize="10" fill="#c0c0c0" textAnchor="middle" letterSpacing="4">EST. 1989</text>
-            </g>
-
-            {/* Tagline */}
-            <text x="200" y="440" fontFamily="Arial, sans-serif" fontSize="11" fill="#606060" textAnchor="middle" letterSpacing="2">AYURVEDIC PRODUCTS MANAGEMENT</text>
-        </svg>
+        <img 
+            src="/logo.svg" 
+            alt="TAL Logo" 
+            className="mx-auto"
+            style={{ width: size, height: 'auto' }}
+        />
     )
 }
 
@@ -153,7 +74,7 @@ export function LoginPage() {
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-premium-500/5 rounded-full blur-3xl" />
 
                 <div className="relative z-10 text-center space-y-8 px-12">
-                    <FalconLogo size={140} />
+                    <TALLogo size={180} />
                     <h1 className="text-5xl font-bold">
                         <span className="text-brand-400">FALCON</span>
                         <span className="text-white"> ERP</span>
@@ -182,7 +103,7 @@ export function LoginPage() {
                 <div className="w-full max-w-md space-y-8">
                     {/* Mobile logo */}
                     <div className="lg:hidden text-center space-y-4">
-                        <FalconLogo size={100} />
+                        <TALLogo size={140} />
                         <h1 className="text-3xl font-bold">
                             <span className="text-brand-400">FALCON</span>
                             <span className="text-white"> ERP</span>

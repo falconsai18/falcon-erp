@@ -1,82 +1,84 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
   <defs>
-    <linearGradient id="holo1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ff0080"/>
-      <stop offset="25%" style="stop-color:#00ffff"/>
-      <stop offset="50%" style="stop-color:#ffff00"/>
-      <stop offset="75%" style="stop-color:#ff00ff"/>
-      <stop offset="100%" style="stop-color:#00ff88"/>
-    </linearGradient>
-    <linearGradient id="chrome" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#c0c0c0"/>
-      <stop offset="50%" style="stop-color:#ffffff"/>
-      <stop offset="100%" style="stop-color:#808080"/>
-    </linearGradient>
-    <linearGradient id="goldLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffd700"/>
-      <stop offset="50%" style="stop-color:#ffec8b"/>
-      <stop offset="100%" style="stop-color:#daa520"/>
-    </linearGradient>
-    <filter id="glow2">
-      <feGaussianBlur stdDeviation="4"/>
+    <!-- Glow filter -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
       <feMerge>
-        <feMergeNode/>
+        <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
   
-  <rect width="400" height="500" fill="#050510"/>
+  <!-- Dark navy background -->
+  <rect width="600" height="800" fill="#0a0a1a"/>
   
-  <g opacity="0.15" stroke="#ff00ff" stroke-width="0.3" fill="none">
-    <path d="M200 50 L100 150 L100 300 L200 400 L300 300 L300 150 Z" stroke="#00ffff"/>
-    <path d="M200 80 L120 160 L120 290 L200 370 L280 290 L280 160 Z" stroke="#ff00ff"/>
-    <path d="M200 110 L140 170 L140 280 L200 340 L260 280 L260 170 Z" stroke="#ffff00"/>
+  <!-- Outer hexagon - Cyan -->
+  <polygon points="300,80 520,200 520,520 300,640 80,520 80,200" 
+           fill="none" stroke="#00ffff" stroke-width="2" opacity="0.8" filter="url(#glow)"/>
+  
+  <!-- Middle hexagon - Magenta/Pink -->
+  <polygon points="300,130 470,230 470,490 300,590 130,490 130,230" 
+           fill="none" stroke="#ff00ff" stroke-width="2" opacity="0.8" filter="url(#glow)"/>
+  
+  <!-- Inner hexagon - Yellow -->
+  <polygon points="300,180 420,250 420,470 300,540 180,470 180,250" 
+           fill="none" stroke="#ffff00" stroke-width="2" opacity="0.8" filter="url(#glow)"/>
+  
+  <!-- Decorative dots on outer hexagon -->
+  <circle cx="300" cy="80" r="6" fill="#ffff00" filter="url(#glow)"/>
+  <circle cx="520" cy="200" r="5" fill="#ff00ff" filter="url(#glow)"/>
+  <circle cx="520" cy="520" r="5" fill="#00ffff" filter="url(#glow)"/>
+  <circle cx="300" cy="640" r="5" fill="#ff00ff" filter="url(#glow)"/>
+  <circle cx="80" cy="520" r="5" fill="#00ff88" filter="url(#glow)"/>
+  <circle cx="80" cy="200" r="5" fill="#00ffff" filter="url(#glow)"/>
+  
+  <!-- Decorative dots on middle hexagon -->
+  <circle cx="300" cy="130" r="5" fill="#ffff00" filter="url(#glow)"/>
+  <circle cx="470" cy="230" r="4" fill="#ffff00" filter="url(#glow)"/>
+  <circle cx="470" cy="490" r="4" fill="#ff00ff" filter="url(#glow)"/>
+  <circle cx="130" cy="490" r="4" fill="#00ffff" filter="url(#glow)"/>
+  <circle cx="130" cy="230" r="4" fill="#ffff00" filter="url(#glow)"/>
+  
+  <!-- Decorative dots on inner hexagon -->
+  <circle cx="300" cy="180" r="4" fill="#ffff00" filter="url(#glow)"/>
+  <circle cx="420" cy="250" r="4" fill="#ffff00" filter="url(#glow)"/>
+  <circle cx="420" cy="470" r="4" fill="#ffff00" filter="url(#glow)"/>
+  <circle cx="180" cy="470" r="4" fill="#ff00ff" filter="url(#glow)"/>
+  <circle cx="180" cy="250" r="4" fill="#ffff00" filter="url(#glow)"/>
+  
+  <!-- Central FAL Logo Group -->
+  <g transform="translate(300, 360)">
+    <!-- Yellow/Green oval ring -->
+    <ellipse cx="0" cy="20" rx="130" ry="75" 
+             fill="none" stroke="#9acd32" stroke-width="6" filter="url(#glow)"/>
+    
+    <!-- Red flame/swoosh (back) -->
+    <path d="M-40,-60 Q-20,-100 0,-90 Q20,-80 10,-40 Q0,-20 -20,-30 Q-40,-40 -40,-60" 
+          fill="#cc0000" filter="url(#glow)"/>
+    
+    <!-- Green flame/swoosh (middle) -->
+    <path d="M-20,-50 Q0,-90 20,-80 Q30,-60 20,-30 Q10,-10 -10,-20 Q-30,-30 -20,-50" 
+          fill="#228b22" filter="url(#glow)"/>
+    
+    <!-- Light green flame/swoosh (front) -->
+    <path d="M-5,-45 Q15,-80 25,-65 Q30,-50 20,-25 Q10,-5 -5,-15 Q-20,-25 -5,-45" 
+          fill="#32cd32" filter="url(#glow)"/>
+    
+    <!-- FAL Text -->
+    <text x="0" y="45" font-family="Arial Black, sans-serif" font-size="72" 
+          fill="#228b22" text-anchor="middle" letter-spacing="8" font-weight="900">FAL</text>
+    
+    <!-- Decorative curl/line on F -->
+    <path d="M-55,10 Q-75,0 -70,-20 Q-65,-35 -50,-30" 
+          fill="none" stroke="#228b22" stroke-width="4" stroke-linecap="round"/>
   </g>
   
-  <g transform="translate(200, 220)">
-    <g stroke="url(#holo1)" stroke-width="2" fill="none" filter="url(#glow2)">
-      <path d="M0 -110 L30 -95 L30 -65 L0 -50 L-30 -65 L-30 -95 Z"/>
-      <path d="M0 -85 L15 -75 L15 -55 L0 -45 L-15 -55 L-15 -75 Z"/>
-      <path d="M0 -60 L10 -55 L10 -40 L0 -35 L-10 -40 L-10 -55 Z"/>
-      <circle cx="0" cy="0" r="130" stroke-dasharray="5,5" opacity="0.6"/>
-      <circle cx="0" cy="0" r="125" stroke-dasharray="3,7" opacity="0.4"/>
-    </g>
-    
-    <g>
-      <ellipse cx="-70" cy="-30" rx="35" ry="50" fill="none" stroke="url(#goldLeaf)" stroke-width="1.5" opacity="0.8"/>
-      <path d="M-70 -10 L-70 -70" stroke="url(#goldLeaf)" stroke-width="1"/>
-      <path d="M-70 -30 L-90 -45 M-70 -40 L-50 -55" stroke="url(#goldLeaf)" stroke-width="0.8" opacity="0.6"/>
-      <circle cx="-70" cy="-30" r="2" fill="#ffd700"/>
-      
-      <ellipse cx="70" cy="-30" rx="35" ry="50" fill="none" stroke="url(#goldLeaf)" stroke-width="1.5" opacity="0.8"/>
-      <path d="M70 -10 L70 -70" stroke="url(#goldLeaf)" stroke-width="1"/>
-      <path d="M70 -30 L50 -45 M70 -40 L90 -55" stroke="url(#goldLeaf)" stroke-width="0.8" opacity="0.6"/>
-      <circle cx="70" cy="-30" r="2" fill="#ffd700"/>
-      
-      <ellipse cx="0" cy="-50" rx="40" ry="60" fill="none" stroke="url(#goldLeaf)" stroke-width="2" opacity="0.9"/>
-      <path d="M0 -20 L0 -100" stroke="url(#goldLeaf)" stroke-width="1.5"/>
-      <path d="M0 -50 L-20 -70 M0 -65 L20 -85" stroke="url(#goldLeaf)" stroke-width="1" opacity="0.7"/>
-      <circle cx="0" cy="-50" r="3" fill="#ffd700"/>
-    </g>
-    
-    <ellipse cx="0" cy="20" rx="135" ry="95" fill="none" stroke="url(#chrome)" stroke-width="3"/>
-    <ellipse cx="0" cy="20" rx="130" ry="90" fill="none" stroke="url(#holo1)" stroke-width="1" stroke-dasharray="10,5" opacity="0.7"/>
-    
-    <g opacity="0.6">
-      <circle cx="-100" cy="-40" r="2" fill="#00ffff"/>
-      <circle cx="100" cy="-40" r="2" fill="#ff00ff"/>
-      <circle cx="0" cy="-90" r="2" fill="#ffff00"/>
-      <circle cx="-90" cy="60" r="2" fill="#00ff88"/>
-      <circle cx="90" cy="60" r="2" fill="#ff0080"/>
-      <circle cx="-60" cy="80" r="1.5" fill="#00ffff"/>
-      <circle cx="60" cy="80" r="1.5" fill="#ff00ff"/>
-    </g>
-    
-    <text x="0" y="30" font-family="Arial Black, sans-serif" font-size="44" fill="url(#chrome)" text-anchor="middle" letter-spacing="6" filter="url(#glow2)">TAL</text>
-    <line x1="-55" y1="42" x2="55" y2="42" stroke="url(#holo1)" stroke-width="2"/>
-    <text x="0" y="62" font-family="Courier New, monospace" font-size="10" fill="#c0c0c0" text-anchor="middle" letter-spacing="4">EST. 1989</text>
-  </g>
+  <!-- EST. 1989 Text -->
+  <text x="300" y="480" font-family="Courier New, monospace" font-size="28" 
+        fill="#c0c0c0" text-anchor="middle" letter-spacing="6">EST. 1989</text>
   
-  <text x="200" y="400" font-family="Arial, sans-serif" font-size="13" fill="#808080" text-anchor="middle" letter-spacing="3">FALCON ERP</text>
+  <!-- Bottom text -->
+  <text x="300" y="740" font-family="Arial, sans-serif" font-size="32" 
+        fill="#808080" text-anchor="middle" letter-spacing="4">AYURVEDIC INTELLIGENCE SYSTEMS</text>
 </svg>

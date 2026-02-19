@@ -225,42 +225,8 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                     {/* Mobile Header with Close Button */}
                     <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-300/50">
                         <div className="flex items-center gap-3">
-                            {/* TAL Sacred Geometry Logo - Compact */}
-                            <svg width="48" height="48" viewBox="0 0 200 200" className="flex-shrink-0">
-                                <defs>
-                                    <linearGradient id="holoMobile" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#ff0080"/>
-                                        <stop offset="25%" stopColor="#00ffff"/>
-                                        <stop offset="50%" stopColor="#ffff00"/>
-                                        <stop offset="75%" stopColor="#ff00ff"/>
-                                        <stop offset="100%" stopColor="#00ff88"/>
-                                    </linearGradient>
-                                    <linearGradient id="chromeMobile" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" stopColor="#e0e0e0"/>
-                                        <stop offset="50%" stopColor="#ffffff"/>
-                                        <stop offset="100%" stopColor="#a0a0a0"/>
-                                    </linearGradient>
-                                    <linearGradient id="goldMobile" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#ffd700"/>
-                                        <stop offset="50%" stopColor="#ffec8b"/>
-                                        <stop offset="100%" stopColor="#daa520"/>
-                                    </linearGradient>
-                                </defs>
-                                <rect width="200" height="200" fill="#0a0a0f" rx="20"/>
-                                <g transform="translate(100, 100)">
-                                    <path d="M0 -70 L60 -35 L60 35 L0 70 L-60 35 L-60 -35 Z" fill="none" stroke="url(#holoMobile)" strokeWidth="1" opacity="0.5"/>
-                                    <ellipse cx="0" cy="0" rx="65" ry="45" fill="none" stroke="url(#chromeMobile)" strokeWidth="2"/>
-                                    <ellipse cx="0" cy="0" rx="62" ry="42" fill="none" stroke="url(#holoMobile)" strokeWidth="1" strokeDasharray="5,3" opacity="0.8"/>
-                                    <ellipse cx="0" cy="-25" rx="18" ry="28" fill="none" stroke="url(#goldMobile)" strokeWidth="1.5" opacity="0.9"/>
-                                    <ellipse cx="-35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldMobile)" strokeWidth="1" opacity="0.7"/>
-                                    <ellipse cx="35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldMobile)" strokeWidth="1" opacity="0.7"/>
-                                    <circle cx="0" cy="-25" r="1.5" fill="#ffd700"/>
-                                    <circle cx="-35" cy="-15" r="1" fill="#ffd700"/>
-                                    <circle cx="35" cy="-15" r="1" fill="#ffd700"/>
-                                    <text x="0" y="8" fontFamily="Arial Black, sans-serif" fontSize="32" fill="url(#chromeMobile)" textAnchor="middle" letterSpacing="4">TAL</text>
-                                    <line x1="-35" y1="18" x2="35" y2="18" stroke="url(#holoMobile)" strokeWidth="1.5"/>
-                                </g>
-                            </svg>
+                            {/* TAL Logo */}
+                            <img src="/logo.svg" alt="TAL Logo" className="h-12 w-auto flex-shrink-0" />
                             <div>
                                 <h1 className="text-sm font-bold text-gray-900 dark:text-white">FALCON ERP</h1>
                                 <p className="text-[10px] text-gray-500 dark:text-dark-500">EST. 1989</p>
@@ -378,42 +344,8 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
         >
             {/* Logo */}
             <div className="h-16 flex items-center gap-3 px-4 border-b border-dark-300/50 dark:border-dark-300/50 border-gray-200">
-                {/* TAL Sacred Geometry Logo — Desktop */}
-                <svg width="48" height="48" viewBox="0 0 200 200" className="flex-shrink-0">
-                    <defs>
-                        <linearGradient id="holoDesktop" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#ff0080"/>
-                            <stop offset="25%" stopColor="#00ffff"/>
-                            <stop offset="50%" stopColor="#ffff00"/>
-                            <stop offset="75%" stopColor="#ff00ff"/>
-                            <stop offset="100%" stopColor="#00ff88"/>
-                        </linearGradient>
-                        <linearGradient id="chromeDesktop" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#e0e0e0"/>
-                            <stop offset="50%" stopColor="#ffffff"/>
-                            <stop offset="100%" stopColor="#a0a0a0"/>
-                        </linearGradient>
-                        <linearGradient id="goldDesktop" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#ffd700"/>
-                            <stop offset="50%" stopColor="#ffec8b"/>
-                            <stop offset="100%" stopColor="#daa520"/>
-                        </linearGradient>
-                    </defs>
-                    <rect width="200" height="200" fill="#0a0a0f" rx="20"/>
-                    <g transform="translate(100, 100)">
-                        <path d="M0 -70 L60 -35 L60 35 L0 70 L-60 35 L-60 -35 Z" fill="none" stroke="url(#holoDesktop)" strokeWidth="1" opacity="0.5"/>
-                        <ellipse cx="0" cy="0" rx="65" ry="45" fill="none" stroke="url(#chromeDesktop)" strokeWidth="2"/>
-                        <ellipse cx="0" cy="0" rx="62" ry="42" fill="none" stroke="url(#holoDesktop)" strokeWidth="1" strokeDasharray="5,3" opacity="0.8"/>
-                        <ellipse cx="0" cy="-25" rx="18" ry="28" fill="none" stroke="url(#goldDesktop)" strokeWidth="1.5" opacity="0.9"/>
-                        <ellipse cx="-35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldDesktop)" strokeWidth="1" opacity="0.7"/>
-                        <ellipse cx="35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldDesktop)" strokeWidth="1" opacity="0.7"/>
-                        <circle cx="0" cy="-25" r="1.5" fill="#ffd700"/>
-                        <circle cx="-35" cy="-15" r="1" fill="#ffd700"/>
-                        <circle cx="35" cy="-15" r="1" fill="#ffd700"/>
-                        <text x="0" y="8" fontFamily="Arial Black, sans-serif" fontSize="32" fill="url(#chromeDesktop)" textAnchor="middle" letterSpacing="4">TAL</text>
-                        <line x1="-35" y1="18" x2="35" y2="18" stroke="url(#holoDesktop)" strokeWidth="1.5"/>
-                    </g>
-                </svg>
+                {/* TAL Logo */}
+                <img src="/logo.svg" alt="TAL Logo" className="h-12 w-auto flex-shrink-0" />
                 {!collapsed && (
                     <div className="overflow-hidden">
                         <h1 className="text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">FALCON ERP</h1>
