@@ -12,32 +12,31 @@ const DEMO_USERS = [
 
 // FAL Oval Logo Component — Faithful recreation of FAL letterhead (Since 1989)
 function FalconLogo({ size = 120 }: { size?: number }) {
-    const h = Math.round(size * (110 / 120))
+    const h = Math.round(size * (120 / 130))
     return (
-        <svg width={size} height={h} viewBox="0 0 120 110" className="mx-auto" style={{overflow:'visible', pointerEvents:'none'}}>
-            {/* Green oval border — white fill so cream leaf is visible on dark bg */}
-            <ellipse cx="60" cy="48" rx="52" ry="34" fill="rgba(0,0,0,0.35)" stroke="#3a7d2c" strokeWidth="2.8"/>
+        <svg width={size} height={h} viewBox="0 0 130 120" className="mx-auto" style={{overflow:'visible', pointerEvents:'none'}}>
+            {/* Dark green swoosh leaf — back, largest */}
+            <path d="M48,76 C44,62 38,46 40,28 C42,16 50,6 54,2 C58,10 60,22 58,38 C56,54 52,66 50,76 Z"
+                fill="#2d7a2d"/>
+            {/* Light green swoosh leaf — middle */}
+            <path d="M54,76 C52,62 50,46 54,28 C57,16 64,6 66,2 C70,10 70,24 68,38 C66,54 60,66 56,76 Z"
+                fill="#7ab648"/>
+            {/* Red swoosh leaf — front, narrowest */}
+            <path d="M60,76 C60,64 62,48 68,32 C71,20 76,10 78,6 C82,14 82,28 78,42 C74,56 66,68 62,76 Z"
+                fill="#cc2222"/>
 
-            {/* 3 leaf strokes — fan from base upward, like original letterhead */}
-            {/* Green leaf (leftmost/back) */}
-            <path d="M57,66 C53,54 47,38 42,18" fill="none" stroke="#3a7d2c" strokeWidth="6" strokeLinecap="round"/>
-            {/* Cream/white leaf (middle) */}
-            <path d="M59,66 C57,53 57,37 58,16" fill="none" stroke="#e8dfc0" strokeWidth="6" strokeLinecap="round"/>
-            {/* Red leaf (rightmost/front) */}
-            <path d="M61,66 C63,53 68,38 74,19" fill="none" stroke="#cc2222" strokeWidth="6" strokeLinecap="round"/>
+            {/* Oval border — drawn over leaf bases, leaves overflow top */}
+            <ellipse cx="62" cy="88" rx="54" ry="28" fill="rgba(0,0,0,0.3)" stroke="#8dc63f" strokeWidth="3"/>
 
-            {/* Cross at base of leaves */}
-            <line x1="59" y1="60" x2="59" y2="72" stroke="#2d6e1e" strokeWidth="2.5" strokeLinecap="round"/>
-            <line x1="53" y1="65" x2="65" y2="65" stroke="#2d6e1e" strokeWidth="2" strokeLinecap="round"/>
+            {/* FAL text — white bold inside oval (dark bg) */}
+            <text x="62" y="100" textAnchor="middle" fill="white"
+                fontSize="26" fontWeight="900"
+                fontFamily="Arial Black, Arial, sans-serif" letterSpacing="3">FAL</text>
 
-            {/* FAL text — dark green bold italic serif */}
-            <text x="72" y="75" textAnchor="middle" fill="white"
-                fontSize="20" fontWeight="900" fontStyle="italic"
-                fontFamily="Georgia, 'Times New Roman', serif" letterSpacing="1">FAL</text>
-
-            {/* Since 1989 — below oval */}
-            <text x="60" y="98" textAnchor="middle" fill="#9ca3af"
-                fontSize="7.5" fontFamily="Arial, sans-serif" letterSpacing="0.5">Since 1989</text>
+            {/* Estd: 1989 below oval */}
+            <text x="62" y="118" textAnchor="middle" fill="#9ca3af"
+                fontSize="8" fontWeight="700"
+                fontFamily="Arial, sans-serif" letterSpacing="0.5">Estd: 1989</text>
         </svg>
     )
 }

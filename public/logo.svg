@@ -1,25 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 110" width="120" height="110">
-  <!-- Green oval border with white fill -->
-  <ellipse cx="60" cy="48" rx="52" ry="34" fill="white" stroke="#3a7d2c" stroke-width="2.8"/>
-
-  <!-- 3 leaf strokes fanning upward from base — Indian flag colors -->
-  <!-- Green leaf (leftmost) -->
-  <path d="M57,66 C53,54 47,38 42,18" fill="none" stroke="#3a7d2c" stroke-width="6" stroke-linecap="round"/>
-  <!-- Cream/white leaf (middle) -->
-  <path d="M59,66 C57,53 57,37 58,16" fill="none" stroke="#e8dfc0" stroke-width="6" stroke-linecap="round"/>
-  <!-- Red leaf (rightmost) -->
-  <path d="M61,66 C63,53 68,38 74,19" fill="none" stroke="#cc2222" stroke-width="6" stroke-linecap="round"/>
-
-  <!-- Cross at base -->
-  <line x1="59" y1="60" x2="59" y2="72" stroke="#2d6e1e" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="53" y1="65" x2="65" y2="65" stroke="#2d6e1e" stroke-width="2" stroke-linecap="round"/>
-
-  <!-- FAL text — dark green bold italic serif -->
-  <text x="72" y="75" text-anchor="middle" fill="#2d6e1e"
-        font-size="20" font-weight="900" font-style="italic"
-        font-family="Georgia, 'Times New Roman', serif" letter-spacing="1">FAL</text>
-
-  <!-- Since 1989 below oval -->
-  <text x="60" y="98" text-anchor="middle" fill="#444444"
-        font-size="7.5" font-family="Arial, sans-serif" letter-spacing="0.5">Since 1989</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 120" width="130" height="120">
+  <!-- Dark green swoosh leaf — back, largest -->
+  <path d="M48,76 C44,62 38,46 40,28 C42,16 50,6 54,2 C58,10 60,22 58,38 C56,54 52,66 50,76 Z" fill="#2d7a2d"/>
+  <!-- Light green swoosh leaf — middle -->
+  <path d="M54,76 C52,62 50,46 54,28 C57,16 64,6 66,2 C70,10 70,24 68,38 C66,54 60,66 56,76 Z" fill="#7ab648"/>
+  <!-- Red swoosh leaf — front -->
+  <path d="M60,76 C60,64 62,48 68,32 C71,20 76,10 78,6 C82,14 82,28 78,42 C74,56 66,68 62,76 Z" fill="#cc2222"/>
+  <!-- Oval border -->
+  <ellipse cx="62" cy="88" rx="54" ry="28" fill="white" stroke="#8dc63f" stroke-width="3"/>
+  <!-- FAL text -->
+  <text x="62" y="100" text-anchor="middle" fill="#2d6e1e"
+        font-size="26" font-weight="900"
+        font-family="Arial Black, Arial, sans-serif" letter-spacing="3">FAL</text>
+  <!-- Estd: 1989 -->
+  <text x="62" y="118" text-anchor="middle" fill="#333333"
+        font-size="8" font-weight="700"
+        font-family="Arial, sans-serif" letter-spacing="0.5">Estd: 1989</text>
 </svg>
