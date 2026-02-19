@@ -225,17 +225,45 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                     {/* Mobile Header with Close Button */}
                     <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-300/50">
                         <div className="flex items-center gap-3">
-                            {/* FAL Oval Logo */}
-                            <svg width="52" height="48" viewBox="0 0 130 120" className="flex-shrink-0" style={{overflow:'visible', pointerEvents:'none'}}>
-                                <path d="M48,76 C44,62 38,46 40,28 C42,16 50,6 54,2 C58,10 60,22 58,38 C56,54 52,66 50,76 Z" fill="#2d7a2d"/>
-                                <path d="M54,76 C52,62 50,46 54,28 C57,16 64,6 66,2 C70,10 70,24 68,38 C66,54 60,66 56,76 Z" fill="#7ab648"/>
-                                <path d="M60,76 C60,64 62,48 68,32 C71,20 76,10 78,6 C82,14 82,28 78,42 C74,56 66,68 62,76 Z" fill="#cc2222"/>
-                                <ellipse cx="62" cy="88" rx="54" ry="28" fill="white" stroke="#8dc63f" strokeWidth="3"/>
-                                <text x="62" y="100" textAnchor="middle" fill="#2d6e1e" fontSize="26" fontWeight="900" fontFamily="Arial Black, Arial, sans-serif" letterSpacing="3">FAL</text>
+                            {/* TAL Sacred Geometry Logo - Compact */}
+                            <svg width="48" height="48" viewBox="0 0 200 200" className="flex-shrink-0">
+                                <defs>
+                                    <linearGradient id="holoMobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#ff0080"/>
+                                        <stop offset="25%" stopColor="#00ffff"/>
+                                        <stop offset="50%" stopColor="#ffff00"/>
+                                        <stop offset="75%" stopColor="#ff00ff"/>
+                                        <stop offset="100%" stopColor="#00ff88"/>
+                                    </linearGradient>
+                                    <linearGradient id="chromeMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stopColor="#e0e0e0"/>
+                                        <stop offset="50%" stopColor="#ffffff"/>
+                                        <stop offset="100%" stopColor="#a0a0a0"/>
+                                    </linearGradient>
+                                    <linearGradient id="goldMobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#ffd700"/>
+                                        <stop offset="50%" stopColor="#ffec8b"/>
+                                        <stop offset="100%" stopColor="#daa520"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect width="200" height="200" fill="#0a0a0f" rx="20"/>
+                                <g transform="translate(100, 100)">
+                                    <path d="M0 -70 L60 -35 L60 35 L0 70 L-60 35 L-60 -35 Z" fill="none" stroke="url(#holoMobile)" strokeWidth="1" opacity="0.5"/>
+                                    <ellipse cx="0" cy="0" rx="65" ry="45" fill="none" stroke="url(#chromeMobile)" strokeWidth="2"/>
+                                    <ellipse cx="0" cy="0" rx="62" ry="42" fill="none" stroke="url(#holoMobile)" strokeWidth="1" strokeDasharray="5,3" opacity="0.8"/>
+                                    <ellipse cx="0" cy="-25" rx="18" ry="28" fill="none" stroke="url(#goldMobile)" strokeWidth="1.5" opacity="0.9"/>
+                                    <ellipse cx="-35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldMobile)" strokeWidth="1" opacity="0.7"/>
+                                    <ellipse cx="35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldMobile)" strokeWidth="1" opacity="0.7"/>
+                                    <circle cx="0" cy="-25" r="1.5" fill="#ffd700"/>
+                                    <circle cx="-35" cy="-15" r="1" fill="#ffd700"/>
+                                    <circle cx="35" cy="-15" r="1" fill="#ffd700"/>
+                                    <text x="0" y="8" fontFamily="Arial Black, sans-serif" fontSize="32" fill="url(#chromeMobile)" textAnchor="middle" letterSpacing="4">TAL</text>
+                                    <line x1="-35" y1="18" x2="35" y2="18" stroke="url(#holoMobile)" strokeWidth="1.5"/>
+                                </g>
                             </svg>
                             <div>
                                 <h1 className="text-sm font-bold text-gray-900 dark:text-white">FALCON ERP</h1>
-                                <p className="text-[10px] text-gray-500 dark:text-dark-500">Since 1989</p>
+                                <p className="text-[10px] text-gray-500 dark:text-dark-500">EST. 1989</p>
                             </div>
                         </div>
                         <button
@@ -350,13 +378,41 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
         >
             {/* Logo */}
             <div className="h-16 flex items-center gap-3 px-4 border-b border-dark-300/50 dark:border-dark-300/50 border-gray-200">
-                {/* FAL Oval Logo — Desktop */}
-                <svg width="52" height="48" viewBox="0 0 130 120" className="flex-shrink-0" style={{overflow:'visible', pointerEvents:'none'}}>
-                    <path d="M48,76 C44,62 38,46 40,28 C42,16 50,6 54,2 C58,10 60,22 58,38 C56,54 52,66 50,76 Z" fill="#2d7a2d"/>
-                    <path d="M54,76 C52,62 50,46 54,28 C57,16 64,6 66,2 C70,10 70,24 68,38 C66,54 60,66 56,76 Z" fill="#7ab648"/>
-                    <path d="M60,76 C60,64 62,48 68,32 C71,20 76,10 78,6 C82,14 82,28 78,42 C74,56 66,68 62,76 Z" fill="#cc2222"/>
-                    <ellipse cx="62" cy="88" rx="54" ry="28" fill="white" stroke="#8dc63f" strokeWidth="3"/>
-                    <text x="62" y="100" textAnchor="middle" fill="#2d6e1e" fontSize="26" fontWeight="900" fontFamily="Arial Black, Arial, sans-serif" letterSpacing="3">FAL</text>
+                {/* TAL Sacred Geometry Logo — Desktop */}
+                <svg width="48" height="48" viewBox="0 0 200 200" className="flex-shrink-0">
+                    <defs>
+                        <linearGradient id="holoDesktop" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#ff0080"/>
+                            <stop offset="25%" stopColor="#00ffff"/>
+                            <stop offset="50%" stopColor="#ffff00"/>
+                            <stop offset="75%" stopColor="#ff00ff"/>
+                            <stop offset="100%" stopColor="#00ff88"/>
+                        </linearGradient>
+                        <linearGradient id="chromeDesktop" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#e0e0e0"/>
+                            <stop offset="50%" stopColor="#ffffff"/>
+                            <stop offset="100%" stopColor="#a0a0a0"/>
+                        </linearGradient>
+                        <linearGradient id="goldDesktop" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#ffd700"/>
+                            <stop offset="50%" stopColor="#ffec8b"/>
+                            <stop offset="100%" stopColor="#daa520"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0a0f" rx="20"/>
+                    <g transform="translate(100, 100)">
+                        <path d="M0 -70 L60 -35 L60 35 L0 70 L-60 35 L-60 -35 Z" fill="none" stroke="url(#holoDesktop)" strokeWidth="1" opacity="0.5"/>
+                        <ellipse cx="0" cy="0" rx="65" ry="45" fill="none" stroke="url(#chromeDesktop)" strokeWidth="2"/>
+                        <ellipse cx="0" cy="0" rx="62" ry="42" fill="none" stroke="url(#holoDesktop)" strokeWidth="1" strokeDasharray="5,3" opacity="0.8"/>
+                        <ellipse cx="0" cy="-25" rx="18" ry="28" fill="none" stroke="url(#goldDesktop)" strokeWidth="1.5" opacity="0.9"/>
+                        <ellipse cx="-35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldDesktop)" strokeWidth="1" opacity="0.7"/>
+                        <ellipse cx="35" cy="-15" rx="15" ry="22" fill="none" stroke="url(#goldDesktop)" strokeWidth="1" opacity="0.7"/>
+                        <circle cx="0" cy="-25" r="1.5" fill="#ffd700"/>
+                        <circle cx="-35" cy="-15" r="1" fill="#ffd700"/>
+                        <circle cx="35" cy="-15" r="1" fill="#ffd700"/>
+                        <text x="0" y="8" fontFamily="Arial Black, sans-serif" fontSize="32" fill="url(#chromeDesktop)" textAnchor="middle" letterSpacing="4">TAL</text>
+                        <line x1="-35" y1="18" x2="35" y2="18" stroke="url(#holoDesktop)" strokeWidth="1.5"/>
+                    </g>
                 </svg>
                 {!collapsed && (
                     <div className="overflow-hidden">
