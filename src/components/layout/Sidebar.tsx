@@ -226,22 +226,14 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                     <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-300/50">
                         <div className="flex items-center gap-3">
                             {/* FAL Oval Logo */}
-                            <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0" style={{overflow:'hidden', pointerEvents:'none'}}>
-                                <defs>
-                                    <clipPath id="flameClipSidebar">
-                                        <path d="M60,8 C66,16 74,27 72,38 C70,47 65,53 60,55 C55,53 50,47 48,38 C46,27 54,16 60,8 Z"/>
-                                    </clipPath>
-                                    <filter id="ovalGlowSidebar" x="-10%" y="-10%" width="120%" height="120%">
-                                        <feGaussianBlur stdDeviation="1" result="blur"/>
-                                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                                    </filter>
-                                </defs>
-                                <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="#16a34a" strokeWidth="2.5" filter="url(#ovalGlowSidebar)"/>
-                                <ellipse cx="60" cy="38" rx="50" ry="28" fill="none" stroke="#16a34a" strokeWidth="0.7" opacity="0.35"/>
-                                <rect x="44" y="8" width="32" height="16" fill="#16a34a" clipPath="url(#flameClipSidebar)"/>
-                                <rect x="44" y="24" width="32" height="15" fill="#f5f5f5" clipPath="url(#flameClipSidebar)"/>
-                                <rect x="44" y="39" width="32" height="16" fill="#dc2626" clipPath="url(#flameClipSidebar)"/>
-                                <text x="60" y="68" textAnchor="middle" fill="#1a1a1a" fontSize="12" fontWeight="900" fontStyle="italic" fontFamily="system-ui" letterSpacing="2">FAL</text>
+                            <svg width="52" height="48" viewBox="0 0 120 110" className="flex-shrink-0" style={{overflow:'visible', pointerEvents:'none'}}>
+                                <ellipse cx="60" cy="48" rx="52" ry="34" fill="white" stroke="#3a7d2c" strokeWidth="2.8"/>
+                                <path d="M57,66 C53,54 47,38 42,18" fill="none" stroke="#3a7d2c" strokeWidth="6" strokeLinecap="round"/>
+                                <path d="M59,66 C57,53 57,37 58,16" fill="none" stroke="#e8dfc0" strokeWidth="6" strokeLinecap="round"/>
+                                <path d="M61,66 C63,53 68,38 74,19" fill="none" stroke="#cc2222" strokeWidth="6" strokeLinecap="round"/>
+                                <line x1="59" y1="60" x2="59" y2="72" stroke="#2d6e1e" strokeWidth="2.5" strokeLinecap="round"/>
+                                <line x1="53" y1="65" x2="65" y2="65" stroke="#2d6e1e" strokeWidth="2" strokeLinecap="round"/>
+                                <text x="72" y="75" textAnchor="middle" fill="#2d6e1e" fontSize="20" fontWeight="900" fontStyle="italic" fontFamily="Georgia, 'Times New Roman', serif" letterSpacing="1">FAL</text>
                             </svg>
                             <div>
                                 <h1 className="text-sm font-bold text-gray-900 dark:text-white">FALCON ERP</h1>
@@ -361,22 +353,14 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
             {/* Logo */}
             <div className="h-16 flex items-center gap-3 px-4 border-b border-dark-300/50 dark:border-dark-300/50 border-gray-200">
                 {/* FAL Oval Logo — Desktop */}
-                <svg width="48" height="32" viewBox="0 0 120 80" className="flex-shrink-0" style={{overflow:'hidden', pointerEvents:'none'}}>
-                    <defs>
-                        <clipPath id="flameClipDesktop">
-                            <path d="M60,8 C66,16 74,27 72,38 C70,47 65,53 60,55 C55,53 50,47 48,38 C46,27 54,16 60,8 Z"/>
-                        </clipPath>
-                        <filter id="ovalGlowDesktop" x="-10%" y="-10%" width="120%" height="120%">
-                            <feGaussianBlur stdDeviation="1" result="blur"/>
-                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                        </filter>
-                    </defs>
-                    <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="#16a34a" strokeWidth="2.5" filter="url(#ovalGlowDesktop)"/>
-                    <ellipse cx="60" cy="38" rx="50" ry="28" fill="none" stroke="#16a34a" strokeWidth="0.7" opacity="0.35"/>
-                    <rect x="44" y="8" width="32" height="16" fill="#16a34a" clipPath="url(#flameClipDesktop)"/>
-                    <rect x="44" y="24" width="32" height="15" fill="#f5f5f5" clipPath="url(#flameClipDesktop)"/>
-                    <rect x="44" y="39" width="32" height="16" fill="#dc2626" clipPath="url(#flameClipDesktop)"/>
-                    <text x="60" y="68" textAnchor="middle" fill="#1a1a1a" fontSize="12" fontWeight="900" fontStyle="italic" fontFamily="system-ui" letterSpacing="2">FAL</text>
+                <svg width="52" height="48" viewBox="0 0 120 110" className="flex-shrink-0" style={{overflow:'visible', pointerEvents:'none'}}>
+                    <ellipse cx="60" cy="48" rx="52" ry="34" fill="white" stroke="#3a7d2c" strokeWidth="2.8"/>
+                    <path d="M57,66 C53,54 47,38 42,18" fill="none" stroke="#3a7d2c" strokeWidth="6" strokeLinecap="round"/>
+                    <path d="M59,66 C57,53 57,37 58,16" fill="none" stroke="#e8dfc0" strokeWidth="6" strokeLinecap="round"/>
+                    <path d="M61,66 C63,53 68,38 74,19" fill="none" stroke="#cc2222" strokeWidth="6" strokeLinecap="round"/>
+                    <line x1="59" y1="60" x2="59" y2="72" stroke="#2d6e1e" strokeWidth="2.5" strokeLinecap="round"/>
+                    <line x1="53" y1="65" x2="65" y2="65" stroke="#2d6e1e" strokeWidth="2" strokeLinecap="round"/>
+                    <text x="72" y="75" textAnchor="middle" fill="#2d6e1e" fontSize="20" fontWeight="900" fontStyle="italic" fontFamily="Georgia, 'Times New Roman', serif" letterSpacing="1">FAL</text>
                 </svg>
                 {!collapsed && (
                     <div className="overflow-hidden">

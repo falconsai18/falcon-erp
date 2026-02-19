@@ -1,70 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80">
-  <defs>
-    <!-- Clip to flame/teardrop shape -->
-    <clipPath id="flameClip">
-      <path d="M60,8 C66,16 74,27 72,38 C70,47 65,53 60,55 C55,53 50,47 48,38 C46,27 54,16 60,8 Z"/>
-    </clipPath>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 110" width="120" height="110">
+  <!-- Green oval border with white fill -->
+  <ellipse cx="60" cy="48" rx="52" ry="34" fill="white" stroke="#3a7d2c" stroke-width="2.8"/>
 
-    <!-- Glow filter for oval border -->
-    <filter id="ovalGlow" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="1" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
+  <!-- 3 leaf strokes fanning upward from base — Indian flag colors -->
+  <!-- Green leaf (leftmost) -->
+  <path d="M57,66 C53,54 47,38 42,18" fill="none" stroke="#3a7d2c" stroke-width="6" stroke-linecap="round"/>
+  <!-- Cream/white leaf (middle) -->
+  <path d="M59,66 C57,53 57,37 58,16" fill="none" stroke="#e8dfc0" stroke-width="6" stroke-linecap="round"/>
+  <!-- Red leaf (rightmost) -->
+  <path d="M61,66 C63,53 68,38 74,19" fill="none" stroke="#cc2222" stroke-width="6" stroke-linecap="round"/>
 
-  <!-- Outer oval border (green) -->
-  <ellipse
-    cx="60" cy="38"
-    rx="57" ry="34"
-    fill="none"
-    stroke="#16a34a"
-    stroke-width="2.5"
-    filter="url(#ovalGlow)"
-  />
+  <!-- Cross at base -->
+  <line x1="59" y1="60" x2="59" y2="72" stroke="#2d6e1e" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="53" y1="65" x2="65" y2="65" stroke="#2d6e1e" stroke-width="2" stroke-linecap="round"/>
 
-  <!-- Inner oval border (decorative, subtle) -->
-  <ellipse
-    cx="60" cy="38"
-    rx="50" ry="28"
-    fill="none"
-    stroke="#16a34a"
-    stroke-width="0.7"
-    opacity="0.35"
-  />
+  <!-- FAL text — dark green bold italic serif -->
+  <text x="72" y="75" text-anchor="middle" fill="#2d6e1e"
+        font-size="20" font-weight="900" font-style="italic"
+        font-family="Georgia, 'Times New Roman', serif" letter-spacing="1">FAL</text>
 
-  <!-- Green stripe (top 1/3) — Indian flag top -->
-  <rect x="44" y="8" width="32" height="16" fill="#16a34a" clip-path="url(#flameClip)"/>
-
-  <!-- White stripe (middle 1/3) -->
-  <rect x="44" y="24" width="32" height="15" fill="#f5f5f5" clip-path="url(#flameClip)"/>
-
-  <!-- Red stripe (bottom 1/3) — Indian flag bottom -->
-  <rect x="44" y="39" width="32" height="16" fill="#dc2626" clip-path="url(#flameClip)"/>
-
-  <!-- FAL text — bold italic dark, below flame -->
-  <text
-    x="60"
-    y="68"
-    text-anchor="middle"
-    fill="#1a1a1a"
-    font-size="12"
-    font-weight="900"
-    font-style="italic"
-    font-family="system-ui, -apple-system, Arial, sans-serif"
-    letter-spacing="2"
-  >FAL</text>
-
-  <!-- Since 1989 -->
-  <text
-    x="60"
-    y="76"
-    text-anchor="middle"
-    fill="#6b7280"
-    font-size="5.5"
-    font-family="system-ui, -apple-system, Arial, sans-serif"
-    letter-spacing="0.5"
-  >Since 1989</text>
+  <!-- Since 1989 below oval -->
+  <text x="60" y="98" text-anchor="middle" fill="#444444"
+        font-size="7.5" font-family="Arial, sans-serif" letter-spacing="0.5">Since 1989</text>
 </svg>

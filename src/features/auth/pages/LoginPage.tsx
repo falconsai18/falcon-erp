@@ -12,55 +12,32 @@ const DEMO_USERS = [
 
 // FAL Oval Logo Component — Faithful recreation of FAL letterhead (Since 1989)
 function FalconLogo({ size = 120 }: { size?: number }) {
-    const h = Math.round(size * (80 / 120))
+    const h = Math.round(size * (110 / 120))
     return (
-        <svg width={size} height={h} viewBox="0 0 120 80" className="mx-auto" style={{overflow:'hidden', pointerEvents:'none'}}>
-            <defs>
-                {/* Clip flame to teardrop shape */}
-                <clipPath id="flameClipLogin">
-                    <path d="M60,8 C66,16 74,27 72,38 C70,47 65,53 60,55 C55,53 50,47 48,38 C46,27 54,16 60,8 Z"/>
-                </clipPath>
-                {/* Green oval glow */}
-                <filter id="ovalGlowLogin" x="-10%" y="-10%" width="120%" height="120%">
-                    <feGaussianBlur stdDeviation="1" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-            </defs>
+        <svg width={size} height={h} viewBox="0 0 120 110" className="mx-auto" style={{overflow:'visible', pointerEvents:'none'}}>
+            {/* Green oval border — white fill so cream leaf is visible on dark bg */}
+            <ellipse cx="60" cy="48" rx="52" ry="34" fill="rgba(0,0,0,0.35)" stroke="#3a7d2c" strokeWidth="2.8"/>
 
-            {/* Outer oval border — green */}
-            <ellipse cx="60" cy="38" rx="57" ry="34" fill="none" stroke="#16a34a" strokeWidth="2.5" filter="url(#ovalGlowLogin)"/>
-            {/* Inner oval — subtle */}
-            <ellipse cx="60" cy="38" rx="50" ry="28" fill="none" stroke="#16a34a" strokeWidth="0.7" opacity="0.35"/>
+            {/* 3 leaf strokes — fan from base upward, like original letterhead */}
+            {/* Green leaf (leftmost/back) */}
+            <path d="M57,66 C53,54 47,38 42,18" fill="none" stroke="#3a7d2c" strokeWidth="6" strokeLinecap="round"/>
+            {/* Cream/white leaf (middle) */}
+            <path d="M59,66 C57,53 57,37 58,16" fill="none" stroke="#e8dfc0" strokeWidth="6" strokeLinecap="round"/>
+            {/* Red leaf (rightmost/front) */}
+            <path d="M61,66 C63,53 68,38 74,19" fill="none" stroke="#cc2222" strokeWidth="6" strokeLinecap="round"/>
 
-            {/* Flame — 3 solid stripes (Indian flag: Green top, White mid, Red bottom) */}
-            {/* Green stripe (top) */}
-            <rect x="44" y="8" width="32" height="16" fill="#16a34a" clipPath="url(#flameClipLogin)"/>
-            {/* White stripe (middle) */}
-            <rect x="44" y="24" width="32" height="15" fill="#f5f5f5" clipPath="url(#flameClipLogin)"/>
-            {/* Red stripe (bottom) */}
-            <rect x="44" y="39" width="32" height="16" fill="#dc2626" clipPath="url(#flameClipLogin)"/>
+            {/* Cross at base of leaves */}
+            <line x1="59" y1="60" x2="59" y2="72" stroke="#2d6e1e" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="53" y1="65" x2="65" y2="65" stroke="#2d6e1e" strokeWidth="2" strokeLinecap="round"/>
 
-            {/* FAL text — bold italic, white (readable on dark bg) */}
-            <text
-                x="60" y="68"
-                textAnchor="middle"
-                fill="white"
-                fontSize="12"
-                fontWeight="900"
-                fontStyle="italic"
-                fontFamily="system-ui, -apple-system, Arial, sans-serif"
-                letterSpacing="2"
-            >FAL</text>
+            {/* FAL text — dark green bold italic serif */}
+            <text x="72" y="75" textAnchor="middle" fill="white"
+                fontSize="20" fontWeight="900" fontStyle="italic"
+                fontFamily="Georgia, 'Times New Roman', serif" letterSpacing="1">FAL</text>
 
-            {/* Since 1989 */}
-            <text
-                x="60" y="76"
-                textAnchor="middle"
-                fill="#9ca3af"
-                fontSize="5.5"
-                fontFamily="system-ui, -apple-system, Arial, sans-serif"
-                letterSpacing="0.5"
-            >Since 1989</text>
+            {/* Since 1989 — below oval */}
+            <text x="60" y="98" textAnchor="middle" fill="#9ca3af"
+                fontSize="7.5" fontFamily="Arial, sans-serif" letterSpacing="0.5">Since 1989</text>
         </svg>
     )
 }
