@@ -17,7 +17,7 @@ try {
     const id = `gen_random_uuid()`;
     
     // Clean strings for SQL
-    const safeName = p.name.replace(/'/g, "''");
+    const safeName = p.name.replace(/&amp;/g, '&').replace(/'/g, "''");
     const safeSku = p.sku.replace(/'/g, "''");
     
     const sellingPrice = Number(p.price) || 0;
@@ -33,8 +33,8 @@ try {
 
     // Inventory insert
     const safeBatch = `BATCH-${Math.floor(Math.random() * 10000)}`;
-    sql += `INSERT INTO inventory (product_id, batch_number, quantity, available_quantity, reserved_quantity, unit_cost, status)
-SELECT id, '${safeBatch}', ${stock}, ${stock}, 0, ${mrp}, 'available' FROM new_product;\n\n`;
+    sql += `INSERT INTO inventory (product_id, batch_number, quantity, reserved_quantity, unit_cost, status)
+SELECT id, '${safeBatch}', ${stock}, 0, ${mrp}, 'available' FROM new_product;\n\n`;
 
   }
 
