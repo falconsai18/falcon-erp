@@ -28,6 +28,9 @@ import {
     Wallet,
     Shield,
     X,
+    Globe,
+    Ship,
+    DollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -59,6 +62,18 @@ const NAV_SECTIONS: NavSection[] = [
             { label: 'Invoices', icon: FileText, path: '/invoices' },
             { label: 'Credit Notes', icon: FileText, path: '/credit-notes' },
             { label: 'Delivery Challans', icon: Truck, path: '/challans' },
+        ]
+    },
+    {
+        title: 'Export',
+        items: [
+            { label: 'Dashboard', icon: LayoutDashboard, path: '/export' },
+            { label: 'Customers', icon: Users, path: '/export/customers' },
+            { label: 'Orders', icon: ClipboardCheck, path: '/export/orders' },
+            { label: 'Invoices', icon: FileText, path: '/export/invoices' },
+            { label: 'Shipments', icon: Ship, path: '/export/shipments' },
+            { label: 'Packing Lists', icon: Package, path: '/export/packing-lists' },
+            { label: 'Payments', icon: DollarSign, path: '/export/payments' },
         ]
     },
     {
@@ -225,8 +240,8 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
                     {/* Mobile Header with Close Button */}
                     <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-300/50">
                         <div className="flex items-center gap-3">
-                            {/* TAL Logo */}
-                            <img src="/logo.svg" alt="TAL Logo" className="h-12 w-auto flex-shrink-0" />
+                            {/* ERP Logo */}
+                            <img src="/logo.png" alt="FALCON ERP" className="h-12 w-auto flex-shrink-0 object-contain" />
                             <div>
                                 <h1 className="text-sm font-bold text-gray-900 dark:text-white">FALCON ERP</h1>
                                 <p className="text-[10px] text-gray-500 dark:text-dark-500">EST. 1989</p>
@@ -344,8 +359,8 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
         >
             {/* Logo */}
             <div className="h-16 flex items-center gap-3 px-4 border-b border-dark-300/50 dark:border-dark-300/50 border-gray-200">
-                {/* TAL Logo */}
-                <img src="/logo.svg" alt="TAL Logo" className="h-12 w-auto flex-shrink-0" />
+                {/* ERP Logo */}
+                <img src="/logo.png" alt="FALCON ERP" className="h-12 w-auto flex-shrink-0 object-contain" />
                 {!collapsed && (
                     <div className="overflow-hidden">
                         <h1 className="text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">FALCON ERP</h1>

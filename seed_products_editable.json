@@ -1,0 +1,1070 @@
+[
+  {
+    "id": 7683,
+    "name": "Anardana Goli Mouth Freshener – 180gm",
+    "sku": "SKU-5301",
+    "price": "0",
+    "regular_price": "0",
+    "stock_quantity": 13,
+    "categories": []
+  },
+  {
+    "id": 7807,
+    "name": "Vasaka Powder 100gm–For productive cough",
+    "sku": "SKU-1624",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 47,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7803,
+    "name": "Tulsi Powder 100gm – Supports Immune Wellness",
+    "sku": "SKU-4245",
+    "price": "243",
+    "regular_price": "270",
+    "stock_quantity": 11,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7800,
+    "name": "Triphala Powder",
+    "sku": "SKU-7970",
+    "price": "243",
+    "regular_price": "270",
+    "stock_quantity": 59,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7797,
+    "name": "Sitopaladi Powder 100gm – Supports Healthy Respiratory Function",
+    "sku": "SKU-5058",
+    "price": "288",
+    "regular_price": "340",
+    "stock_quantity": 90,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7794,
+    "name": "Shatavari Powder 100gm–To Hormonal Balance",
+    "sku": "SKU-3928",
+    "price": "333",
+    "regular_price": "370",
+    "stock_quantity": 12,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7791,
+    "name": "Safed Musli Powder 100gm – Supports Men's Wellness Naturally",
+    "sku": "SKU-1169",
+    "price": "459",
+    "regular_price": "510",
+    "stock_quantity": 47,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7788,
+    "name": "Rasayan Churan 100gm–Resistance of the body",
+    "sku": "SKU-3785",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 84,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7785,
+    "name": "Punarnava Powder 100gm-For Positive Energy",
+    "sku": "SKU-2942",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 32,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7782,
+    "name": "Pippali Powder 100gm–For Respiratory System",
+    "sku": "SKU-2117",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 85,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7778,
+    "name": "Neem Powder 100gm – Supports Healthy Blood Sugar Levels",
+    "sku": "SKU-4519",
+    "price": "252",
+    "regular_price": "280",
+    "stock_quantity": 91,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7775,
+    "name": "Licorice Powder 100gm – Promotes Gastric Wellness",
+    "sku": "SKU-4017",
+    "price": "297",
+    "regular_price": "330",
+    "stock_quantity": 41,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7772,
+    "name": "New Karela Powder 100gm – Helps to Weight Loss",
+    "sku": "SKU-7784",
+    "price": "250",
+    "regular_price": "300",
+    "stock_quantity": 34,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7769,
+    "name": "New Jatamansi Powder 100gm–For Skin & Hair Care",
+    "sku": "SKU-9305",
+    "price": "225",
+    "regular_price": "300",
+    "stock_quantity": 50,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7765,
+    "name": "Jamun Seed Powder 100gm - Enhance Liver Function Naturally",
+    "sku": "SKU-1240",
+    "price": "243",
+    "regular_price": "270",
+    "stock_quantity": 66,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7761,
+    "name": "New Moringa Powder 100gm – Highly Nutritious",
+    "sku": "SKU-5855",
+    "price": "265",
+    "regular_price": "300",
+    "stock_quantity": 107,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7758,
+    "name": "Haritaki Powder 100gm – Supports Healthy Immunity",
+    "sku": "SKU-5811",
+    "price": "243",
+    "regular_price": "270",
+    "stock_quantity": 84,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7755,
+    "name": "Gurmar Powder 100gm – Supports Healthy Blood Sugar",
+    "sku": "SKU-9649",
+    "price": "234",
+    "regular_price": "300",
+    "stock_quantity": 22,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7751,
+    "name": "Giloy Powder 100gm – Supports Immunity &amp; Natural Detox",
+    "sku": "SKU-3786",
+    "price": "220",
+    "regular_price": "300",
+    "stock_quantity": 65,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7748,
+    "name": "New Dudhi Powder 100gm – Acts as Liver tonic",
+    "sku": "SKU-246",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 74,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7745,
+    "name": "Dashmool Powder 100gm – Supports Muscle and Joint Wellness",
+    "sku": "SKU-3215",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 16,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7742,
+    "name": "Brahmi Powder 100gm – Supports Healthy Memory &amp; Focus",
+    "sku": "SKU-9753",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 94,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7739,
+    "name": "Bhringraj Powder 100gm – Supports Healthy Hair Growth",
+    "sku": "SKU-2667",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 32,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7735,
+    "name": "Avipattikar Powder 100gm – Supports Digestive Comfort",
+    "sku": "SKU-6697",
+    "price": "279",
+    "regular_price": "310",
+    "stock_quantity": 105,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7731,
+    "name": "Ashwagandha Powder 100gm – Supports Stress Relief &amp; Wellness",
+    "sku": "SKU-5562",
+    "price": "288",
+    "regular_price": "320",
+    "stock_quantity": 63,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7728,
+    "name": "Arjuna Powder 100gm – Supports Healthy Lipid Levels",
+    "sku": "SKU-2891",
+    "price": "252",
+    "regular_price": "280",
+    "stock_quantity": 65,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7725,
+    "name": "Amla Powder 100gm – Supports Hair Growth &amp; Wellness",
+    "sku": "SKU-3027",
+    "price": "254",
+    "regular_price": "300",
+    "stock_quantity": 10,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7722,
+    "name": "New Tini Mini Goli Mouth Freshener – 180gm",
+    "sku": "SKU-8516",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 50,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7718,
+    "name": "The New Ilu Ilu Mouth Freshener -180gm",
+    "sku": "SKU-8243",
+    "price": "212",
+    "regular_price": "250",
+    "stock_quantity": 76,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7715,
+    "name": "Shahi Gulab Mouth Freshener - 180gm Pack",
+    "sku": "SKU-7207",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 10,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7712,
+    "name": "Rim Jhim Mix Mouth Freshener – 180gm",
+    "sku": "SKU-6856",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 20,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7709,
+    "name": "Punjabi Mix Mouth Freshener – 180gm",
+    "sku": "SKU-5986",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 93,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7706,
+    "name": "Mumbaiya Mix Mouth Freshener-180gm",
+    "sku": "SKU-7879",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 28,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7703,
+    "name": "Kesari Saunf Mouth Fresheners – 180gm",
+    "sku": "SKU-2202",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 94,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7700,
+    "name": "Hing Peda Mouth Freshener – 180gm",
+    "sku": "SKU-2819",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 12,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7695,
+    "name": "Green Flavored Mix 180gm – Mouth Freshners, Mukhwas",
+    "sku": "SKU-3412",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 85,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7691,
+    "name": "Dry Dates Mouth Freshener – 180gm",
+    "sku": "SKU-4226",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 34,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7690,
+    "name": "Lemon Peel Herbal 100g Face Pack",
+    "sku": "SKU-6917",
+    "price": "225",
+    "regular_price": "250",
+    "stock_quantity": 98,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7687,
+    "name": "Chandan Mix Mouth Freshener – 180gm",
+    "sku": "SKU-9356",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 75,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7684,
+    "name": "Anardana Goli Mouth Freshener – 180gm",
+    "sku": "SKU-1105",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 44,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7680,
+    "name": "6 Color Mix Mouth Freshener – 180gm",
+    "sku": "SKU-5353",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 80,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7676,
+    "name": "Paan Masala Mouth Freshener – 180gm",
+    "sku": "SKU-5310",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 49,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7672,
+    "name": "New Meetha Paan Mouth Freshener -180gm",
+    "sku": "SKU-5488",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 61,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7669,
+    "name": "Mughlai Paan Mouth Freshener – 180gm",
+    "sku": "SKU-6029",
+    "price": "279",
+    "regular_price": "310",
+    "stock_quantity": 29,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7666,
+    "name": "Elaichi Paan Mouth Freshener – 180gm",
+    "sku": "SKU-4524",
+    "price": "279",
+    "regular_price": "310",
+    "stock_quantity": 39,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7662,
+    "name": "Dry Green Paan Mouth Freshener -180gm",
+    "sku": "SKU-5703",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 10,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7659,
+    "name": "Calcutta Paan Mouth Freshener – 180gm",
+    "sku": "SKU-6791",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 77,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7656,
+    "name": "Banarasi Paan Mouth Freshener -180gm",
+    "sku": "SKU-2188",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 53,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7651,
+    "name": "Shikakai Powder Herbal 100g Hair Pack",
+    "sku": "SKU-8433",
+    "price": "225",
+    "regular_price": "250",
+    "stock_quantity": 82,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7645,
+    "name": "Reetha Herbal 100g Hair Pack",
+    "sku": "SKU-9643",
+    "price": "225",
+    "regular_price": "250",
+    "stock_quantity": 102,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7640,
+    "name": "Mehandi Powder Herbal100g  Hair Pack",
+    "sku": "SKU-300",
+    "price": "207",
+    "regular_price": "230",
+    "stock_quantity": 77,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7635,
+    "name": "Amla Powder Herbal 100g Hair Pack",
+    "sku": "SKU-7676",
+    "price": "225",
+    "regular_price": "250",
+    "stock_quantity": 86,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7625,
+    "name": "Turmeric Powder Herbal 100g Face Pack Remedies acne, blemishes, black heads and dark spots",
+    "sku": "SKU-2304",
+    "price": "225",
+    "regular_price": "250",
+    "stock_quantity": 77,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7620,
+    "name": "Sandal Powder Herbal 100g Face Pack deep cleans skin by removing dead cells",
+    "sku": "SKU-3995",
+    "price": "252",
+    "regular_price": "280",
+    "stock_quantity": 49,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7615,
+    "name": "Rose Petals Herbal 100g Face Pack Helps to Removes dead cells, dirt and unclogs pores",
+    "sku": "SKU-6269",
+    "price": "225",
+    "regular_price": "250",
+    "stock_quantity": 105,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7610,
+    "name": "Orange Peel Herbal 100gm Face Pack",
+    "sku": "SKU-40",
+    "price": "224",
+    "regular_price": "250",
+    "stock_quantity": 109,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7605,
+    "name": "Multani Mitti 100g Face Pack",
+    "sku": "SKU-4759",
+    "price": "198",
+    "regular_price": "220",
+    "stock_quantity": 59,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7558,
+    "name": "Sugset – Paneer Dodi Phool 175g – Traditional Ayurvedic Herb Blend for Everyday Wellness",
+    "sku": "SKU-5024",
+    "price": "344",
+    "regular_price": "430",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7551,
+    "name": "Sugset Ashwagandha Tea Powder 200g – Traditional Ayurvedic Blend for Daily Wellness",
+    "sku": "SKU-2376",
+    "price": "400",
+    "regular_price": "500",
+    "stock_quantity": 150,
+    "categories": [
+      null
+    ]
+  },
+  {
+    "id": 7534,
+    "name": "Valerian Root 100gm | Supports Restful Sleep &amp; Relaxation",
+    "sku": "SKU-2985",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7527,
+    "name": "Rose Petals (Gulab Patti) – 60g | Pure, Natural Dried Petals for Culinary &amp; Aromatic Use\n\nThis version is compliant with Ayurvedic marketing guidelines — no disease or structure/function claims, while remaining SEO-friendly with keywords like “Rose Petals,” “Gulab Patti,” and “dried petals” that users commonly search for. It highlights purity, form, and traditional uses (culinary and aromatic) without overstepping regulatory boundaries.",
+    "sku": "SKU-7238",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7512,
+    "name": "Tulsi Leaves 70gm – Organic Herbal Immunity Wellness",
+    "sku": "SKU-8002",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 149,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7510,
+    "name": "Turmeric Powder 100g - Traditional Ayurvedic Herb",
+    "sku": "SKU-7333",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7506,
+    "name": "Shikakai Pods 100gm | Supports Healthy Hair &amp; Reduces Hair Fall",
+    "sku": "SKU-1168",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7493,
+    "name": "Senna Leaves 70gm | Pure Ayurvedic Herb",
+    "sku": "SKU-7433",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7486,
+    "name": "Naagkesar 100gm | Traditional Ayurvedic Herb for Wellness",
+    "sku": "SKU-1768",
+    "price": "297",
+    "regular_price": "330",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7479,
+    "name": "Mulethi Sticks 100gm | Traditional Throat &amp; Respiratory Wellness Herb",
+    "sku": "SKU-7849",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7478,
+    "name": "Neem Leaves 70gm | Rich in Natural Anti-bacterial Properties",
+    "sku": "SKU-9680",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7448,
+    "name": "Methi Dana 200gm | Supports Digestive Wellness &amp; Appetite",
+    "sku": "SKU-6958",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7444,
+    "name": "Moringa Seeds 100gm | Supports Liver Wellness &amp; Healthy Digestion",
+    "sku": "SKU-4600",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 149,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7435,
+    "name": "Long Pepper Whole 100gm | Supports Digestive Comfort &amp; Wellness",
+    "sku": "SKU-2412",
+    "price": "270",
+    "regular_price": "300",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7433,
+    "name": "Kamarkas Raw Herb 200gm | Traditional Ayurvedic Wellness Herb",
+    "sku": "SKU-3626",
+    "price": "324",
+    "regular_price": "360",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7341,
+    "name": "Kalonji 200gm | Traditional Seed for Immunity &amp; Wellness",
+    "sku": "SKU-6130",
+    "price": "324",
+    "regular_price": "360",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7339,
+    "name": "Kaali Jeeri (Black Cumin) 200gm – Traditional Ayurvedic Herb for Daily Use",
+    "sku": "SKU-1368",
+    "price": "324",
+    "regular_price": "360",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7324,
+    "name": "Haritaki Dried Whole 200 gm | Good for Digestion | Detox body and helps Nervous System",
+    "sku": "SKU-2331",
+    "price": "252",
+    "regular_price": "280",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7323,
+    "name": "Guduchi (Tinospora Cordifolia) 100gm | Organic Immunity Wellness Herb",
+    "sku": "SKU-709",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7312,
+    "name": "Ginger Whole 100gm | Traditional Digestive &amp; Wellness Herb",
+    "sku": "SKU-101",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7309,
+    "name": "Dry Amla 100gm | Supports Hair &amp; Digestive Wellness",
+    "sku": "SKU-8125",
+    "price": "252",
+    "regular_price": "280",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7292,
+    "name": "Organic Dry Dates 200gm | Supports Bone Health &amp; Skin Wellness",
+    "sku": "SKU-9788",
+    "price": "279",
+    "regular_price": "310",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7285,
+    "name": "Black Harde (Haritaki) 100gm | Supports Immunity &amp; Scalp Wellness",
+    "sku": "SKU-9969",
+    "price": "288",
+    "regular_price": "320",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7278,
+    "name": "Calendula Flowers 70gms | Helpful for Skin and Skin related problems",
+    "sku": "SKU-5002",
+    "price": "220",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7211,
+    "name": "Banafsha Leaves 30gm | Traditional Ayurvedic Herb for Wellness",
+    "sku": "SKU-9366",
+    "price": "279",
+    "regular_price": "310",
+    "stock_quantity": 149,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7204,
+    "name": "Arnica Flowers Whole 70gm | Traditional Topical Wellness Herb",
+    "sku": "SKU-9537",
+    "price": "234",
+    "regular_price": "260",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7176,
+    "name": "Arjuna Bark 100gm | Traditional Heart Wellness Herb",
+    "sku": "SKU-1531",
+    "price": "216",
+    "regular_price": "240",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7141,
+    "name": "Aritha Soap Nut 100gm | Natural Hair Wellness &amp; Anti-Dandruff Herb",
+    "sku": "SKU-520",
+    "price": "203",
+    "regular_price": "220",
+    "stock_quantity": 146,
+    "categories": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7134,
+    "name": "Alsi Flax Seeds 200gm | High Fiber Seed for Digestive Wellness",
+    "sku": "SKU-7106",
+    "price": "207",
+    "regular_price": "230",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  {
+    "id": 7068,
+    "name": "Ashwagandha Root Whole 100gm | Traditional Ayurvedic Wellness Herb",
+    "sku": "SKU-3996",
+    "price": "252",
+    "regular_price": "280",
+    "stock_quantity": 150,
+    "categories": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  }
+]

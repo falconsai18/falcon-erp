@@ -322,7 +322,7 @@ export const SIDEBAR_MODULES: Record<UserRole, string[]> = {
 
     manager: [
         '/', '/customers', '/quotations', '/sales', '/invoices',
-        '/credit-notes', '/challans', '/suppliers', '/purchase',
+        '/credit-notes', '/challans', '/export', '/suppliers', '/purchase',
         '/grn', '/debit-notes', '/supplier-payments', '/raw-materials',
         '/formulations', '/production', '/batches', '/quality-checks',
         '/products', '/inventory', '/reports'
@@ -331,13 +331,13 @@ export const SIDEBAR_MODULES: Record<UserRole, string[]> = {
 
     accountant: [
         '/', '/invoices', '/credit-notes', '/debit-notes',
-        '/supplier-payments', '/reports', '/customers', '/suppliers'
+        '/supplier-payments', '/reports', '/customers', '/suppliers', '/export'
         // Note: gst_reports is likely a sub-feature of reports
     ],
 
     staff: [
         '/', '/customers', '/quotations', '/sales', '/challans',
-        '/suppliers', '/purchase', '/grn', '/products',
+        '/export', '/suppliers', '/purchase', '/grn', '/products',
         '/raw-materials', '/batches', '/inventory', '/formulations',
         '/production', '/quality-checks'
     ],

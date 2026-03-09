@@ -14,6 +14,24 @@ export function formatCurrency(amount: number): string {
     }).format(amount)
 }
 
+export function formatUSD(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(amount)
+}
+
+export function formatINR(amount: number): string {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(amount)
+}
+
 export function formatDate(date: string | Date): string {
     return new Intl.DateTimeFormat('en-IN', {
         day: '2-digit',

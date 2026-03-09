@@ -1,22 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { Eye, EyeOff, Loader2, Shield, Zap, BarChart3, Package } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
-const DEMO_USERS = [
-    { email: 'admin@falcon.com', password: 'admin123', role: 'Admin', icon: Shield, color: 'text-red-400' },
-    { email: 'manager@falcon.com', password: 'manager123', role: 'Manager', icon: Zap, color: 'text-blue-400' },
-    { email: 'production@falcon.com', password: 'prod123', role: 'Production', icon: Package, color: 'text-green-400' },
-    { email: 'viewer@falcon.com', password: 'viewer123', role: 'Viewer', icon: BarChart3, color: 'text-purple-400' },
-]
-
-// TAL Logo Component
-function TALLogo({ size = 180 }: { size?: number }) {
+// ERP Logo Component
+function ERPLogo({ size = 180 }: { size?: number }) {
     return (
         <img 
-            src="/logo.svg" 
-            alt="TAL Logo" 
-            className="mx-auto"
+            src="/logo.png" 
+            alt="FALCON ERP" 
+            className="mx-auto object-contain"
             style={{ width: size, height: 'auto' }}
         />
     )
@@ -48,22 +41,6 @@ export function LoginPage() {
         setIsSubmitting(false)
     }
 
-    const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
-        setEmail(demoEmail)
-        setPassword(demoPassword)
-        setError('')
-        setIsSubmitting(true)
-
-        const result = await login(demoEmail, demoPassword)
-
-        if (result.success) {
-            navigate('/', { replace: true })
-        } else {
-            setError(result.error || 'Demo login failed')
-        }
-        setIsSubmitting(false)
-    }
-
     return (
         <div className="min-h-screen bg-dark flex">
             {/* Left - Branding */}
@@ -74,7 +51,7 @@ export function LoginPage() {
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-premium-500/5 rounded-full blur-3xl" />
 
                 <div className="relative z-10 text-center space-y-8 px-12">
-                    <TALLogo size={180} />
+                    <ERPLogo size={180} />
                     <h1 className="text-5xl font-bold">
                         <span className="text-brand-400">FALCON</span>
                         <span className="text-white"> ERP</span>
@@ -103,7 +80,7 @@ export function LoginPage() {
                 <div className="w-full max-w-md space-y-8">
                     {/* Mobile logo */}
                     <div className="lg:hidden text-center space-y-4">
-                        <TALLogo size={140} />
+                        <ERPLogo size={140} />
                         <h1 className="text-3xl font-bold">
                             <span className="text-brand-400">FALCON</span>
                             <span className="text-white"> ERP</span>
@@ -171,32 +148,6 @@ export function LoginPage() {
                             )}
                         </button>
                     </form>
-
-                    {/* Demo Users */}
-                    <div className="space-y-3">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-dark-300" />
-                            </div>
-                            <div className="relative flex justify-center text-xs">
-                                <span className="bg-dark px-4 text-dark-500">Quick Demo Access</span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                            {DEMO_USERS.map((demo) => (
-                                <button
-                                    key={demo.role}
-                                    onClick={() => handleDemoLogin(demo.email, demo.password)}
-                                    disabled={isSubmitting}
-                                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-dark-100 border border-dark-300 hover:border-brand-500/50 hover:bg-dark-200 transition-all text-sm disabled:opacity-50"
-                                >
-                                    <demo.icon size={16} className={demo.color} />
-                                    <span className="text-white font-medium">{demo.role}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
 
                     <p className="text-center text-xs text-dark-600">
                         FALCON ERP v2.0 • falconherbs.com

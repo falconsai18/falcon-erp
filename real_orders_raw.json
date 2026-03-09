@@ -1,0 +1,92 @@
+{
+  "total_orders": 3,
+  "period": "Last 730 days",
+  "fetched_at": "2026-03-02T03:15:58.463350",
+  "revenue": {
+    "total": 747.0,
+    "currency": "INR",
+    "average_order_value": 249.0
+  },
+  "status_breakdown": {
+    "processing": 3
+  },
+  "country_breakdown": {
+    "IN": 3
+  },
+  "monthly_breakdown": {
+    "2026-02": {
+      "orders": 1,
+      "revenue": 234.0
+    },
+    "2025-10": {
+      "orders": 1,
+      "revenue": 279.0
+    },
+    "2024-08": {
+      "orders": 1,
+      "revenue": 234.0
+    }
+  },
+  "orders": [
+    {
+      "id": 8225,
+      "status": "processing",
+      "total": 234.0,
+      "currency": "INR",
+      "date": "2026-02-23T10:53:06",
+      "customer_email": "sales@organicwellnesses.com",
+      "country": "IN",
+      "city": "Banjara Hills Hyderabad",
+      "payment_method": "cod",
+      "payment_method_title": "Cash on delivery",
+      "items": [
+        {
+          "name": "Tulsi Leaves - 70gms. Organic Herbal Immunity booster.",
+          "quantity": 1,
+          "total": "234.00"
+        }
+      ],
+      "shipping_total": "0.00"
+    },
+    {
+      "id": 8222,
+      "status": "processing",
+      "total": 279.0,
+      "currency": "INR",
+      "date": "2025-10-22T05:35:13",
+      "customer_email": "apoorv@bhayajimercantile.com",
+      "country": "IN",
+      "city": "Indore",
+      "payment_method": "cod",
+      "payment_method_title": "Cash on delivery",
+      "items": [
+        {
+          "name": "Banafsha - 30gms. Helpful for acne, pimple and respiratory problem",
+          "quantity": 1,
+          "total": "279.00"
+        }
+      ],
+      "shipping_total": "0.00"
+    },
+    {
+      "id": 8215,
+      "status": "processing",
+      "total": 234.0,
+      "currency": "INR",
+      "date": "2024-08-20T10:44:41",
+      "customer_email": "inaam.patel33@gmail.com",
+      "country": "IN",
+      "city": "belagavi",
+      "payment_method": "cod",
+      "payment_method_title": "Cash on delivery",
+      "items": [
+        {
+          "name": "Moringa Seeds - 100gms. Drumstick Seeds reduce cholesterol level, support healthy function of the liver and improve digestion",
+          "quantity": 1,
+          "total": "234.00"
+        }
+      ],
+      "shipping_total": "0.00"
+    }
+  ]
+}

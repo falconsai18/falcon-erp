@@ -23,6 +23,14 @@ import { RawMaterialsPage } from '@/features/raw-materials/pages/RawMaterialsPag
 import { ProductionPage } from '@/features/production/pages/ProductionPage'
 import { ReportsPage } from '@/features/reports/pages/ReportsPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
+import { ExportDashboardPage } from '@/features/export/pages/ExportDashboardPage'
+import { ExportCustomersPage } from '@/features/export/pages/ExportCustomersPage'
+import { ExportOrdersPage } from '@/features/export/pages/ExportOrdersPage'
+import { ExportOrderDetailPage } from '@/features/export/pages/ExportOrderDetailPage'
+import { ExportInvoicesPage } from '@/features/export/pages/ExportInvoicesPage'
+import { ShipmentsPage } from '@/features/export/pages/ShipmentsPage'
+import { PackingListsPage } from '@/features/export/pages/PackingListsPage'
+import { ExportPaymentsPage } from '@/features/export/pages/ExportPaymentsPage'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useEffect, lazy, Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
@@ -113,6 +121,46 @@ export function AppRouter() {
                     <Route path="/credit-notes" element={
                         <ProtectedRoute requiredPermission={{ action: 'read', resource: 'credit_notes' }}>
                             <CreditNotesPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'dashboard' }}>
+                            <ExportDashboardPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export/customers" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'customers' }}>
+                            <ExportCustomersPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export/orders" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'sales_orders' }}>
+                            <ExportOrdersPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export/orders/:id" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'sales_orders' }}>
+                            <ExportOrderDetailPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export/invoices" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'invoices' }}>
+                            <ExportInvoicesPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export/shipments" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'dashboard' }}>
+                            <ShipmentsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export/packing-lists" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'dashboard' }}>
+                            <PackingListsPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/export/payments" element={
+                        <ProtectedRoute requiredPermission={{ action: 'read', resource: 'payments' }}>
+                            <ExportPaymentsPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/debit-notes" element={
