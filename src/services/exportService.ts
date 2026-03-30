@@ -434,8 +434,8 @@ export async function generateInvoicePDF(invoiceId: string) {
     const isInterstate = inv.igst_amount > 0
 
     const tableHeaders = isInterstate
-        ? [['#', 'Product', 'HSN', 'Qty', 'Rate', 'Disc%', 'Taxable', 'IGST%', 'IGST', 'Total']]
-        : [['#', 'Product', 'HSN', 'Qty', 'Rate', 'Disc%', 'Taxable', 'CGST', 'SGST', 'Total']]
+        ? [['Sr No.', 'Product', 'HSN', 'Qty', 'Rate', 'Disc%', 'Taxable', 'IGST%', 'IGST', 'Total']]
+        : [['Sr No.', 'Product', 'HSN', 'Qty', 'Rate', 'Disc%', 'Taxable', 'CGST', 'SGST', 'Total']]
 
     const tableData = items.map((item: any, idx: number) => {
         const subtotal = item.quantity * item.unit_price
