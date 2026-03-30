@@ -19,6 +19,7 @@ export interface Invoice {
     tax_amount: number
     discount_amount: number
     total_amount: number
+    round_off: number
     paid_amount: number
     balance_amount: number
     cgst_amount: number
@@ -113,14 +114,39 @@ export function calculateInvoiceItem(item: InvoiceItem, placeOfSupply: string): 
 }
 
 export function calculateInvoiceTotals(items: InvoiceItem[]) {
+    const subtotal = Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price, 0) * 100) / 100
+    const discount_amount = Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price * i.discount_percent / 100, 0) * 100) / 100
+    const tax_amount = Math.round(items.reduce((s, i) => s + i.tax_amount, 0) * 100) / 100
+    const cgst_amount = Math.round(items.reduce((s, i) => s + i.cgst_amount, 0) * 100) / 100
+    const sgst_amount = Math.round(items.reduce((s, i) => s + i.sgst_amount, 0) * 100) / 100
+    const igst_amount = Math.round(items.reduce((s, i) => s + i.igst_amount, 0) * 100) / 100
+    const exactTotal = Math.round(items.reduce((s, i) => s + i.total_amount, 0) * 100) / 100
+
+    // Business rounding: >=51 paise round UP, <=50 paise wave off
+    const paise = Math.round((exactTotal % 1) * 100)
+    let total_amount: number
+    let round_off: number
+
+    if (paise === 0) {
+        total_amount = exactTotal
+        round_off = 0
+    } else if (paise >= 51) {
+        total_amount = Math.ceil(exactTotal)
+        round_off = Math.round((total_amount - exactTotal) * 100) / 100
+    } else {
+        total_amount = Math.floor(exactTotal)
+        round_off = Math.round((total_amount - exactTotal) * 100) / 100
+    }
+
     return {
-        subtotal: Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price, 0) * 100) / 100,
-        discount_amount: Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price * i.discount_percent / 100, 0) * 100) / 100,
-        tax_amount: Math.round(items.reduce((s, i) => s + i.tax_amount, 0) * 100) / 100,
-        cgst_amount: Math.round(items.reduce((s, i) => s + i.cgst_amount, 0) * 100) / 100,
-        sgst_amount: Math.round(items.reduce((s, i) => s + i.sgst_amount, 0) * 100) / 100,
-        igst_amount: Math.round(items.reduce((s, i) => s + i.igst_amount, 0) * 100) / 100,
-        total_amount: Math.round(items.reduce((s, i) => s + i.total_amount, 0) * 100) / 100,
+        subtotal,
+        discount_amount,
+        tax_amount,
+        cgst_amount,
+        sgst_amount,
+        igst_amount,
+        total_amount,
+        round_off,
     }
 }
 
@@ -198,7 +224,7 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
     // Fetch SO with items
     const { data: so, error: soError } = await supabase
         .from('sales_orders')
-        .select('*, sales_order_items(*, products(name, sku, hsn_code))')
+        .select('*, customers(state), sales_order_items(*, products(name, display_name, sku, hsn_code))')
         .eq('id', salesOrderId)
         .single()
 
@@ -208,10 +234,14 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
     const dueDate = new Date()
     dueDate.setDate(dueDate.getDate() + 30)
 
+    // Auto-fill place of supply from customer's state
+    const customerState = so.customers?.state || ''
+    const resolvedPlaceOfSupply = customerState || placeOfSupply || SELLER_STATE
+
     const items: InvoiceItem[] = (so.sales_order_items || []).map((soItem: any) => {
         return calculateInvoiceItem({
             product_id: soItem.product_id,
-            description: null,
+            description: soItem.products?.display_name || soItem.products?.name || null,
             quantity: soItem.quantity,
             unit_price: soItem.unit_price,
             discount_percent: soItem.discount_percent || 0,
@@ -225,7 +255,7 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
             batch_number: null,
             product_name: soItem.products?.name,
             product_sku: soItem.products?.sku,
-        }, placeOfSupply)
+        }, resolvedPlaceOfSupply)
     })
 
     const totals = calculateInvoiceTotals(items)
@@ -240,7 +270,7 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
             invoice_date: new Date().toISOString().split('T')[0],
             due_date: dueDate.toISOString().split('T')[0],
             status: 'draft',
-            place_of_supply: placeOfSupply || SELLER_STATE,
+            place_of_supply: resolvedPlaceOfSupply,
             reverse_charge: false,
             paid_amount: 0,
             balance_amount: totals.total_amount,

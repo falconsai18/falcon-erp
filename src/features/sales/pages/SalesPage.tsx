@@ -382,7 +382,7 @@ function CreateOrderWizard({ isOpen, onClose, onCreated, customers }: {
     }, [isOpen])
 
     const loadProducts = async () => {
-        const { data } = await supabase.from('products').select('id, name, sku, selling_price, mrp, tax_rate').eq('status', 'active').order('name')
+        const { data } = await supabase.from('products').select('id, name, sku, selling_price, mrp, tax_rate, default_free_qty').eq('status', 'active').order('name')
         setProducts(data || [])
     }
 
@@ -398,6 +398,7 @@ function CreateOrderWizard({ isOpen, onClose, onCreated, customers }: {
             product_name: product.name,
             product_sku: product.sku,
             quantity: 1,
+            free_qty: product.default_free_qty || 0,
             unit_price: product.selling_price || 0,
             discount_percent: 0,
             tax_rate: product.tax_rate || 12,
@@ -609,9 +610,11 @@ function CreateOrderWizard({ isOpen, onClose, onCreated, customers }: {
                                                     className="p-1 rounded text-dark-500 hover:text-red-400"><Minus size={14} /></button>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-4 gap-2">
+                                        <div className="grid grid-cols-5 gap-2">
                                             <Input label="Qty" type="number" value={item.quantity}
                                                 onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} />
+                                            <Input label="Free" type="number" value={item.free_qty || 0}
+                                                onChange={(e) => updateItem(idx, 'free_qty', Number(e.target.value))} />
                                             <Input label="Price (₹)" type="number" value={item.unit_price}
                                                 onChange={(e) => updateItem(idx, 'unit_price', Number(e.target.value))} />
                                             <Input label="Disc %" type="number" value={item.discount_percent}

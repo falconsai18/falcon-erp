@@ -61,6 +61,7 @@ export function RepeatOrderButton({ customerId, onRepeatOrder }: RepeatOrderButt
         product_name: item.products?.name || item.product_name || 'Unknown',
         product_sku: item.products?.sku || item.product_sku || '',
         quantity: item.quantity,
+        free_qty: item.free_qty || 0,
         unit_price: item.unit_price,
         discount_percent: item.discount_percent || 0,
         tax_rate: item.tax_rate || item.products?.tax_rate || 12,

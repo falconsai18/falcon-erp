@@ -434,8 +434,8 @@ export async function generateInvoicePDF(invoiceId: string) {
     const isInterstate = inv.igst_amount > 0
 
     const tableHeaders = isInterstate
-        ? [['Sr No.', 'Product', 'HSN', 'Qty', 'Rate', 'Disc%', 'Taxable', 'IGST%', 'IGST', 'Total']]
-        : [['Sr No.', 'Product', 'HSN', 'Qty', 'Rate', 'Disc%', 'Taxable', 'CGST', 'SGST', 'Total']]
+        ? [['Sr No.', 'Product', 'HSN', 'Batch', 'Qty', 'Rate', 'Disc%', 'Taxable', 'IGST%', 'IGST', 'Total']]
+        : [['Sr No.', 'Product', 'HSN', 'Batch', 'Qty', 'Rate', 'Disc%', 'Taxable', 'CGST', 'SGST', 'Total']]
 
     const tableData = items.map((item: any, idx: number) => {
         const subtotal = item.quantity * item.unit_price
@@ -445,8 +445,9 @@ export async function generateInvoicePDF(invoiceId: string) {
         if (isInterstate) {
             return [
                 idx + 1,
-                item.products?.name || item.description || '-',
+                item.description || item.products?.name || '-',
                 item.hsn_code || item.products?.hsn_code || '-',
+                item.batch_number || '',
                 item.quantity,
                 `₹${item.unit_price.toFixed(2)}`,
                 `${item.discount_percent || 0}%`,
@@ -458,8 +459,9 @@ export async function generateInvoicePDF(invoiceId: string) {
         } else {
             return [
                 idx + 1,
-                item.products?.name || item.description || '-',
+                item.description || item.products?.name || '-',
                 item.hsn_code || item.products?.hsn_code || '-',
+                item.batch_number || '',
                 item.quantity,
                 `₹${item.unit_price.toFixed(2)}`,
                 `${item.discount_percent || 0}%`,
@@ -489,15 +491,16 @@ export async function generateInvoicePDF(invoiceId: string) {
         },
         columnStyles: {
             0: { halign: 'center', cellWidth: 8 },
-            1: { cellWidth: 40 },
-            2: { halign: 'center', cellWidth: 16 },
-            3: { halign: 'center', cellWidth: 12 },
-            4: { halign: 'right', cellWidth: 18 },
-            5: { halign: 'center', cellWidth: 12 },
-            6: { halign: 'right', cellWidth: 20 },
-            7: { halign: 'right', cellWidth: 16 },
-            8: { halign: 'right', cellWidth: 16 },
-            9: { halign: 'right', cellWidth: 22 },
+            1: { cellWidth: 34 },
+            2: { halign: 'center', cellWidth: 14 },
+            3: { halign: 'center', cellWidth: 14 },
+            4: { halign: 'center', cellWidth: 10 },
+            5: { halign: 'right', cellWidth: 16 },
+            6: { halign: 'center', cellWidth: 10 },
+            7: { halign: 'right', cellWidth: 18 },
+            8: { halign: 'right', cellWidth: 15 },
+            9: { halign: 'right', cellWidth: 15 },
+            10: { halign: 'right', cellWidth: 20 },
         },
         margin: { left: margin, right: margin },
         didDrawPage: () => {
@@ -541,6 +544,12 @@ export async function generateInvoicePDF(invoiceId: string) {
         addTotalRow('SGST', `₹${(inv.sgst_amount || 0).toFixed(2)}`)
     }
 
+    // Round Off row
+    const roundOff = inv.round_off || 0
+    const roundOffSign = roundOff > 0 ? '+' : roundOff < 0 ? '-' : ''
+    const roundOffText = `${roundOffSign}₹${Math.abs(roundOff).toFixed(2)}`
+    addTotalRow('Round Off', roundOffText)
+
     // Separator line
     doc.setDrawColor(209, 213, 219)
     doc.line(totalsX + 4, tY - 3, totalsX + totalsWidth - 4, tY - 3)
@@ -559,7 +568,7 @@ export async function generateInvoicePDF(invoiceId: string) {
     doc.setFontSize(8)
     doc.setFont('helvetica', 'italic')
     doc.setTextColor(107, 114, 128)
-    doc.text(`Amount in words: ${numberToWords(inv.total_amount)} Rupees Only`, margin, y + 4)
+    doc.text(`Amount in Words: Rupees ${numberToWords(Math.round(inv.total_amount))} Only`, margin, y + 4)
 
     // ============ BANK DETAILS ============
     const bankY = y + 12

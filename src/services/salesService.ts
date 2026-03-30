@@ -35,6 +35,7 @@ export interface SalesOrderItem {
     sales_order_id?: string
     product_id: string
     quantity: number
+    free_qty: number
     unit_price: number
     discount_percent: number
     tax_rate: number
@@ -90,7 +91,7 @@ export function calculateLineItem(item: SalesOrderItem): SalesOrderItem {
     const taxAmount = Math.round(taxableAmount * (item.tax_rate / 100) * 100) / 100
     const totalAmount = Math.round((taxableAmount + taxAmount) * 100) / 100
 
-    return { ...item, tax_amount: taxAmount, total_amount: totalAmount }
+    return { ...item, free_qty: item.free_qty || 0, tax_amount: taxAmount, total_amount: totalAmount }
 }
 
 export function calculateOrderTotals(items: SalesOrderItem[]) {
@@ -206,6 +207,7 @@ export async function createSalesOrder(data: SalesOrderFormData, userId?: string
             sales_order_id: order.id,
             product_id: item.product_id,
             quantity: item.quantity,
+            free_qty: item.free_qty || 0,
             unit_price: item.unit_price,
             discount_percent: item.discount_percent,
             tax_rate: item.tax_rate,
