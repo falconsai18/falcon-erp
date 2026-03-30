@@ -46,6 +46,7 @@ export interface InvoiceItem {
     product_id: string
     description: string | null
     quantity: number
+    free_qty: number
     unit_price: number
     discount_percent: number
     tax_rate: number
@@ -243,6 +244,7 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
             product_id: soItem.product_id,
             description: soItem.products?.display_name || soItem.products?.name || null,
             quantity: soItem.quantity,
+            free_qty: soItem.free_qty || 0,
             unit_price: soItem.unit_price,
             discount_percent: soItem.discount_percent || 0,
             tax_rate: soItem.tax_rate || 12,
@@ -288,6 +290,7 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
         product_id: item.product_id,
         description: item.description,
         quantity: item.quantity,
+        free_qty: item.free_qty || 0,
         unit_price: item.unit_price,
         discount_percent: item.discount_percent,
         tax_rate: item.tax_rate,
