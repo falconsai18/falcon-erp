@@ -91,16 +91,15 @@ export function calculateInvoiceItem(item: InvoiceItem, placeOfSupply: string): 
     const subtotal = item.quantity * item.unit_price
     const discountAmt = subtotal * (item.discount_percent / 100)
     const taxableAmount = subtotal - discountAmt
+    const taxAmount = Math.round(taxableAmount * (item.tax_rate / 100) * 100) / 100
     const isInterstate = placeOfSupply && placeOfSupply !== SELLER_STATE
 
-    let cgst = 0, sgst = 0, igst = 0, taxAmount = 0
+    let cgst = 0, sgst = 0, igst = 0
     if (isInterstate) {
-        igst = Math.round(taxableAmount * (item.tax_rate / 100) * 100) / 100
-        taxAmount = igst
+        igst = taxAmount
     } else {
-        cgst = Math.round(taxableAmount * (item.tax_rate / 2 / 100) * 100) / 100
-        sgst = cgst
-        taxAmount = Math.round((cgst + sgst) * 100) / 100
+        cgst = Math.round(taxAmount / 2 * 100) / 100
+        sgst = taxAmount - cgst
     }
 
     return {
@@ -114,26 +113,14 @@ export function calculateInvoiceItem(item: InvoiceItem, placeOfSupply: string): 
 }
 
 export function calculateInvoiceTotals(items: InvoiceItem[]) {
-    const subtotal = Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price, 0) * 100) / 100
-    const discount_amount = Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price * i.discount_percent / 100, 0) * 100) / 100
-    const tax_amount = Math.round(items.reduce((s, i) => s + i.tax_amount, 0) * 100) / 100
-    const cgst_amount = Math.round(items.reduce((s, i) => s + i.cgst_amount, 0) * 100) / 100
-    const sgst_amount = Math.round(items.reduce((s, i) => s + i.sgst_amount, 0) * 100) / 100
-    const igst_amount = Math.round(items.reduce((s, i) => s + i.igst_amount, 0) * 100) / 100
-
-    const exactTotal = Math.round(items.reduce((s, i) => s + i.total_amount, 0) * 100) / 100
-    const integerPart = Math.floor(exactTotal)
-    const centPart = Math.round((exactTotal - integerPart) * 100)
-    const total_amount = centPart >= 51 ? integerPart + 1 : integerPart
-
     return {
-        subtotal,
-        discount_amount,
-        tax_amount,
-        cgst_amount,
-        sgst_amount,
-        igst_amount,
-        total_amount,
+        subtotal: Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price, 0) * 100) / 100,
+        discount_amount: Math.round(items.reduce((s, i) => s + i.quantity * i.unit_price * i.discount_percent / 100, 0) * 100) / 100,
+        tax_amount: Math.round(items.reduce((s, i) => s + i.tax_amount, 0) * 100) / 100,
+        cgst_amount: Math.round(items.reduce((s, i) => s + i.cgst_amount, 0) * 100) / 100,
+        sgst_amount: Math.round(items.reduce((s, i) => s + i.sgst_amount, 0) * 100) / 100,
+        igst_amount: Math.round(items.reduce((s, i) => s + i.igst_amount, 0) * 100) / 100,
+        total_amount: Math.round(items.reduce((s, i) => s + i.total_amount, 0) * 100) / 100,
     }
 }
 
