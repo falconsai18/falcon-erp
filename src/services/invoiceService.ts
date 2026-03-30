@@ -91,15 +91,16 @@ export function calculateInvoiceItem(item: InvoiceItem, placeOfSupply: string): 
     const subtotal = item.quantity * item.unit_price
     const discountAmt = subtotal * (item.discount_percent / 100)
     const taxableAmount = subtotal - discountAmt
-    const taxAmount = Math.round(taxableAmount * (item.tax_rate / 100) * 100) / 100
     const isInterstate = placeOfSupply && placeOfSupply !== SELLER_STATE
 
-    let cgst = 0, sgst = 0, igst = 0
+    let cgst = 0, sgst = 0, igst = 0, taxAmount = 0
     if (isInterstate) {
-        igst = taxAmount
+        igst = Math.round(taxableAmount * (item.tax_rate / 100) * 100) / 100
+        taxAmount = igst
     } else {
-        cgst = Math.round(taxAmount / 2 * 100) / 100
-        sgst = taxAmount - cgst
+        cgst = Math.round(taxableAmount * (item.tax_rate / 2 / 100) * 100) / 100
+        sgst = cgst
+        taxAmount = Math.round((cgst + sgst) * 100) / 100
     }
 
     return {
