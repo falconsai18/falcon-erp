@@ -441,6 +441,7 @@ export async function generateInvoicePDF(invoiceId: string) {
         const subtotal = item.quantity * item.unit_price
         const discount = subtotal * (item.discount_percent || 0) / 100
         const taxable = subtotal - discount
+        const qtyDisplay = item.free_qty > 0 ? `${item.quantity}+${item.free_qty}` : `${item.quantity}`
 
         if (isInterstate) {
             return [
@@ -448,7 +449,7 @@ export async function generateInvoicePDF(invoiceId: string) {
                 item.description || item.products?.name || '-',
                 item.hsn_code || item.products?.hsn_code || '-',
                 item.batch_number || '',
-                item.quantity,
+                qtyDisplay,
                 `₹${item.unit_price.toFixed(2)}`,
                 `${item.discount_percent || 0}%`,
                 `₹${taxable.toFixed(2)}`,
@@ -462,7 +463,7 @@ export async function generateInvoicePDF(invoiceId: string) {
                 item.description || item.products?.name || '-',
                 item.hsn_code || item.products?.hsn_code || '-',
                 item.batch_number || '',
-                item.quantity,
+                qtyDisplay,
                 `₹${item.unit_price.toFixed(2)}`,
                 `${item.discount_percent || 0}%`,
                 `₹${taxable.toFixed(2)}`,
