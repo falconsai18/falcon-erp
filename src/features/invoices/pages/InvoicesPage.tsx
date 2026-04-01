@@ -14,6 +14,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { usePermission } from '@/hooks/usePermission'
 import {
     getInvoices, getInvoiceById, createInvoiceFromSO, updateInvoiceStatus,
     recordPayment, deleteInvoice, getInvoiceStats, getUnbilledSalesOrders, getInvoicePayments,
@@ -440,6 +441,7 @@ export function InvoicesPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
+    const { can } = usePermission()
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [totalCount, setTotalCount] = useState(0)
@@ -714,7 +716,7 @@ export function InvoicesPage() {
                                                         <CheckCircle size={14} />
                                                     </button>
                                                 )}
-                                                {inv.status === 'draft' && (
+                                                {can('delete', 'invoices') && (inv.status === 'draft' || inv.status === 'unpaid' || inv.status === 'paid' || inv.status === 'sent') && (
                                                     <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingInvoice(inv); setIsDeleteModalOpen(true) }}
                                                         className="p-1.5 rounded-lg text-gray-500 dark:text-dark-500 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 )}

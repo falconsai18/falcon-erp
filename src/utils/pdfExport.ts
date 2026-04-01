@@ -5,7 +5,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 // ============ NUMBER TO WORDS (INDIAN SYSTEM) ============
 
 export function numberToWords(num: number): string {
-    if (num === 0) return 'Zero'
+    if (num === 0 || isNaN(num) || num === null || num === undefined) return 'Zero'
 
     const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
         'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
@@ -26,7 +26,8 @@ export function numberToWords(num: number): string {
         return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '')
     }
 
-    return convert(Math.floor(num))
+    const result = convert(Math.floor(num))
+    return result.trim().replace(/\s+/g, ' ')
 }
 
 // ============ INVOICE PRINTING ============
@@ -72,8 +73,8 @@ export async function printInvoicePDF(invoiceId: string) {
             <tr>
                 <td style="text-align: center;">${index + 1}</td>
                 <td>
-                    <b>${product.name}</b><br/>
-                    <small>${item.description || ''}</small>
+                    <b>${product.name}</b>
+                    ${(item.description && item.description !== product.name) ? `<br/><small>${item.description}</small>` : ''}
                 </td>
                 <td style="text-align: center;">${item.hsn_code || product.hsn_code || '-'}</td>
                 <td style="text-align: center;">${item.batch_number || '-'}</td>
@@ -248,12 +249,12 @@ export async function printInvoicePDF(invoiceId: string) {
                                 <tr>
                                     <td colspan="2"><div style="border-bottom: 1px solid #ddd; margin: 5px 0;"></div></td>
                                 </tr>
-                                ${invoice.round_off ? `
-                                <tr>
-                                    <td>Round Off:</td>
-                                    <td class="amount-col">${invoice.round_off > 0 ? '+' : ''}${formatCurrency(invoice.round_off)}</td>
-                                </tr>
-                                ` : ''}
+${invoice.round_off !== 0 ? `
+          <tr>
+            <td>Round Off:</td>
+            <td class="amount-col">${invoice.round_off > 0 ? '+' : '-'}${formatCurrency(Math.abs(invoice.round_off))}</td>
+          </tr>
+        ` : ''}
                                 <tr class="grand-total">
                                     <td>Grand Total:</td>
                                     <td class="amount-col">${formatCurrency(invoice.total_amount)}</td>
@@ -291,7 +292,7 @@ export async function printInvoicePDF(invoiceId: string) {
                 @media print {
                     @page { margin: 10mm; }
                     body { -webkit-print-color-adjust: exact; }
-                    .page-break { page-break-after: always; min-height: 100vh; }
+                    .page-break { page-break-after: always; padding-bottom: 20px; border-bottom: 1px dashed #eee; margin-bottom: 20px; }
                 }
                 body { font-family: 'Arial', sans-serif; font-size: 11px; color: #000; padding: 10px; margin: 0; }
                 .invoice-container { padding: 10px; }

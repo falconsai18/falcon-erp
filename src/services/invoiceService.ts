@@ -123,21 +123,21 @@ export function calculateInvoiceTotals(items: InvoiceItem[]) {
     const igst_amount = Math.round(items.reduce((s, i) => s + i.igst_amount, 0) * 100) / 100
     const exactTotal = Math.round(items.reduce((s, i) => s + i.total_amount, 0) * 100) / 100
 
-    // Business rounding: >=51 paise round UP, <=50 paise wave off
-    const paise = Math.round((exactTotal % 1) * 100)
-    let total_amount: number
-    let round_off: number
+  // Business rounding: >=50 paise round UP, <50 paise round DOWN (nearest rupee)
+  const paise = Math.round((exactTotal % 1) * 100)
+  let total_amount: number
+  let round_off: number
 
-    if (paise === 0) {
-        total_amount = exactTotal
-        round_off = 0
-    } else if (paise >= 51) {
-        total_amount = Math.ceil(exactTotal)
-        round_off = Math.round((total_amount - exactTotal) * 100) / 100
-    } else {
-        total_amount = Math.floor(exactTotal)
-        round_off = Math.round((total_amount - exactTotal) * 100) / 100
-    }
+  if (paise === 0) {
+    total_amount = exactTotal
+    round_off = 0
+  } else if (paise >= 50) {
+    total_amount = Math.ceil(exactTotal)
+    round_off = Math.round((exactTotal - total_amount) * 100) / 100
+  } else {
+    total_amount = Math.floor(exactTotal)
+    round_off = Math.round((exactTotal - total_amount) * 100) / 100
+  }
 
     return {
         subtotal,
@@ -349,7 +349,7 @@ export async function recordPayment(
     // Get invoice details
     const { data: inv } = await supabase
         .from('invoices')
-        .select('paid_amount, total_amount, customer_id, invoice_number')
+        .select('paid_amount, total_amount, customer_id, invoice_number, sales_order_id')
         .eq('id', invoiceId)
         .single()
 
@@ -388,6 +388,14 @@ export async function recordPayment(
 
     if (error) throw error
 
+    // Sync with Sales Order if exists
+    if (inv.sales_order_id) {
+        await supabase.from('sales_orders').update({
+            payment_status: status,
+            updated_at: new Date().toISOString()
+        }).eq('id', inv.sales_order_id)
+    }
+
     logActivity({
         action: AUDIT_ACTIONS.PAYMENT_RECEIVED,
         entity_type: 'invoice',
@@ -397,6 +405,11 @@ export async function recordPayment(
 }
 
 export async function deleteInvoice(id: string): Promise<void> {
+    // 1. Delete payments
+    await supabase.from('payments').delete().eq('invoice_id', id)
+    // 2. Delete items
+    await supabase.from('invoice_items').delete().eq('invoice_id', id)
+    // 3. Delete invoice
     return deleteRecord('invoices', id)
 }
 

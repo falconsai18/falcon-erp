@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import {
     Plus, Search, Download, Edit2, Trash2, X, Save, ChevronLeft, ChevronRight,
     AlertCircle, LayoutGrid, LayoutList, FlaskConical, AlertTriangle,
-    Thermometer, Calendar, IndianRupee, Package, Clock,
+    Thermometer, Calendar, IndianRupee, Package, Clock, Upload, ImageIcon,
 } from 'lucide-react'
+import { uploadRawMaterialImage, deleteImage, formatFileSize } from '@/services/imageService'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -71,10 +72,14 @@ function RawMaterialDetail({ item, onClose, onEdit }: {
         <div className="glass-card h-full flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-dark-300/50">
                 <div className="flex items-center gap-3">
-                    <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg',
-                        isLow ? 'bg-red-500/10 text-red-400' : 'bg-lime-500/10 text-lime-400')}>
-                        <FlaskConical size={20} />
-                    </div>
+                    {item.image_url ? (
+                        <img src={item.image_url} className="w-10 h-10 rounded-xl object-cover border border-dark-300" alt={item.name} />
+                    ) : (
+                        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg',
+                            isLow ? 'bg-red-500/10 text-red-400' : 'bg-lime-500/10 text-lime-400')}>
+                            <FlaskConical size={20} />
+                        </div>
+                    )}
                     <div>
                         <h2 className="font-semibold text-white">{item.name}</h2>
                         <div className="flex items-center gap-2 mt-0.5">
@@ -184,6 +189,11 @@ export function RawMaterialsPage() {
     const [showHistoryDrawer, setShowHistoryDrawer] = useState(false)
     const [selectedMaterialForHistory, setSelectedMaterialForHistory] = useState<RawMaterial | null>(null)
 
+    // Image Upload States
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const [imageUploading, setImageUploading] = useState(false)
+
     const fetchSuppliers = async () => {
         try {
             const { data } = await supabase.from('suppliers').select('id, name').eq('status', 'active').order('name')
@@ -248,7 +258,10 @@ export function RawMaterialsPage() {
             reorder_point: rm.reorder_point, unit_cost: rm.unit_cost,
             supplier_id: rm.supplier_id || '', shelf_life_days: rm.shelf_life_days || 365,
             storage_conditions: rm.storage_conditions || '', status: rm.status,
+            image_url: rm.image_url || null, thumbnail_url: rm.thumbnail_url || null,
         })
+        setImagePreview(rm.image_url || null)
+        setImageFile(null)
         setIsModalOpen(true)
     }
 
@@ -256,14 +269,39 @@ export function RawMaterialsPage() {
         if (!formData.name.trim()) { toast.error('Name required'); return }
         try {
             setIsSaving(true)
+            let materialId = ''
+            
             if (editingItem) {
                 await updateRawMaterial(editingItem.id, formData)
+                materialId = editingItem.id
                 toast.success('Updated!')
             } else {
-                await createRawMaterial(formData)
+                const material = await createRawMaterial(formData)
+                materialId = material.id
                 toast.success('Created!')
             }
-            setIsModalOpen(false); fetchData()
+
+            // Handle image upload if selected
+            if (imageFile && materialId) {
+                setImageUploading(true)
+                try {
+                    const { url, thumbnailUrl } = await uploadRawMaterialImage(imageFile, materialId)
+                    await supabase
+                        .from('raw_materials')
+                        .update({ image_url: url, thumbnail_url: thumbnailUrl })
+                        .eq('id', materialId)
+                } catch (uploadErr) {
+                    console.error('Image upload failed:', uploadErr)
+                    toast.error('Material saved, but image upload failed')
+                } finally {
+                    setImageUploading(false)
+                }
+            }
+
+            setIsModalOpen(false)
+            setImageFile(null)
+            setImagePreview(null)
+            fetchData()
         } catch (err: any) { toast.error(err.message) }
         finally { setIsSaving(false) }
     }
@@ -386,10 +424,14 @@ export function RawMaterialsPage() {
                                     </div>
                                     <div className="space-y-3">
                                         <div className="flex items-start gap-3">
-                                            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center',
-                                                rm.current_stock <= rm.reorder_point ? 'bg-red-500/10 text-red-400' : 'bg-lime-500/10 text-lime-400')}>
-                                                <FlaskConical size={18} />
-                                            </div>
+                                            {rm.thumbnail_url ? (
+                                                <img src={rm.thumbnail_url} className="w-10 h-10 rounded-xl object-cover border border-dark-300" alt={rm.name} />
+                                            ) : (
+                                                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center',
+                                                    rm.current_stock <= rm.reorder_point ? 'bg-red-500/10 text-red-400' : 'bg-lime-500/10 text-lime-400')}>
+                                                    <FlaskConical size={18} />
+                                                </div>
+                                            )}
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="font-semibold text-white truncate">{rm.name}</h3>
                                                 <div className="flex items-center gap-2 mt-0.5">
@@ -438,10 +480,14 @@ export function RawMaterialsPage() {
                                                 selectedItem?.id === rm.id && 'bg-lime-500/5 border-l-2 border-lime-500')}>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center',
-                                                        rm.current_stock <= rm.reorder_point ? 'bg-red-500/10 text-red-400' : 'bg-lime-500/10 text-lime-400')}>
-                                                        <FlaskConical size={14} />
-                                                    </div>
+                                                    {rm.thumbnail_url ? (
+                                                        <img src={rm.thumbnail_url} className="w-8 h-8 rounded-lg object-cover border border-dark-300" alt={rm.name} />
+                                                    ) : (
+                                                        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center',
+                                                            rm.current_stock <= rm.reorder_point ? 'bg-red-500/10 text-red-400' : 'bg-lime-500/10 text-lime-400')}>
+                                                            <FlaskConical size={14} />
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <p className="text-sm font-medium text-white">{rm.name}</p>
                                                         <p className="text-xs text-dark-500">{rm.code || '-'} • {rm.category || 'No category'}</p>
@@ -506,15 +552,84 @@ export function RawMaterialsPage() {
             </div>
 
             {/* Create/Edit Modal */}
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+            <Modal isOpen={isModalOpen} onClose={() => {
+                    setIsModalOpen(false)
+                    setImageFile(null)
+                    setImagePreview(null)
+                }}
                 title={editingItem ? 'Edit Raw Material' : 'Add Raw Material'} size="lg"
                 footer={<>
-                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                    <Button onClick={handleSave} isLoading={isSaving} icon={<Save size={16} />}>
+                    <Button variant="secondary" onClick={() => {
+                        setIsModalOpen(false)
+                        setImageFile(null)
+                        setImagePreview(null)
+                    }}>Cancel</Button>
+                    <Button onClick={handleSave} isLoading={isSaving || imageUploading} icon={<Save size={16} />}>
                         {editingItem ? 'Update' : 'Create'}
                     </Button>
                 </>}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-6">
+                    {/* Image Upload Zone */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">Material Image</label>
+                        <div 
+                            onClick={() => document.getElementById('rm-image-input')?.click()}
+                            className={cn(
+                                "relative h-44 rounded-xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center overflow-hidden",
+                                imagePreview ? "border-lime-500/50" : "border-dark-300 hover:border-dark-400 bg-dark-300/10"
+                            )}
+                        >
+                            {imagePreview ? (
+                                <>
+                                    <img src={imagePreview} className="w-full h-full object-contain" alt="Preview" />
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            if (editingItem?.image_url) {
+                                                deleteImage(editingItem.image_url).catch(console.error)
+                                            }
+                                            setImageFile(null)
+                                            setImagePreview(null)
+                                            updateForm('image_url', null)
+                                            updateForm('thumbnail_url', null)
+                                        }}
+                                        className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-lg transition-all"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </>
+                            ) : (
+                                <div className="text-center p-6">
+                                    <div className="w-12 h-12 rounded-full bg-dark-200 flex items-center justify-center mx-auto mb-3">
+                                        <Upload size={24} className="text-dark-500" />
+                                    </div>
+                                    <p className="text-sm text-white font-medium">Click or drag to upload image</p>
+                                    <p className="text-xs text-dark-500 mt-1">Max 300KB • JPG, PNG, WebP</p>
+                                </div>
+                            )}
+                            <input 
+                                id="rm-image-input"
+                                type="file" 
+                                className="hidden" 
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) {
+                                        setImageFile(file)
+                                        setImagePreview(URL.createObjectURL(file))
+                                    }
+                                }}
+                            />
+                        </div>
+                        {imageFile && (
+                            <p className="text-[10px] text-dark-500 flex items-center gap-1">
+                                <span className="font-semibold text-lime-400">{imageFile.name}</span>
+                                ({formatFileSize(imageFile.size)})
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input label="Material Name *" value={formData.name}
                         onChange={(e) => updateForm('name', e.target.value)} placeholder="e.g. Ashwagandha Root" />
                     <Input label="Code" value={formData.code}
@@ -545,6 +660,7 @@ export function RawMaterialsPage() {
                     <div className="md:col-span-2"><Textarea label="Description" value={formData.description}
                         onChange={(e) => updateForm('description', e.target.value)} rows={2} /></div>
                 </div>
+            </div>
             </Modal>
 
             {/* Delete Modal */}

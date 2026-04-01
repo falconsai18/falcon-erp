@@ -18,6 +18,7 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { usePermission } from '@/hooks/usePermission'
 import {
     getSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrderStatus,
     deleteSalesOrder, getSalesOrderStats, calculateLineItem, calculateOrderTotals,
@@ -798,6 +799,7 @@ export function SalesPage() {
     const [statusFilter, setStatusFilter] = useState('all')
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const { can } = usePermission()
     const [totalCount, setTotalCount] = useState(0)
     const pageSize = 25
 
@@ -1015,7 +1017,7 @@ export function SalesPage() {
                                                 <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{formatCurrency(o.total_amount)}</span>
                                             </td>
                                             <td className="px-4 py-3">
-                                                {o.status === 'draft' && (
+                                                {can('delete', 'sales_orders') && (o.status === 'draft' || o.status === 'cancelled' || o.status === 'confirmed') && (
                                                     <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
                                                         className="p-1.5 rounded-lg text-gray-500 dark:text-dark-500 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 )}

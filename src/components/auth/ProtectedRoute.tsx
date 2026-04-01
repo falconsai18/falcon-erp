@@ -5,52 +5,51 @@ import { useAuthStore } from '@/features/auth/store/authStore'
 import { usePermission } from '@/hooks/usePermission'
 import { type Action, type Resource } from '@/config/permissions'
 import { toast } from 'sonner'
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ProtectedRouteProps {
-    children: React.ReactNode
-    requiredPermission?: {
-        action: Action
-        resource: Resource
-    }
+  children: React.ReactNode
+  requiredPermission?: {
+    action: Action
+    resource: Resource
+  }
 }
 
 export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
-    const { isAuthenticated, isLoading } = useAuthStore()
-    const { can } = usePermission()
-    const location = useLocation()
-    const toastShownRef = useRef(false)
+  const { isAuthenticated, isLoading } = useAuthStore()
+  const { can } = usePermission()
+  const location = useLocation()
+  const [shouldRedirect, setShouldRedirect] = useState(false)
 
-    // Reset toast ref on location change
-    useEffect(() => {
-        toastShownRef.current = false
-    }, [location.pathname])
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-dark-900 flex items-center justify-center">
-                <div className="text-center space-y-4">
-                    <Loader2 size={40} className="animate-spin text-brand-400 mx-auto" />
-                    <p className="text-dark-500">Loading Falcon ERP...</p>
-                </div>
-            </div>
-        )
+  // Handle permission check in effect to avoid ref access during render
+  useEffect(() => {
+    if (isAuthenticated && requiredPermission) {
+      if (!can(requiredPermission.action, requiredPermission.resource)) {
+        toast.error('Access Denied: Insufficient permissions')
+        setShouldRedirect(true)
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, requiredPermission?.action, requiredPermission?.resource])
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" state={{ from: location }} replace />
-    }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 size={40} className="animate-spin text-brand-400 mx-auto" />
+          <p className="text-dark-500">Loading Falcon ERP...</p>
+        </div>
+      </div>
+    )
+  }
 
-    if (requiredPermission) {
-        if (!can(requiredPermission.action, requiredPermission.resource)) {
-            // Prevent duplicate toasts in strict mode double-render
-            if (!toastShownRef.current) {
-                toast.error('Access Denied: Insufficient permissions')
-                toastShownRef.current = true
-            }
-            return <Navigate to="/" replace />
-        }
-    }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
 
-    return <>{children}</>
+  if (shouldRedirect) {
+    return <Navigate to="/" replace />
+  }
+
+  return <>{children}</>
 }

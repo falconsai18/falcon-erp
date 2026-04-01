@@ -33,7 +33,7 @@ import { PackingListsPage } from '@/features/export/pages/PackingListsPage'
 import { ExportPaymentsPage } from '@/features/export/pages/ExportPaymentsPage'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useEffect, lazy, Suspense } from 'react'
-import { Loader2 } from 'lucide-react'
+import BulkInwardingPage from '@/features/inventory/pages/BulkInwarding'
 
 const CustomerLedgerPage = lazy(() => import('@/features/customers/pages/CustomerLedgerPage'))
 const SupplierLedgerPage = lazy(() => import('@/features/suppliers/pages/SupplierLedgerPage'))
@@ -72,6 +72,11 @@ export function AppRouter() {
                     <Route path="/inventory" element={
                         <ProtectedRoute requiredPermission={{ action: 'read', resource: 'warehouses' }}>
                             <InventoryPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/inventory/bulk-entry" element={
+                        <ProtectedRoute requiredPermission={{ action: 'create', resource: 'warehouses' }}>
+                            <BulkInwardingPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/customers" element={

@@ -252,7 +252,19 @@ export async function updateSalesOrderStatus(id: string, status: string): Promis
 }
 
 export async function deleteSalesOrder(id: string): Promise<void> {
-    // Items auto-delete via CASCADE
+    // 1. Delete associated invoices (manually since they have payments/items)
+    const { data: invs } = await supabase.from('invoices').select('id').eq('sales_order_id', id)
+    if (invs && invs.length > 0) {
+        // We import deleteInvoice dynamically or just delete related stuff here
+        for (const inv of invs) {
+            await supabase.from('payments').delete().eq('invoice_id', inv.id)
+            await supabase.from('invoice_items').delete().eq('invoice_id', inv.id)
+            await supabase.from('invoices').delete().eq('id', inv.id)
+        }
+    }
+    // 2. Delete order items
+    await supabase.from('sales_order_items').delete().eq('sales_order_id', id)
+    // 3. Delete the order
     return deleteRecord('sales_orders', id)
 }
 

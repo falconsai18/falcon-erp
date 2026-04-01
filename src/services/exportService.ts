@@ -642,14 +642,15 @@ export async function generateInvoicePDF(invoiceId: string) {
     doc.setTextColor(107, 114, 128)
     doc.text('Authorized Signatory', pageWidth - margin - 25, doc.internal.pageSize.getHeight() - 25, { align: 'center' })
 
-    // Save
-    doc.save(`${inv.invoice_number}.pdf`)
-    return true
+  // Save with sanitized filename
+  const sanitizedInvoiceNumber = (inv.invoice_number || 'Invoice').replace(/[^a-zA-Z0-9-_]/g, '_')
+  doc.save(`${sanitizedInvoiceNumber}.pdf`)
+  return true
 }
 
 // ============ NUMBER TO WORDS ============
-function numberToWords(num: number): string {
-    if (num === 0) return 'Zero'
+export function numberToWords(num: number): string {
+    if (num === 0 || isNaN(num) || (num as any) === null || (num as any) === undefined) return 'Zero'
 
     const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
         'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
@@ -671,5 +672,6 @@ function numberToWords(num: number): string {
         return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '')
     }
 
-    return convert(Math.floor(num))
+    const result = convert(Math.floor(num))
+    return result.trim().replace(/\s+/g, ' ')
 }

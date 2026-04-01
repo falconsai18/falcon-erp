@@ -1,10 +1,12 @@
 import { supabase } from '@/lib/supabase';
 
-const MAX_FILE_SIZE = 500 * 1024; // 500KB
+// ✅ CHANGED: 300KB as per your requirement
+const MAX_FILE_SIZE = 300 * 1024; // 300KB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export interface ImageUploadResult {
   url: string;
+  thumbnailUrl: string; // ✅ NEW: thumbnail URL
   path: string;
   size: number;
   width: number;
@@ -25,17 +27,18 @@ export function validateImage(file: File): ImageValidationError | null {
     };
   }
 
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_FILE_SIZE * 10) {
+    // ✅ CHANGED: Allow up to 3MB raw input (we compress it anyway)
     return {
       field: 'size',
-      message: `File too large. Maximum size is ${formatFileSize(MAX_FILE_SIZE)}.`
+      message: 'File too large. Maximum upload size is 3MB (will be compressed automatically).'
     };
   }
 
   return null;
 }
 
-// Optimize image before upload
+// ✅ CHANGED: Optimize image with new settings
 export async function optimizeImage(
   file: File,
   options: {
@@ -44,11 +47,11 @@ export async function optimizeImage(
     quality?: number;
     format?: 'image/jpeg' | 'image/png' | 'image/webp';
   } = {}
-): Promise<Blob> {
+): Promise<{ blob: Blob; width: number; height: number }> {
   const {
-    maxWidth = 1200,
-    maxHeight = 1200,
-    quality = 0.85,
+    maxWidth = 800,    // ✅ CHANGED: 1200 → 800
+    maxHeight = 800,   // ✅ CHANGED: 1200 → 800
+    quality = 0.75,    // ✅ CHANGED: 0.85 → 0.75
     format = 'image/webp'
   } = options;
 
@@ -59,16 +62,14 @@ export async function optimizeImage(
     img.onload = () => {
       URL.revokeObjectURL(url);
 
-      // Calculate new dimensions
       let { width, height } = img;
-      
+
       if (width > maxWidth || height > maxHeight) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
-        width *= ratio;
-        height *= ratio;
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
       }
 
-      // Create canvas
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
@@ -79,14 +80,28 @@ export async function optimizeImage(
         return;
       }
 
-      // Draw image
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Convert to blob
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            resolve(blob);
+            // ✅ NEW: Check if compressed size exceeds limit
+            if (blob.size > MAX_FILE_SIZE) {
+              // Re-compress with lower quality
+              canvas.toBlob(
+                (retryBlob) => {
+                  if (retryBlob) {
+                    resolve({ blob: retryBlob, width, height });
+                  } else {
+                    resolve({ blob, width, height }); // Use original attempt
+                  }
+                },
+                format,
+                0.6 // Lower quality fallback
+              );
+            } else {
+              resolve({ blob, width, height });
+            }
           } else {
             reject(new Error('Failed to create blob'));
           }
@@ -105,52 +120,121 @@ export async function optimizeImage(
   });
 }
 
-// Upload image to Supabase Storage
+// ✅ NEW: Create thumbnail blob (150x150)
+export async function createThumbnailBlob(
+  file: File,
+  maxSize: number = 150
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+
+      let { width, height } = img;
+      if (width > height) {
+        height = Math.round((height / width) * maxSize);
+        width = maxSize;
+      } else {
+        width = Math.round((width / height) * maxSize);
+        height = maxSize;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to create thumbnail blob'));
+        },
+        'image/webp',
+        0.7
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load image'));
+    };
+
+    img.src = url;
+  });
+}
+
+// ✅ CHANGED: Upload product image (now also uploads thumbnail)
 export async function uploadProductImage(
   file: File,
   productId: string
 ): Promise<ImageUploadResult> {
-  // Validate
   const validationError = validateImage(file);
   if (validationError) {
     throw new Error(validationError.message);
   }
 
-  // Optimize
-  const optimizedBlob = await optimizeImage(file);
-  
-  // Generate filename
   const timestamp = Date.now();
-  const fileExt = 'webp';
-  const fileName = `products/${productId}/${timestamp}.${fileExt}`;
 
-  // Upload
-  const { data, error } = await supabase.storage
+  // Optimize main image
+  const { blob: optimizedBlob, width, height } = await optimizeImage(file);
+
+  // Create thumbnail
+  const thumbnailBlob = await createThumbnailBlob(file);
+
+  // Upload main image
+  const mainPath = `products/${productId}/${timestamp}.webp`;
+  const { error: mainError } = await supabase.storage
     .from('product-images')
-    .upload(fileName, optimizedBlob, {
+    .upload(mainPath, optimizedBlob, {
       contentType: 'image/webp',
       upsert: true
     });
 
-  if (error) {
-    throw new Error(`Upload failed: ${error.message}`);
+  if (mainError) {
+    throw new Error(`Upload failed: ${mainError.message}`);
   }
 
-  // Get public URL
+  // Upload thumbnail
+  const thumbPath = `products/${productId}/${timestamp}_thumb.webp`;
+  const { error: thumbError } = await supabase.storage
+    .from('product-images')
+    .upload(thumbPath, thumbnailBlob, {
+      contentType: 'image/webp',
+      upsert: true
+    });
+
+  if (thumbError) {
+    console.warn('Thumbnail upload failed, using main image:', thumbError.message);
+  }
+
+  // Get public URLs
   const { data: { publicUrl } } = supabase.storage
     .from('product-images')
-    .getPublicUrl(fileName);
+    .getPublicUrl(mainPath);
+
+  const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(thumbPath);
 
   return {
     url: publicUrl,
-    path: fileName,
+    thumbnailUrl: thumbError ? publicUrl : thumbPublicUrl,
+    path: mainPath,
     size: optimizedBlob.size,
-    width: 0, // Could get from canvas
-    height: 0
+    width,
+    height
   };
 }
 
-// Upload raw material image
+// ✅ CHANGED: Upload raw material image (same pattern)
 export async function uploadRawMaterialImage(
   file: File,
   materialId: string
@@ -160,49 +244,69 @@ export async function uploadRawMaterialImage(
     throw new Error(validationError.message);
   }
 
-  const optimizedBlob = await optimizeImage(file);
   const timestamp = Date.now();
-  const fileName = `raw-materials/${materialId}/${timestamp}.webp`;
 
-  const { data, error } = await supabase.storage
+  const { blob: optimizedBlob, width, height } = await optimizeImage(file);
+  const thumbnailBlob = await createThumbnailBlob(file);
+
+  const mainPath = `raw-materials/${materialId}/${timestamp}.webp`;
+  const { error: mainError } = await supabase.storage
     .from('product-images')
-    .upload(fileName, optimizedBlob, {
+    .upload(mainPath, optimizedBlob, {
       contentType: 'image/webp',
       upsert: true
     });
 
-  if (error) {
-    throw new Error(`Upload failed: ${error.message}`);
+  if (mainError) {
+    throw new Error(`Upload failed: ${mainError.message}`);
+  }
+
+  const thumbPath = `raw-materials/${materialId}/${timestamp}_thumb.webp`;
+  const { error: thumbError } = await supabase.storage
+    .from('product-images')
+    .upload(thumbPath, thumbnailBlob, {
+      contentType: 'image/webp',
+      upsert: true
+    });
+
+  if (thumbError) {
+    console.warn('Thumbnail upload failed, using main image:', thumbError.message);
   }
 
   const { data: { publicUrl } } = supabase.storage
     .from('product-images')
-    .getPublicUrl(fileName);
+    .getPublicUrl(mainPath);
+
+  const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(thumbPath);
 
   return {
     url: publicUrl,
-    path: fileName,
+    thumbnailUrl: thumbError ? publicUrl : thumbPublicUrl,
+    path: mainPath,
     size: optimizedBlob.size,
-    width: 0,
-    height: 0
+    width,
+    height
   };
 }
 
-// Delete image
+// Delete image (also deletes thumbnail)
 export async function deleteImage(imageUrl: string): Promise<void> {
-  // Extract path from URL
   const url = new URL(imageUrl);
   const pathMatch = url.pathname.match(/product-images\/(.*)/);
-  
+
   if (!pathMatch) {
     throw new Error('Invalid image URL');
   }
 
   const path = pathMatch[1];
+  // ✅ NEW: Also delete thumbnail
+  const thumbPath = path.replace('.webp', '_thumb.webp');
 
   const { error } = await supabase.storage
     .from('product-images')
-    .remove([path]);
+    .remove([path, thumbPath]);
 
   if (error) {
     throw new Error(`Delete failed: ${error.message}`);
@@ -238,7 +342,7 @@ export function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Create thumbnail
+// ✅ KEPT: Create thumbnail as data URL (for preview before upload)
 export async function createThumbnail(
   file: File,
   maxSize: number = 150
@@ -257,21 +361,19 @@ export async function createThumbnail(
         return;
       }
 
-      // Calculate thumbnail size
       let { width, height } = img;
       if (width > height) {
-        height = (height / width) * maxSize;
+        height = Math.round((height / width) * maxSize);
         width = maxSize;
       } else {
-        width = (width / height) * maxSize;
+        width = Math.round((width / height) * maxSize);
         height = maxSize;
       }
 
       canvas.width = width;
       canvas.height = height;
-
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', 0.7));
+      resolve(canvas.toDataURL('image/webp', 0.7)); // ✅ CHANGED: jpeg → webp
     };
 
     img.onerror = () => {

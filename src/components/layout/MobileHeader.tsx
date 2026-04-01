@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { Menu, Bell } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 
 interface MobileHeaderProps {

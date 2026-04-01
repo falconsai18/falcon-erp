@@ -8,6 +8,7 @@ import {
 // ============ TYPES ============
 export type UserRole = 'super_admin' | 'admin' | 'manager' | 'accountant' | 'staff' | 'viewer'
 
+
 export type Resource =
     | 'dashboard'
     | 'users'
@@ -105,7 +106,7 @@ export const PERMISSIONS: PermissionMatrix = {
     customers: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: READ_ONLY,
         staff: CRUD,
         viewer: READ_ONLY
@@ -113,7 +114,7 @@ export const PERMISSIONS: PermissionMatrix = {
     quotations: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: READ_ONLY,
         staff: CRUD,
         viewer: READ_ONLY
@@ -121,7 +122,7 @@ export const PERMISSIONS: PermissionMatrix = {
     sales_orders: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: READ_ONLY,
         staff: CRUD,
         viewer: READ_ONLY
@@ -129,7 +130,7 @@ export const PERMISSIONS: PermissionMatrix = {
     invoices: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: CRUD,
         staff: CRUD,
         viewer: READ_ONLY
@@ -137,7 +138,7 @@ export const PERMISSIONS: PermissionMatrix = {
     credit_notes: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: CRUD,
         staff: [],
         viewer: READ_ONLY
@@ -145,7 +146,7 @@ export const PERMISSIONS: PermissionMatrix = {
     challans: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: CRUD,
         viewer: READ_ONLY
@@ -153,7 +154,7 @@ export const PERMISSIONS: PermissionMatrix = {
     suppliers: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: READ_ONLY,
         staff: CRUD,
         viewer: READ_ONLY
@@ -161,7 +162,7 @@ export const PERMISSIONS: PermissionMatrix = {
     purchase_orders: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: READ_ONLY,
         staff: CRUD,
         viewer: READ_ONLY
@@ -169,7 +170,7 @@ export const PERMISSIONS: PermissionMatrix = {
     grn: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: CRUD,
         viewer: READ_ONLY
@@ -177,7 +178,7 @@ export const PERMISSIONS: PermissionMatrix = {
     supplier_bills: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: CRUD,
         staff: [],
         viewer: READ_ONLY
@@ -185,7 +186,7 @@ export const PERMISSIONS: PermissionMatrix = {
     debit_notes: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: CRUD,
         staff: [],
         viewer: READ_ONLY
@@ -193,7 +194,7 @@ export const PERMISSIONS: PermissionMatrix = {
     payments: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: CRUD,
         staff: [],
         viewer: READ_ONLY
@@ -201,7 +202,7 @@ export const PERMISSIONS: PermissionMatrix = {
     products: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: READ_ONLY,
         staff: CRUD,
         viewer: READ_ONLY
@@ -209,7 +210,7 @@ export const PERMISSIONS: PermissionMatrix = {
     raw_materials: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: READ_ONLY,
         staff: CRUD,
         viewer: READ_ONLY
@@ -217,7 +218,7 @@ export const PERMISSIONS: PermissionMatrix = {
     batches: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: CRUD,
         viewer: READ_ONLY
@@ -225,15 +226,15 @@ export const PERMISSIONS: PermissionMatrix = {
     warehouses: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
-        accountant: [],
-        staff: READ_ONLY,
+        manager: CRU,
+        accountant: READ_ONLY,
+        staff: CRUD,
         viewer: READ_ONLY
     },
     formulations: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: CRUD,
         viewer: READ_ONLY
@@ -241,7 +242,7 @@ export const PERMISSIONS: PermissionMatrix = {
     work_orders: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: CRUD,
         viewer: READ_ONLY
@@ -249,7 +250,7 @@ export const PERMISSIONS: PermissionMatrix = {
     quality_checks: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: CRUD,
         viewer: READ_ONLY
@@ -257,7 +258,7 @@ export const PERMISSIONS: PermissionMatrix = {
     reports: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: CRUD,
         staff: [],
         viewer: READ_ONLY
@@ -265,7 +266,7 @@ export const PERMISSIONS: PermissionMatrix = {
     gst_reports: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: CRUD,
         staff: [],
         viewer: READ_ONLY
@@ -273,7 +274,7 @@ export const PERMISSIONS: PermissionMatrix = {
     categories: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: [],
         viewer: READ_ONLY
@@ -281,7 +282,7 @@ export const PERMISSIONS: PermissionMatrix = {
     brands: {
         super_admin: ALL_ACTIONS,
         admin: ALL_ACTIONS,
-        manager: ALL_ACTIONS,
+        manager: CRU,
         accountant: [],
         staff: [],
         viewer: READ_ONLY

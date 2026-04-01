@@ -22,6 +22,8 @@ export interface RawMaterial {
     created_at: string
     updated_at: string
     supplier_name?: string
+    image_url?: string | null
+    thumbnail_url?: string | null
 }
 
 export interface RawMaterialFormData {
@@ -38,6 +40,8 @@ export interface RawMaterialFormData {
     shelf_life_days: number
     storage_conditions: string
     status: string
+    image_url: string | null
+    thumbnail_url: string | null
 }
 
 export const EMPTY_RAWMATERIAL_FORM: RawMaterialFormData = {
@@ -54,6 +58,8 @@ export const EMPTY_RAWMATERIAL_FORM: RawMaterialFormData = {
     shelf_life_days: 365,
     storage_conditions: '',
     status: 'active',
+    image_url: null,
+    thumbnail_url: null,
 }
 
 const RM_CATEGORIES = [

@@ -18,7 +18,10 @@ import {
     AlertCircle,
     Camera,
     Scan,
+    Upload,
+    ImageIcon,
 } from 'lucide-react'
+import { uploadProductImage, deleteImage, createThumbnail, formatFileSize } from '@/services/imageService'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -55,6 +58,8 @@ interface Product {
     // joined
     category_name?: string
     brand_name?: string
+    image_url?: string | null
+    thumbnail_url?: string | null
 }
 
 interface ProductFormData {
@@ -73,6 +78,8 @@ interface ProductFormData {
     min_stock_level: number
     max_stock_level: number
     reorder_point: number
+    image_url: string | null
+    thumbnail_url: string | null
 }
 
 const EMPTY_FORM: ProductFormData = {
@@ -91,6 +98,8 @@ const EMPTY_FORM: ProductFormData = {
     min_stock_level: 10,
     max_stock_level: 1000,
     reorder_point: 25,
+    image_url: null,
+    thumbnail_url: null,
 }
 
 const UNIT_OPTIONS = [
@@ -139,6 +148,11 @@ export function ProductsPage() {
     const [isSmartCameraOpen, setIsSmartCameraOpen] = useState(false)
     const [isTrainingOpen, setIsTrainingOpen] = useState(false)
     const [trainingProducts, setTrainingProducts] = useState<any[]>([])
+
+    // Image Upload States
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const [imageUploading, setImageUploading] = useState(false)
 
     // ============ FETCH DATA ============
     const fetchProducts = async () => {
@@ -264,7 +278,11 @@ export function ProductsPage() {
             min_stock_level: product.min_stock_level || 10,
             max_stock_level: product.max_stock_level || 1000,
             reorder_point: product.reorder_point || 25,
+            image_url: product.image_url || null,
+            thumbnail_url: product.thumbnail_url || null,
         })
+        setImagePreview(product.image_url || null)
+        setImageFile(null)
         setIsModalOpen(true)
     }
 
@@ -303,24 +321,66 @@ export function ProductsPage() {
 
             if (editingProduct) {
                 // UPDATE
-                const { error } = await supabase
+                const { error, data } = await supabase
                     .from('products')
                     .update(payload)
                     .eq('id', editingProduct.id)
+                    .select()
+                    .single()
 
                 if (error) throw error
+                
+                // Handle image upload if selected
+                if (imageFile) {
+                    setImageUploading(true)
+                    try {
+                        const { url, thumbnailUrl } = await uploadProductImage(imageFile, editingProduct.id)
+                        await supabase
+                            .from('products')
+                            .update({ image_url: url, thumbnail_url: thumbnailUrl })
+                            .eq('id', editingProduct.id)
+                    } catch (uploadErr) {
+                        console.error('Image upload failed:', uploadErr)
+                        toast.error('Product saved, but image upload failed')
+                    } finally {
+                        setImageUploading(false)
+                    }
+                }
+
                 toast.success('Product updated successfully!')
             } else {
                 // CREATE
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('products')
                     .insert(payload)
+                    .select()
+                    .single()
 
                 if (error) throw error
+
+                // Handle image upload if selected
+                if (imageFile && data) {
+                    setImageUploading(true)
+                    try {
+                        const { url, thumbnailUrl } = await uploadProductImage(imageFile, data.id)
+                        await supabase
+                            .from('products')
+                            .update({ image_url: url, thumbnail_url: thumbnailUrl })
+                            .eq('id', data.id)
+                    } catch (uploadErr) {
+                        console.error('Image upload failed:', uploadErr)
+                        toast.error('Product created, but image upload failed')
+                    } finally {
+                        setImageUploading(false)
+                    }
+                }
+
                 toast.success('Product created successfully!')
             }
 
             setIsModalOpen(false)
+            setImageFile(null)
+            setImagePreview(null)
             fetchProducts()
         } catch (err: any) {
             toast.error('Failed to save: ' + err.message)
@@ -358,6 +418,20 @@ export function ProductsPage() {
 
     // ============ TABLE COLUMNS ============
     const columns = [
+        {
+            key: 'image',
+            label: 'Image',
+            className: 'w-[60px]',
+            render: (item: Product) => (
+                item.thumbnail_url ? (
+                    <img src={item.thumbnail_url} className="w-10 h-10 rounded object-cover border border-dark-300" alt={item.name} />
+                ) : (
+                    <div className="w-10 h-10 rounded bg-dark-200/50 flex items-center justify-center border border-dashed border-dark-300">
+                        <ImageIcon className="w-5 h-5 text-dark-500" />
+                    </div>
+                )
+            ),
+        },
         {
             key: 'name',
             label: 'Product',
@@ -569,20 +643,89 @@ export function ProductsPage() {
             {/* ============ CREATE/EDIT MODAL ============ */}
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false)
+                    setImageFile(null)
+                    setImagePreview(null)
+                }}
                 title={editingProduct ? 'Edit Product' : 'Add New Product'}
                 description={editingProduct ? `Editing ${editingProduct.name}` : 'Fill in product details'}
                 size="lg"
                 footer={
                     <>
-                        <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSave} isLoading={isSaving} icon={<Save size={16} />}>
+                        <Button variant="secondary" onClick={() => {
+                            setIsModalOpen(false)
+                            setImageFile(null)
+                            setImagePreview(null)
+                        }}>Cancel</Button>
+                        <Button onClick={handleSave} isLoading={isSaving || imageUploading} icon={<Save size={16} />}>
                             {editingProduct ? 'Update Product' : 'Create Product'}
                         </Button>
                     </>
                 }
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-6">
+                    {/* Image Upload Zone */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-medium text-dark-500 uppercase tracking-wider">Product Image</label>
+                        <div 
+                            onClick={() => document.getElementById('product-image-input')?.click()}
+                            className={cn(
+                                "relative h-48 rounded-xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center overflow-hidden",
+                                imagePreview ? "border-brand-500/50" : "border-dark-300 hover:border-dark-400 bg-dark-300/10"
+                            )}
+                        >
+                            {imagePreview ? (
+                                <>
+                                    <img src={imagePreview} className="w-full h-full object-contain" alt="Preview" />
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            if (editingProduct?.image_url) {
+                                                deleteImage(editingProduct.image_url).catch(console.error)
+                                            }
+                                            setImageFile(null)
+                                            setImagePreview(null)
+                                            updateForm('image_url', null)
+                                            updateForm('thumbnail_url', null)
+                                        }}
+                                        className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-lg transition-all"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </>
+                            ) : (
+                                <div className="text-center p-6">
+                                    <div className="w-12 h-12 rounded-full bg-dark-200 flex items-center justify-center mx-auto mb-3">
+                                        <Upload size={24} className="text-dark-500" />
+                                    </div>
+                                    <p className="text-sm text-white font-medium">Click or drag to upload image</p>
+                                    <p className="text-xs text-dark-500 mt-1">Max 300KB • JPG, PNG, WebP</p>
+                                </div>
+                            )}
+                            <input 
+                                id="product-image-input"
+                                type="file" 
+                                className="hidden" 
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) {
+                                        setImageFile(file)
+                                        setImagePreview(URL.createObjectURL(file))
+                                    }
+                                }}
+                            />
+                        </div>
+                        {imageFile && (
+                            <p className="text-[10px] text-dark-500 flex items-center gap-1">
+                                <span className="font-semibold text-brand-400">{imageFile.name}</span>
+                                ({formatFileSize(imageFile.size)})
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                         label="Product Name *"
                         value={formData.name}
@@ -670,7 +813,8 @@ export function ProductsPage() {
                         />
                     </div>
                 </div>
-            </Modal>
+            </div>
+        </Modal>
 
             {/* ============ VIEW MODAL ============ */}
             <Modal

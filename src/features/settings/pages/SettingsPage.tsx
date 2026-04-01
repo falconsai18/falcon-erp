@@ -14,17 +14,17 @@ import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
-    getCompanyInfo, updateCompanyInfo,
-    getAllSettings, updateSetting,
-    getNumberSequences, updateNumberSequence,
-    getBankAccounts, updateBankAccount,
-    getCurrentUser, updateUserProfile, changePassword,
-    getSystemStats,
-    getCategories, createCategory, updateCategory, deleteCategory,
-    getBrands, createBrand, updateBrand, deleteBrand,
-    getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
-    getUnitsOfMeasure, createUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure,
-    type CompanyInfo, type SettingRow, type NumberSequence, type BankAccount,
+  getCompanyInfo, updateCompanyInfo,
+  getAllSettings, updateSetting, upsertSetting,
+  getNumberSequences, updateNumberSequence,
+  getBankAccounts, updateBankAccount,
+  getCurrentUser, updateUserProfile, changePassword,
+  getSystemStats,
+  getCategories, createCategory, updateCategory, deleteCategory,
+  getBrands, createBrand, updateBrand, deleteBrand,
+  getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
+  getUnitsOfMeasure, createUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure,
+  type CompanyInfo, type SettingRow, type NumberSequence, type BankAccount,
 } from '@/services/settingsService'
 
 type SettingsTab = 'company' | 'profile' | 'numbering' | 'system' | 'categories' | 'brands' | 'taxes' | 'units'
@@ -142,31 +142,40 @@ export function SettingsPage() {
 
     useEffect(() => { loadAll() }, [])
 
-    const loadAll = async () => {
-        try {
-            setLoading(true)
-            const [companyData, settingsData, seqData, bankData, userData, statsData, cats, brnds, taxes, uom] = await Promise.all([
-                getCompanyInfo(),
-                getAllSettings(),
-                getNumberSequences(),
-                getBankAccounts(),
-                getCurrentUser(),
-                getSystemStats(),
-                getCategories().catch(() => []),
-                getBrands().catch(() => []),
-                getTaxRates().catch(() => []),
-                getUnitsOfMeasure().catch(() => []),
-            ])
-            setCompany(companyData)
-            setSettings(settingsData)
-            setSequences(seqData)
-            setBankAccounts(bankData)
-            setProfile(userData)
-            setStats(statsData)
-            setCategories(cats || [])
-            setBrands(brnds || [])
-            setTaxRates(taxes || [])
-            setUnits(uom || [])
+  const loadAll = async () => {
+    try {
+      setLoading(true)
+      const [companyData, settingsData, seqData, bankData, userData, statsData, cats, brnds, taxes, uom] = await Promise.all([
+        getCompanyInfo(),
+        getAllSettings(),
+        getNumberSequences(),
+        getBankAccounts(),
+        getCurrentUser(),
+        getSystemStats(),
+        getCategories().catch(() => []),
+        getBrands().catch(() => []),
+        getTaxRates().catch(() => []),
+        getUnitsOfMeasure().catch(() => []),
+      ])
+      setCompany(companyData)
+
+      // Ensure invoice_terms_conditions exists
+      let finalSettingsData = settingsData
+      const hasTerms = settingsData.some(s => s.key === 'invoice_terms_conditions')
+      if (!hasTerms) {
+        await upsertSetting('invoice_terms_conditions', "1. Goods once sold will not be taken back.\n2. Interest @ 18% p.a. will be charged if payment is not made within the due date.\n3. Subject to jurisdiction.", 'Terms and conditions displayed on invoices')
+        finalSettingsData = await getAllSettings()
+      }
+
+      setSettings(finalSettingsData)
+      setSequences(seqData)
+      setBankAccounts(bankData)
+      setProfile(userData)
+      setStats(statsData)
+      setCategories(cats || [])
+      setBrands(brnds || [])
+      setTaxRates(taxes || [])
+      setUnits(uom || [])
         } catch (err: any) {
             toast.error('Failed to load settings: ' + err.message)
         } finally {

@@ -3,8 +3,9 @@ import {
     Plus, Search, Download, X, Save, TrendingUp, ChevronLeft, ChevronRight,
     AlertCircle, Warehouse, Package, AlertTriangle, Calendar,
     IndianRupee, ArrowUpCircle, ArrowDownCircle, RefreshCw,
-    Clock, XCircle, CheckCircle, Filter, History, ScanLine,
+    Clock, XCircle, CheckCircle, Filter, History, ScanLine, FileSpreadsheet,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -179,6 +180,7 @@ function StockDetail({ item, onClose, onAdjust }: {
 
 // ============ MAIN PAGE ============
 export function InventoryPage() {
+    const navigate = useNavigate()
     const { user } = useAuthStore()
     const [items, setItems] = useState<InventoryItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -286,6 +288,7 @@ export function InventoryPage() {
                 actions={<div className="flex items-center gap-3">
                     <Button variant="secondary" icon={<Download size={16} />} size="sm">Export</Button>
                     <Button variant="secondary" size="sm" icon={<ScanLine size={16} />} onClick={() => setShowSmartCamera(true)}>Scan & Add</Button>
+                    <Button variant="secondary" size="sm" icon={<FileSpreadsheet size={16} />} onClick={() => navigate('/inventory/bulk-entry')}>Bulk Entry</Button>
                     <Button icon={<Plus size={16} />} onClick={() => setShowAddStock(true)}>Add Stock</Button>
                 </div>} />
 
