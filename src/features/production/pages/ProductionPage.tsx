@@ -16,6 +16,7 @@ import { cn, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { usePermission } from '@/hooks/usePermission'
 import {
     getWorkOrders, getWorkOrderById, createWorkOrder,
     updateWorkOrderStatus, completeWorkOrder, deleteWorkOrder,
@@ -239,6 +240,7 @@ export function ProductionPage() {
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [totalCount, setTotalCount] = useState(0)
+    const { can } = usePermission()
     const pageSize = 25
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
     const [stats, setStats] = useState({ total: 0, planned: 0, inProgress: 0, completed: 0 })
@@ -420,9 +422,9 @@ export function ProductionPage() {
                                                             {(o.status === 'in_progress' || o.status === 'material_issued') && (
                                                                 <ScrapButton workOrder={o} onScrapRecorded={fetchOrders} />
                                                             )}
-                                                            {o.status === 'planned' && (
+                                                            {can('delete', 'work_orders') && (o.status === 'planned' || o.status === 'in_progress' || o.status === 'completed' || o.status === 'cancelled') && (
                                                                 <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
-                                                                    className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
+                                                                    className="p-1.5 rounded-lg text-gray-500 dark:text-dark-500 hover:text-red-400 hover:bg-dark-200"><Trash2 size={14} /></button>
                                                             )}
                                                         </div>
                                                     </td>

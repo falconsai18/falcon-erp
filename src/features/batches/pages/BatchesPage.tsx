@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { usePermission } from '@/hooks/usePermission'
 import { supabase } from '@/lib/supabase'
 import {
     getBatches, getBatchById, createBatch, deleteBatch, updateBatchStatus,
@@ -299,6 +300,7 @@ export function BatchesPage() {
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [totalCount, setTotalCount] = useState(0)
+    const { can } = usePermission()
     const pageSize = 25
 
     const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null)
@@ -526,7 +528,7 @@ export function BatchesPage() {
                                                         <LifecycleBadge status={batch.status} />
                                                     </td>
                                                     <td className="px-3 py-3">
-                                                        {batch.quality_status === 'pending' && (
+                                                        {can('delete', 'batches') && (batch.quality_status === 'pending' || batch.quality_status === 'pass' || batch.quality_status === 'fail') && (
                                                             <button onClick={(e) => { e.stopPropagation(); setDeletingBatch(batch) }}
                                                                 className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-dark-200">
                                                                 <Trash2 size={14} />

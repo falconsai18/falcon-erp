@@ -17,10 +17,15 @@ async function clearManufacturingData() {
   console.log('🗑️ CLEARING MANUFACTURING DATA (Correct Order)...')
   
   const tables = [
+    'quality_check_items',
     'quality_checks',
     'production_order_items',
     'production_orders',
-    'formulation_items',
+    'work_order_steps',
+    'work_order_materials',
+    'work_orders',
+    'formulation_ingredients',
+    'formulation_process_steps',
     'formulations',
     'inventory_movements',
     'batches',

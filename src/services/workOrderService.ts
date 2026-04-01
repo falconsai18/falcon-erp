@@ -477,7 +477,22 @@ export async function completeWorkOrder(
 }
 
 export async function deleteWorkOrder(id: string): Promise<void> {
-    // Materials and steps auto-delete via CASCADE
+    // 1. Delete Quality Checks and Items
+    const { data: qcs } = await supabase.from('quality_checks').select('id').eq('work_order_id', id)
+    if (qcs && qcs.length > 0) {
+        const qcIds = qcs.map(q => q.id)
+        await supabase.from('quality_check_items').delete().in('quality_check_id', qcIds)
+        await supabase.from('quality_checks').delete().in('id', qcIds)
+    }
+
+    // 2. Delete Batches
+    await supabase.from('batches').delete().eq('work_order_id', id)
+
+    // 3. Delete WO Materials & Steps
+    await supabase.from('work_order_materials').delete().eq('work_order_id', id)
+    await supabase.from('work_order_steps').delete().eq('work_order_id', id)
+
+    // 4. Delete the Work Order itself
     return deleteRecord('work_orders', id)
 }
 

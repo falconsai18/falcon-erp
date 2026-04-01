@@ -350,12 +350,31 @@ export async function updateBatchStatus(
 export async function deleteBatch(id: string): Promise<void> {
     const batch = await getBatchById(id)
 
+    // 1. Delete associated Quality Checks and Items
+    const { data: qcs } = await supabase.from('quality_checks').select('id')
+        .or(`batch_id.eq.${id},batch_number.eq.${batch.batch_number}`)
+    
+    if (qcs && qcs.length > 0) {
+        const qcIds = qcs.map(q => q.id)
+        await supabase.from('quality_check_items').delete().in('quality_check_id', qcIds)
+        await supabase.from('quality_checks').delete().in('id', qcIds)
+    }
+
+    // 2. Delete inventory records
     await supabase
         .from('inventory')
         .delete()
         .eq('batch_number', batch.batch_number)
         .eq('product_id', batch.product_id)
 
+    // 3. Delete inventory movements
+    await supabase
+        .from('inventory_movements')
+        .delete()
+        .eq('batch_number', batch.batch_number)
+        .eq('product_id', batch.product_id)
+
+    // 4. Delete the batch itself
     return deleteRecord('batches', id)
 }
 

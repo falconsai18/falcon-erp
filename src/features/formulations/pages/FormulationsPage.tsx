@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { usePermission } from '@/hooks/usePermission'
 import {
     getFormulations, getFormulationById, createFormulation, updateFormulation, deleteFormulation,
     updateFormulationStatus, getFormulationStats,
@@ -400,6 +401,7 @@ export function FormulationsPage() {
     const [statusFilter, setStatusFilter] = useState('all')
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const { can } = usePermission()
     const [totalCount, setTotalCount] = useState(0)
     const pageSize = 20
 
@@ -568,7 +570,7 @@ export function FormulationsPage() {
                                             <td className="px-3 py-3"><FormulationStatusBadge status={formulation.status} /></td>
                                             <td className="px-3 py-3 text-sm text-dark-500">{formatDate(formulation.created_at)}</td>
                                             <td className="px-3 py-3">
-                                                {formulation.status === 'draft' && (
+                                                {can('delete', 'formulations') && (formulation.status === 'draft' || formulation.status === 'approved' || formulation.status === 'obsolete') && (
                                                     <button onClick={(e) => { e.stopPropagation(); setDeletingFormulation(formulation) }}
                                                         className="p-1.5 rounded-lg text-gray-500 dark:text-dark-500 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-200" title="Delete"><Trash2 size={14} /></button>
                                                 )}

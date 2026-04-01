@@ -226,6 +226,11 @@ export async function updateFormulation(id: string, data: FormulationFormData): 
 }
 
 export async function deleteFormulation(id: string): Promise<void> {
+    // 1. Delete ingredients
+    await supabase.from('formulation_ingredients').delete().eq('formulation_id', id)
+    // 2. Delete steps
+    await supabase.from('formulation_process_steps').delete().eq('formulation_id', id)
+    // 3. Delete formulation
     return deleteRecord('formulations', id)
 }
 
