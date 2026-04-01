@@ -88,7 +88,8 @@ export async function printInvoicePDF(invoiceId: string) {
                     <small>${item.description || ''}</small>
                 </td>
                 <td style="text-align: center;">${item.hsn_code || product.hsn_code || '-'}</td>
-                <td style="text-align: center;">${item.quantity}</td>
+                <td style="text-align: center;">${item.batch_number || '-'}</td>
+                <td style="text-align: center;">${item.free_qty > 0 ? `${item.quantity}+${item.free_qty}` : item.quantity}</td>
                 <td style="text-align: right;">${item.unit_price.toFixed(2)}</td>
                 <td style="text-align: right;">${item.discount_percent}%</td>
                 <td style="text-align: right;">${(item.quantity * item.unit_price - (item.quantity * item.unit_price * item.discount_percent / 100)).toFixed(2)}</td>
@@ -191,6 +192,7 @@ export async function printInvoicePDF(invoiceId: string) {
                         <th width="30">Sr</th>
                         <th>Description</th>
                         <th width="80">HSN/SAC</th>
+                        <th width="60">Batch</th>
                         <th width="40">Qty</th>
                         <th width="70">Rate</th>
                         <th width="40">Disc%</th>

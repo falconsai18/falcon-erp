@@ -330,17 +330,21 @@ export async function generateInvoicePDF(invoiceId: string) {
 
     // ============ HEADER ============
     // Tax Invoice title
-    doc.setFillColor(245, 158, 11) // amber-500
+    doc.setFillColor(255, 255, 255)
     doc.rect(0, 0, pageWidth, 32, 'F')
 
+    doc.setDrawColor(234, 179, 8) // amber-500
+    doc.setLineWidth(0.5)
+    doc.rect(margin, 10, 42, 10, 'S')
+
     doc.setTextColor(0, 0, 0)
-    doc.setFontSize(20)
+    doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
-    doc.text('TAX INVOICE', margin, 15)
+    doc.text('TAX INVOICE', margin + 4, 17)
 
     doc.setFontSize(9)
     doc.setFont('helvetica', 'normal')
-    doc.text(inv.invoice_number, margin, 22)
+    doc.text(`Invoice No: ${inv.invoice_number}`, margin, 32)
 
     // Status badge
     doc.setFontSize(10)
@@ -450,12 +454,12 @@ export async function generateInvoicePDF(invoiceId: string) {
                 item.hsn_code || item.products?.hsn_code || '-',
                 item.batch_number || '',
                 qtyDisplay,
-                `₹${item.unit_price.toFixed(2)}`,
+                `Rs. ${item.unit_price.toFixed(2)}`,
                 `${item.discount_percent || 0}%`,
-                `₹${taxable.toFixed(2)}`,
+                `Rs. ${taxable.toFixed(2)}`,
                 `${item.tax_rate || 0}%`,
-                `₹${(item.igst_amount || 0).toFixed(2)}`,
-                `₹${item.total_amount.toFixed(2)}`,
+                `Rs. ${(item.igst_amount || 0).toFixed(2)}`,
+                `Rs. ${item.total_amount.toFixed(2)}`,
             ]
         } else {
             return [
@@ -464,12 +468,12 @@ export async function generateInvoicePDF(invoiceId: string) {
                 item.hsn_code || item.products?.hsn_code || '-',
                 item.batch_number || '',
                 qtyDisplay,
-                `₹${item.unit_price.toFixed(2)}`,
+                `Rs. ${item.unit_price.toFixed(2)}`,
                 `${item.discount_percent || 0}%`,
-                `₹${taxable.toFixed(2)}`,
-                `₹${(item.cgst_amount || 0).toFixed(2)}`,
-                `₹${(item.sgst_amount || 0).toFixed(2)}`,
-                `₹${item.total_amount.toFixed(2)}`,
+                `Rs. ${taxable.toFixed(2)}`,
+                `Rs. ${(item.cgst_amount || 0).toFixed(2)}`,
+                `Rs. ${(item.sgst_amount || 0).toFixed(2)}`,
+                `Rs. ${item.total_amount.toFixed(2)}`,
             ]
         }
     })
@@ -480,11 +484,13 @@ export async function generateInvoicePDF(invoiceId: string) {
         body: tableData,
         theme: 'grid',
         headStyles: {
-            fillColor: [245, 158, 11],
+            fillColor: [243, 244, 246],
             textColor: [0, 0, 0],
             fontStyle: 'bold',
             fontSize: 7,
             halign: 'center',
+            lineWidth: 0.1,
+            lineColor: [229, 231, 235]
         },
         bodyStyles: {
             fontSize: 7,
@@ -535,20 +541,20 @@ export async function generateInvoicePDF(invoiceId: string) {
         tY += 6
     }
 
-    addTotalRow('Subtotal', `₹${(inv.subtotal || 0).toFixed(2)}`)
-    if (inv.discount_amount > 0) addTotalRow('Discount', `-₹${(inv.discount_amount || 0).toFixed(2)}`)
+    addTotalRow('Subtotal', `Rs. ${(inv.subtotal || 0).toFixed(2)}`)
+    if (inv.discount_amount > 0) addTotalRow('Discount', `-Rs. ${(inv.discount_amount || 0).toFixed(2)}`)
 
     if (isInterstate) {
-        addTotalRow('IGST', `₹${(inv.igst_amount || 0).toFixed(2)}`)
+        addTotalRow('IGST', `Rs. ${(inv.igst_amount || 0).toFixed(2)}`)
     } else {
-        addTotalRow('CGST', `₹${(inv.cgst_amount || 0).toFixed(2)}`)
-        addTotalRow('SGST', `₹${(inv.sgst_amount || 0).toFixed(2)}`)
+        addTotalRow('CGST', `Rs. ${(inv.cgst_amount || 0).toFixed(2)}`)
+        addTotalRow('SGST', `Rs. ${(inv.sgst_amount || 0).toFixed(2)}`)
     }
 
     // Round Off row
     const roundOff = inv.round_off || 0
     const roundOffSign = roundOff > 0 ? '+' : roundOff < 0 ? '-' : ''
-    const roundOffText = `${roundOffSign}₹${Math.abs(roundOff).toFixed(2)}`
+    const roundOffText = `${roundOffSign}Rs. ${Math.abs(roundOff).toFixed(2)}`
     addTotalRow('Round Off', roundOffText)
 
     // Separator line
@@ -556,12 +562,12 @@ export async function generateInvoicePDF(invoiceId: string) {
     doc.line(totalsX + 4, tY - 3, totalsX + totalsWidth - 4, tY - 3)
 
     doc.setFontSize(10)
-    addTotalRow('TOTAL', `₹${(inv.total_amount || 0).toFixed(2)}`, true)
+    addTotalRow('TOTAL', `Rs. ${(inv.total_amount || 0).toFixed(2)}`, true)
 
     if (inv.paid_amount > 0) {
         doc.setFontSize(8)
-        addTotalRow('Paid', `₹${(inv.paid_amount || 0).toFixed(2)}`)
-        addTotalRow('Balance', `₹${(inv.balance_amount || 0).toFixed(2)}`, true)
+        addTotalRow('Paid', `Rs. ${(inv.paid_amount || 0).toFixed(2)}`)
+        addTotalRow('Balance', `Rs. ${(inv.balance_amount || 0).toFixed(2)}`, true)
     }
 
     // ============ AMOUNT IN WORDS ============
