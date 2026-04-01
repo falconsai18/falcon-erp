@@ -553,23 +553,38 @@ export function SettingsPage() {
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {settings.map(setting => (
-                                        <div key={setting.id}>
+                                        <div key={setting.id} className={setting.key.includes('terms') ? "sm:col-span-2 lg:col-span-3" : ""}>
                                             <label className="block text-xs font-medium text-dark-500 mb-1.5 capitalize">
                                                 {setting.key.replace(/_/g, ' ')}
                                             </label>
-                                            <input
-                                                type="text"
-                                                value={setting.value}
-                                                onChange={e => setSettings(prev => prev.map(s => s.id === setting.id ? { ...s, value: e.target.value } : s))}
-                                                onBlur={e => {
-                                                    const original = settings.find(s => s.id === setting.id)
-                                                    if (original && original.value !== e.target.value) {
-                                                        updateSettingValue(setting, e.target.value)
-                                                    }
-                                                }}
-                                                className="w-full px-3 py-2 bg-dark-200/50 border border-dark-300/50 rounded-lg text-white text-sm
+                                            {setting.key.includes('terms') ? (
+                                                <textarea
+                                                    value={setting.value}
+                                                    onChange={e => setSettings(prev => prev.map(s => s.id === setting.id ? { ...s, value: e.target.value } : s))}
+                                                    onBlur={e => {
+                                                        const original = settings.find(s => s.id === setting.id)
+                                                        if (original && original.value !== e.target.value) {
+                                                            updateSettingValue(setting, e.target.value)
+                                                        }
+                                                    }}
+                                                    className="w-full px-3 py-2 bg-dark-200/50 border border-dark-300/50 rounded-lg text-white text-sm
+                          placeholder:text-dark-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 transition-all min-h-[100px]"
+                                                />
+                                            ) : (
+                                                <input
+                                                    type="text"
+                                                    value={setting.value}
+                                                    onChange={e => setSettings(prev => prev.map(s => s.id === setting.id ? { ...s, value: e.target.value } : s))}
+                                                    onBlur={e => {
+                                                        const original = settings.find(s => s.id === setting.id)
+                                                        if (original && original.value !== e.target.value) {
+                                                            updateSettingValue(setting, e.target.value)
+                                                        }
+                                                    }}
+                                                    className="w-full px-3 py-2 bg-dark-200/50 border border-dark-300/50 rounded-lg text-white text-sm
                           placeholder:text-dark-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 transition-all"
-                                            />
+                                                />
+                                            )}
                                             <p className="text-[10px] text-dark-500 mt-1">{setting.description}</p>
                                         </div>
                                     ))}

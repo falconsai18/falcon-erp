@@ -612,6 +612,19 @@ export async function generateInvoicePDF(invoiceId: string) {
         doc.text(`E-Way Bill: ${inv.eway_bill_number}`, margin, bankY + 29)
     }
 
+    // ============ TERMS & CONDITIONS ============
+    const { data: termsSetting } = await supabase.from('settings').select('value').eq('key', 'invoice_terms_conditions').maybeSingle()
+    const termsStr = termsSetting?.value || "1. Goods once sold will not be taken back.\n2. Interest @ 18% p.a. will be charged if payment is not made within the due date.\n3. Subject to jurisdiction."
+    
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(107, 114, 128)
+    doc.text('Terms & Conditions:', margin, bankY + 35)
+    
+    doc.setFont('helvetica', 'normal')
+    const termsLines = doc.splitTextToSize(termsStr, pageWidth / 2)
+    doc.text(termsLines, margin, bankY + 40)
+
     // ============ INVOICE FOOTER (from settings) ============
     const { data: footerSetting } = await supabase.from('settings').select('value').eq('key', 'invoice_footer').single()
     if (footerSetting?.value) {

@@ -4,51 +4,29 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 
 // ============ NUMBER TO WORDS (INDIAN SYSTEM) ============
 
-const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine']
-const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
-const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+export function numberToWords(num: number): string {
+    if (num === 0) return 'Zero'
 
-function convertLessThanOneThousand(n: number): string {
-    if (n === 0) return ''
-    if (n < 10) return units[n]
-    if (n < 20) return teens[n - 10]
-    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + units[n % 10] : '')
-    return units[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertLessThanOneThousand(n % 100) : '')
-}
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+        'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
 
-export function numberToWords(n: number): string {
-    if (n === 0) return 'Zero'
+    const numStr = Math.floor(num).toString()
+    const len = numStr.length
 
-    const numStr = n.toString().split('.')
-    let wholePart = parseInt(numStr[0])
-    const decimalPart = numStr[1] ? parseInt(numStr[1].substring(0, 2)) : 0
+    if (len <= 0) return ''
 
-    let words = ''
-
-    if (wholePart >= 10000000) {
-        words += numberToWords(Math.floor(wholePart / 10000000)) + ' Crore '
-        wholePart %= 10000000
-    }
-    if (wholePart >= 100000) {
-        words += numberToWords(Math.floor(wholePart / 100000)) + ' Lakh '
-        wholePart %= 100000
-    }
-    if (wholePart >= 1000) {
-        words += numberToWords(Math.floor(wholePart / 1000)) + ' Thousand '
-        wholePart %= 1000
+    const convert = (n: number): string => {
+        if (n === 0) return ''
+        if (n < 20) return ones[n]
+        if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '')
+        if (n < 1000) return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' and ' + convert(n % 100) : '')
+        if (n < 100000) return convert(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + convert(n % 1000) : '')
+        if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + convert(n % 100000) : '')
+        return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '')
     }
 
-    words += convertLessThanOneThousand(wholePart)
-
-    // Cleanup
-    words = words.trim()
-
-    // Add decimal part (Paise)
-    if (decimalPart > 0) {
-        words += ' and ' + convertLessThanOneThousand(decimalPart) + ' Paise'
-    }
-
-    return words + ' Only'
+    return convert(Math.floor(num))
 }
 
 // ============ INVOICE PRINTING ============
@@ -72,6 +50,16 @@ export async function printInvoicePDF(invoiceId: string) {
 
         if (compError) throw compError
         if (!company) throw new Error('Company details not found')
+
+        // Fetch Terms & Conditions from settings
+        const { data: termsSetting } = await supabase
+            .from('settings')
+            .select('value')
+            .eq('key', 'invoice_terms_conditions')
+            .maybeSingle()
+
+        const termsStr = termsSetting?.value || "1. Goods once sold will not be taken back.\n2. Interest @ 18% p.a. will be charged if payment is not made within the due date.\n3. Subject to jurisdiction."
+        const termsHtml = termsStr.split('\n').map((line: string) => `${line}<br/>`).join('')
 
         // 2. Generate HTML
         const customer = invoice.customers
@@ -102,6 +90,198 @@ export async function printInvoicePDF(invoiceId: string) {
             `
         })
 
+        // Calculate HSN Summary
+        const hsnSummary: Record<string, { taxable: number, cgst: number, sgst: number, igst: number, rate: number }> = {}
+        items.forEach((item: any) => {
+            const hsn = item.hsn_code || item.products?.hsn_code || 'N/A'
+            if (!hsnSummary[hsn]) {
+                hsnSummary[hsn] = { taxable: 0, cgst: 0, sgst: 0, igst: 0, rate: item.tax_rate }
+            }
+            const taxable = (item.quantity * item.unit_price) - (item.quantity * item.unit_price * item.discount_percent / 100)
+            hsnSummary[hsn].taxable += taxable
+            hsnSummary[hsn].cgst += item.cgst_amount
+            hsnSummary[hsn].sgst += item.sgst_amount
+            hsnSummary[hsn].igst += item.igst_amount
+        })
+
+        const copies = [
+            'Original for Recipient',
+            'Duplicate for Transporter',
+            'Triplicate for Supplier'
+        ]
+
+        const renderInvoice = (copyLabel: string, isLast: boolean) => `
+            <div class="invoice-container ${!isLast ? 'page-break' : ''}">
+                <div style="text-align: right; font-weight: bold; font-size: 10px; margin-bottom: 5px; color: #666;">
+                    ${copyLabel.toUpperCase()}
+                </div>
+                <!-- HEADER -->
+                <table class="header-table">
+                    <tr>
+                        <td width="60%">
+                            <div class="company-name">${company.name}</div>
+                            <div>${company.address_line1 || ''}, ${company.address_line2 || ''}</div>
+                            <div>${company.city || ''}, ${company.state || ''} - ${company.pincode || ''}</div>
+                            <div style="margin-top: 5px;">
+                                <b>GSTIN:</b> ${company.gst_number || '-'} | <b>PAN:</b> ${company.pan_number || '-'}
+                            </div>
+                            <div>
+                                <b>Phone:</b> ${company.phone || '-'} | <b>Email:</b> ${company.email || '-'}
+                            </div>
+                        </td>
+                        <td width="40%" style="text-align: right;">
+                            <div class="invoice-title">TAX INVOICE</div>
+                            <table style="width: 100%; margin-top: 10px;">
+                                <tr><td style="text-align: right;"><b>Invoice No:</b></td><td style="text-align: right;">${invoice.invoice_number}</td></tr>
+                                <tr><td style="text-align: right;"><b>Date:</b></td><td style="text-align: right;">${formatDate(invoice.invoice_date)}</td></tr>
+                                <tr><td style="text-align: right;"><b>Due Date:</b></td><td style="text-align: right;">${invoice.due_date ? formatDate(invoice.due_date) : '-'}</td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+
+                <!-- BILL TO -->
+                <table class="header-table">
+                    <tr>
+                        <td width="50%" style="border: 1px solid #ddd; padding: 10px;">
+                            <b>Bill To:</b><br/>
+                            <div style="font-size: 14px; font-weight: bold; margin: 5px 0;">${customer?.name || 'Walk-in Customer'}</div>
+                            <div>${customer?.address_line1 || ''}</div>
+                            <div>${customer?.city || ''}, ${customer?.state || ''}</div>
+                            <div style="margin-top: 5px;"><b>GSTIN:</b> ${customer?.gst_number || 'N/A'}</div>
+                        </td>
+                        <td width="50%" style="border: 1px solid #ddd; padding: 10px;">
+                            <table style="width: 100%;">
+                                <tr><td style="border:none;"><b>Place of Supply:</b></td><td style="border:none;">${invoice.place_of_supply || '-'}</td></tr>
+                                <tr><td style="border:none;"><b>Reverse Charge:</b></td><td style="border:none;">${invoice.reverse_charge ? 'Yes' : 'No'}</td></tr>
+                                <tr><td style="border:none;"><b>Vehicle No:</b></td><td style="border:none;">-</td></tr>
+                                <tr><td style="border:none;"><b>Transport Mode:</b></td><td style="border:none;">-</td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- ITEMS -->
+                <table class="items-table" style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th width="30">Sr</th>
+                            <th>Description</th>
+                            <th width="80">HSN/SAC</th>
+                            <th width="60">Batch</th>
+                            <th width="40">Qty</th>
+                            <th width="70">Rate</th>
+                            <th width="40">Disc%</th>
+                            <th width="80">Taxable</th>
+                            <th width="40">GST%</th>
+                            <th width="70">CGST</th>
+                            <th width="70">SGST</th>
+                            <th width="70">IGST</th>
+                            <th width="90">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                </table>
+
+                <!-- SUMMARY -->
+                <table style="width: 100%; margin-top: 20px;">
+                    <tr>
+                        <td width="60%" style="vertical-align: top;">
+                            <div style="border: 1px solid #ddd; padding: 10px;">
+                                <b>Amount in Words:</b><br/>
+                                <i>Rupees ${numberToWords(Math.round(invoice.total_amount))} Only</i>
+                            </div>
+                            <!-- HSN SUMMARY -->
+                            <table class="items-table" style="margin-top: 15px; width: 100%;">
+                                <thead>
+                                    <tr style="font-size: 8px;">
+                                        <th>HSN/SAC</th>
+                                        <th>Taxable Value</th>
+                                        <th>GST Rate</th>
+                                        <th>GST Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${Object.entries(hsnSummary).map(([hsn, data]) => `
+                                        <tr style="font-size: 8px;">
+                                            <td style="text-align: center;">${hsn}</td>
+                                            <td style="text-align: right;">${formatCurrency(data.taxable)}</td>
+                                            <td style="text-align: center;">${data.rate}%</td>
+                                            <td style="text-align: right;">${formatCurrency(data.cgst + data.sgst + data.igst)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </td>
+                        <td width="40%" style="padding-left: 20px;">
+                            <table class="summary-table">
+                                <tr>
+                                    <td>Subtotal:</td>
+                                    <td class="amount-col">${formatCurrency(invoice.subtotal)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Discount:</td>
+                                    <td class="amount-col">-${formatCurrency(invoice.discount_amount)}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Taxable Value:</b></td>
+                                    <td class="amount-col"><b>${formatCurrency(invoice.subtotal - invoice.discount_amount)}</b></td>
+                                </tr>
+                                <tr>
+                                    <td>CGST:</td>
+                                    <td class="amount-col">${formatCurrency(invoice.cgst_amount)}</td>
+                                </tr>
+                                <tr>
+                                    <td>SGST:</td>
+                                    <td class="amount-col">${formatCurrency(invoice.sgst_amount)}</td>
+                                </tr>
+                                ${invoice.igst_amount > 0 ? `
+                                <tr>
+                                    <td>IGST:</td>
+                                    <td class="amount-col">${formatCurrency(invoice.igst_amount)}</td>
+                                </tr>
+                                ` : ''}
+                                <tr>
+                                    <td colspan="2"><div style="border-bottom: 1px solid #ddd; margin: 5px 0;"></div></td>
+                                </tr>
+                                ${invoice.round_off ? `
+                                <tr>
+                                    <td>Round Off:</td>
+                                    <td class="amount-col">${invoice.round_off > 0 ? '+' : ''}${formatCurrency(invoice.round_off)}</td>
+                                </tr>
+                                ` : ''}
+                                <tr class="grand-total">
+                                    <td>Grand Total:</td>
+                                    <td class="amount-col">${formatCurrency(invoice.total_amount)}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- FOOTER -->
+                <div class="footer">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td width="60%" class="terms">
+                                <b>Terms & Conditions:</b><br/>
+                                ${termsHtml}
+                            </td>
+                            <td width="40%" style="text-align: center;">
+                                <b>For ${company.name}</b>
+                                <br/><br/><br/><br/>
+                                Authorized Signatory
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        `
+
         const printContent = `
         <!DOCTYPE html>
         <html>
@@ -111,180 +291,34 @@ export async function printInvoicePDF(invoiceId: string) {
                 @media print {
                     @page { margin: 10mm; }
                     body { -webkit-print-color-adjust: exact; }
+                    .page-break { page-break-after: always; min-height: 100vh; }
                 }
-                body { font-family: 'Arial', sans-serif; font-size: 11px; color: #000; padding: 20px; }
+                body { font-family: 'Arial', sans-serif; font-size: 11px; color: #000; padding: 10px; margin: 0; }
+                .invoice-container { padding: 10px; }
                 .header-table, .items-table, .summary-table { width: 100%; border-collapse: collapse; }
                 .header-table td { vertical-align: top; padding: 5px; }
-                .company-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
-                .invoice-title { font-size: 24px; font-weight: bold; border: 2px solid #eab308; color: #000; padding: 5px 15px; display: inline-block; margin-bottom: 10px; }
+                .company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+                .invoice-title { font-size: 22px; font-weight: bold; border: 2px solid #000; color: #000; padding: 5px 15px; display: inline-block; margin-bottom: 10px; }
                 
-                .section-header { background: #eee; font-weight: bold; padding: 5px; border: 1px solid #ddd; margin-top: 10px; }
+                .section-header { background: #f3f4f6; font-weight: bold; padding: 5px; border: 1px solid #ddd; margin-top: 10px; }
                 
-                .items-table th { background: #f3f4f6; padding: 8px; border: 1px solid #ddd; font-weight: bold; text-align: center; font-size: 10px; }
-                .items-table td { padding: 6px; border: 1px solid #ddd; font-size: 10px; }
-                .items-table tr:nth-child(even) { background: #fafafa; }
+                .items-table th { background: #f3f4f6; padding: 6px; border: 1px solid #ddd; font-weight: bold; text-align: center; font-size: 9px; }
+                .items-table td { padding: 4px; border: 1px solid #ddd; font-size: 9px; }
                 
-                .totals-row td { font-weight: bold; background: #f3f4f6; }
+                .summary-table td { padding: 4px; }
+                .amount-col { text-align: right; width: 110px; }
+                .grand-total { font-size: 14px; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; }
                 
-                .summary-table td { padding: 5px; }
-                .amount-col { text-align: right; width: 120px; }
-                .grand-total { font-size: 16px; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 10px 0; }
-                
-                .footer { margin-top: 40px; }
-                .terms { font-size: 10px; color: #555; }
-                
-                .flex-between { display: flex; justify-content: space-between; }
+                .footer { margin-top: 30px; }
+                .terms { font-size: 9px; color: #333; line-height: 1.4; }
             </style>
         </head>
         <body>
-            <!-- HEADER -->
-            <table class="header-table">
-                <tr>
-                    <td width="60%">
-                        <div class="company-name">${company.name}</div>
-                        <div>${company.address_line1 || ''}, ${company.address_line2 || ''}</div>
-                        <div>${company.city || ''}, ${company.state || ''} - ${company.pincode || ''}</div>
-                        <div style="margin-top: 5px;">
-                            <b>GSTIN:</b> ${company.gst_number || '-'} | <b>PAN:</b> ${company.pan_number || '-'}
-                        </div>
-                        <div>
-                            <b>Phone:</b> ${company.phone || '-'} | <b>Email:</b> ${company.email || '-'}
-                        </div>
-                    </td>
-                    <td width="40%" style="text-align: right;">
-                        <div class="invoice-title">TAX INVOICE</div>
-                        <table style="width: 100%; margin-top: 10px;">
-                            <tr><td style="text-align: right;"><b>Invoice No:</b></td><td style="text-align: right;">${invoice.invoice_number}</td></tr>
-                            <tr><td style="text-align: right;"><b>Date:</b></td><td style="text-align: right;">${formatDate(invoice.invoice_date)}</td></tr>
-                            <tr><td style="text-align: right;"><b>Due Date:</b></td><td style="text-align: right;">${invoice.due_date ? formatDate(invoice.due_date) : '-'}</td></tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-
-            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-
-            <!-- BILL TO -->
-            <table class="header-table">
-                <tr>
-                    <td width="50%" style="border: 1px solid #ddd; padding: 10px;">
-                        <b>Bill To:</b><br/>
-                        <div style="font-size: 14px; font-weight: bold; margin: 5px 0;">${customer?.name || 'Walk-in Customer'}</div>
-                        <div>${customer?.address_line1 || ''}</div>
-                        <div>${customer?.city || ''}, ${customer?.state || ''}</div>
-                        <div style="margin-top: 5px;"><b>GSTIN:</b> ${customer?.gst_number || 'N/A'}</div>
-                    </td>
-                    <td width="50%" style="border: 1px solid #ddd; padding: 10px;">
-                        <table style="width: 100%;">
-                            <tr><td style="border:none;"><b>Place of Supply:</b></td><td style="border:none;">${invoice.place_of_supply || '-'}</td></tr>
-                            <tr><td style="border:none;"><b>Reverse Charge:</b></td><td style="border:none;">${invoice.reverse_charge ? 'Yes' : 'No'}</td></tr>
-                            <tr><td style="border:none;"><b>Vehicle No:</b></td><td style="border:none;">-</td></tr>
-                            <tr><td style="border:none;"><b>Transport Mode:</b></td><td style="border:none;">-</td></tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- ITEMS -->
-            <table class="items-table" style="margin-top: 20px;">
-                <thead>
-                    <tr>
-                        <th width="30">Sr</th>
-                        <th>Description</th>
-                        <th width="80">HSN/SAC</th>
-                        <th width="60">Batch</th>
-                        <th width="40">Qty</th>
-                        <th width="70">Rate</th>
-                        <th width="40">Disc%</th>
-                        <th width="80">Taxable</th>
-                        <th width="40">GST%</th>
-                        <th width="70">CGST</th>
-                        <th width="70">SGST</th>
-                        <th width="70">IGST</th>
-                        <th width="90">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHtml}
-                </tbody>
-            </table>
-
-            <!-- SUMMARY -->
-            <table style="width: 100%; margin-top: 20px;">
-                <tr>
-                    <td width="60%" style="vertical-align: top;">
-                        <div style="border: 1px solid #ddd; padding: 10px;">
-                            <b>Amount in Words:</b><br/>
-                            <i>Rupees ${numberToWords(invoice.total_amount)}</i>
-                        </div>
-                        <div style="margin-top: 10px; font-size: 10px;">
-                            <b>Bank Details:</b><br/>
-                            Bank Name: HDFC Bank<br/>
-                            A/c No: 50200012345678<br/>
-                            IFSC: HDFC0001234
-                        </div>
-                    </td>
-                    <td width="40%" style="padding-left: 20px;">
-                        <table class="summary-table">
-                            <tr>
-                                <td>Subtotal:</td>
-                                <td class="amount-col">${formatCurrency(invoice.subtotal)}</td>
-                            </tr>
-                            <tr>
-                                <td>Discount:</td>
-                                <td class="amount-col">-${formatCurrency(invoice.discount_amount)}</td>
-                            </tr>
-                            <tr>
-                                <td><b>Taxable Value:</b></td>
-                                <td class="amount-col"><b>${formatCurrency(invoice.subtotal - invoice.discount_amount)}</b></td>
-                            </tr>
-                            <tr>
-                                <td>CGST:</td>
-                                <td class="amount-col">${formatCurrency(invoice.cgst_amount)}</td>
-                            </tr>
-                            <tr>
-                                <td>SGST:</td>
-                                <td class="amount-col">${formatCurrency(invoice.sgst_amount)}</td>
-                            </tr>
-                            ${invoice.igst_amount > 0 ? `
-                            <tr>
-                                <td>IGST:</td>
-                                <td class="amount-col">${formatCurrency(invoice.igst_amount)}</td>
-                            </tr>
-                            ` : ''}
-                            <tr>
-                                <td colspan="2"><div style="border-bottom: 1px solid #ddd; margin: 5px 0;"></div></td>
-                            </tr>
-                            <tr class="grand-total">
-                                <td>Grand Total:</td>
-                                <td class="amount-col">${formatCurrency(invoice.total_amount)}</td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- FOOTER -->
-            <div class="footer">
-                <table style="width: 100%;">
-                    <tr>
-                        <td width="60%" class="terms">
-                            <b>Terms & Conditions:</b><br/>
-                            1. Goods once sold will not be taken back.<br/>
-                            2. Interest @ 18% p.a. will be charged if payment is not made within the due date.<br/>
-                            3. Subject to jurisdiction.
-                        </td>
-                        <td width="40%" style="text-align: center;">
-                            <b>For ${company.name}</b>
-                            <br/><br/><br/><br/>
-                            Authorized Signatory
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
+            ${copies.map((label, index) => renderInvoice(label, index === copies.length - 1)).join('')}
             <script>
-                window.onload = function() { window.print(); }
+                window.onload = function() { 
+                    setTimeout(() => { window.print(); }, 500);
+                }
             </script>
         </body>
         </html>
