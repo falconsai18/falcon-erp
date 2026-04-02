@@ -70,6 +70,12 @@ export const useAuthStore = create<AuthStore>()(
                             return { success: false, error: 'Account is deactivated. Contact administrator.' }
                         }
 
+                        // Update last_login timestamp
+                        await supabase
+                            .from('users')
+                            .update({ last_login: new Date().toISOString() })
+                            .eq('id', data.user.id)
+
                         const user: AuthUser = {
                             id: data.user.id,
                             email: data.user.email || '',
