@@ -441,17 +441,23 @@ export async function generateInvoicePDF(invoiceId: string) {
         ? [['Sr No.', 'Product', 'HSN', 'Batch', 'Qty', 'Rate', 'Disc%', 'Taxable', 'IGST%', 'IGST', 'Total']]
         : [['Sr No.', 'Product', 'HSN', 'Batch', 'Qty', 'Rate', 'Disc%', 'Taxable', 'CGST', 'SGST', 'Total']]
 
-    const tableData = items.map((item: any, idx: number) => {
-        const subtotal = item.quantity * item.unit_price
-        const discount = subtotal * (item.discount_percent || 0) / 100
-        const taxable = subtotal - discount
-        const qtyDisplay = item.free_qty > 0 ? `${item.quantity}+${item.free_qty}` : `${item.quantity}`
+  const tableData = items.map((item: any, idx: number) => {
+    const subtotal = item.quantity * item.unit_price
+    const discount = subtotal * (item.discount_percent || 0) / 100
+    const taxable = subtotal - discount
+    const qtyDisplay = item.free_qty > 0 ? `${item.quantity}+${item.free_qty}` : `${item.quantity}`
+    
+    // Product display: sirf product name (with grams if available)
+    const productName = item.products?.name || '-'
+    const productWithWeight = item.weight_grams && item.weight_grams > 0
+      ? `${productName} (${item.weight_grams}g)`
+      : productName
 
-        if (isInterstate) {
-            return [
-                idx + 1,
-                item.description || item.products?.name || '-',
-                item.hsn_code || item.products?.hsn_code || '-',
+    if (isInterstate) {
+      return [
+        idx + 1,
+        productWithWeight,
+        item.hsn_code || item.products?.hsn_code || '-',
                 item.batch_number || '',
                 qtyDisplay,
                 `Rs. ${item.unit_price.toFixed(2)}`,
@@ -464,7 +470,7 @@ export async function generateInvoicePDF(invoiceId: string) {
         } else {
             return [
                 idx + 1,
-                item.description || item.products?.name || '-',
+                productWithWeight,
                 item.hsn_code || item.products?.hsn_code || '-',
                 item.batch_number || '',
                 qtyDisplay,

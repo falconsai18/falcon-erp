@@ -69,12 +69,15 @@ export async function printInvoicePDF(invoiceId: string) {
         let itemsHtml = ''
         items.forEach((item: any, index: number) => {
             const product = item.products
+            // Show product name with grams (if available)
+            const productDisplay = item.weight_grams && item.weight_grams > 0
+                ? `${product.name} (${item.weight_grams}g)`
+                : product.name
             itemsHtml += `
             <tr>
                 <td style="text-align: center;">${index + 1}</td>
                 <td>
-                    <b>${product.name}</b>
-                    ${(item.description && item.description !== product.name) ? `<br/><small>${item.description}</small>` : ''}
+                    <b>${productDisplay}</b>
                 </td>
                 <td style="text-align: center;">${item.hsn_code || product.hsn_code || '-'}</td>
                 <td style="text-align: center;">${item.batch_number || '-'}</td>
