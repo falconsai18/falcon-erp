@@ -1,6 +1,6 @@
 # Falcon ERP — Project Context
 
-> Last Updated: 02-Apr-2026 (System Cleanup & RBAC Hardening)
+> Last Updated: 02-Apr-2026 (Invoice PDF Fix + System Cleanup & RBAC Hardening)
 > Status: 🟢 LIVE (Production Ready)
 > Hosting: Vercel | Database: Supabase | Repo: GitHub (single branch)
 
@@ -36,14 +36,15 @@ Falcon ERP is a React + TypeScript ERP for manufacturing/sales operations focuse
 | inventory_movements | id, product_id, movement_type (in/out/adj), quantity, reference_id | Ledger of all stock changes |
 | users | id, email, full_name, role (admin/manager/staff) | Public profile sync with Auth |
 
-## Recent Major Fixes (01-Apr-2026) ✅
+## Recent Major Fixes (02-Apr-2026) ✅
+- **Invoice PDF Product Display Fix**: Fixed duplicate product name issue in invoice PDFs (print & download). Product column now shows only `Product Name (XXg)` - clean, single display with weight info.
 - **SQL Cleanup & Admin Access**: Purged test users, migrated all power to `falconherbs@gmail.com` (Admin) and `managerherbs@gmail.com` (Manager).
 - **Invoice Math & Rounding**: Unified `Math.round` logic across Print & Download. Proper Rupee (₹) symbol and "Rupees X Only" formatting.
 - **GST Compliance**: Added **HSN Summary** table to printed invoices.
 - **Transporter Documents**: Added support for **Original/Duplicate/Triplicate** copies in the print preview.
 - **Dynamic Settings**: Integrated `invoice_terms_conditions` setting; T&C are now editable via Settings UI.
 - **Manufacturing Data Cleanup**: Executed deep purge of all test data (Formulations, Production Orders, Batches, Quality Checks) to ensure a clean production environment.
-- **RBAC & Permission Hardening**: 
+- **RBAC & Permission Hardening**:
     - Downgraded `manager` role to **CRU** (Create, Read, Update) — direct deletion is now restricted to `admin` and `super_admin`.
     - Implemented UI-level permission checks for "Delete" buttons in Sales, Invoices, Formulations, Production, and Batches.
 - **Robust Deletion Logic**: Updated service layers (`invoiceService`, `salesService`, `formulationService`, `workOrderService`, `batchService`) to handle complex cascading deletions of child records (items, payments, QC checks) before parent records, preventing foreign key errors.
