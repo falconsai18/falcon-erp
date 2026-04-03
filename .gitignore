@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Tauri / Rust
+src-tauri/
+rustup-init.exe
+run-tauri.bat

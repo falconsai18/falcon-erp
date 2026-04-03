@@ -1,6 +1,6 @@
 # Falcon ERP — Project Context
 
-> Last Updated: 02-Apr-2026 (Invoice PDF Fix + System Cleanup & RBAC Hardening)
+> Last Updated: 03-Apr-2026 (Invoice System Enhancements & State-based IGST Logic)
 > Status: 🟢 LIVE (Production Ready)
 > Hosting: Vercel | Database: Supabase | Repo: GitHub (single branch)
 
@@ -36,7 +36,18 @@ Falcon ERP is a React + TypeScript ERP for manufacturing/sales operations focuse
 | inventory_movements | id, product_id, movement_type (in/out/adj), quantity, reference_id | Ledger of all stock changes |
 | users | id, email, full_name, role (admin/manager/staff) | Public profile sync with Auth |
 
+## Recent Major Updates (03-Apr-2026) 💎
+- **Invoice Date Consistency**: Invoices generated from Sales Orders now inherit the original SO date as the `invoice_date`. Due dates are also calculated based on the SO date (SO Date + 30 days), ensuring historical accuracy regardless of when the print is generated.
+- **Enhanced Bill To Details**: Enriched the customer section in both PDF download and print views with complete address, city, state, pincode, and phone number. Used robust joining logic to ensure clean formatting without trailing commas.
+- **GSTIN Styling & Null Handling**: Bolded GSTIN labels and numbers for better visibility. Missing GSTINs now show as an empty space instead of "N/A" for a cleaner, professional look.
+- **HSN Column Optimization**: Increased the HSN column width in the print view to accommodate 8-digit codes on a single line without wrapping.
+- **Footer Closing Message**: Added a bold "Thank you for your business!" line at the bottom of both Draft (Print) and Final (PDF) invoices.
+- **Proforma vs Tax Invoice Toggle**: Implemented dynamic title logic; invoices in `draft` status are now titled **PROFORMA INVOICE**, while others remain **TAX INVOICE**.
+- **Consolidated Print Layout**: Replaced the multi-page print loop with a single-page template featuring "ORIGINAL [ ]  DUPLICATE [ ]  TRIPLICATE [ ]" checkboxes at the top right.
+- **Auto IGST Detection**: Updated the global `SELLER_STATE` to **Karnataka** and implemented case-insensitive interstate detection. The system now automatically applies IGST for any customer/place of supply outside Karnataka.
+
 ## Recent Major Fixes (02-Apr-2026) ✅
+... (rest of the file)
 - **Invoice PDF Product Display Fix**: Fixed duplicate product name issue in invoice PDFs (print & download). Product column now shows only `Product Name (XXg)` - clean, single display with weight info.
 - **SQL Cleanup & Admin Access**: Purged test users, migrated all power to `falconherbs@gmail.com` (Admin) and `managerherbs@gmail.com` (Manager).
 - **Invoice Math & Rounding**: Unified `Math.round` logic across Print & Download. Proper Rupee (₹) symbol and "Rupees X Only" formatting.

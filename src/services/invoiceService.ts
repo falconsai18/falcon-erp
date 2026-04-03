@@ -87,14 +87,17 @@ export const EMPTY_INVOICE_FORM: InvoiceFormData = {
     items: [],
 }
 
-const SELLER_STATE = import.meta.env.VITE_SELLER_STATE || 'Maharashtra'
+// Default Seller State set to Karnataka for IGST logic
+const SELLER_STATE = import.meta.env.VITE_SELLER_STATE || 'Karnataka'
 
 export function calculateInvoiceItem(item: InvoiceItem, placeOfSupply: string): InvoiceItem {
     const subtotal = item.quantity * item.unit_price
     const discountAmt = subtotal * (item.discount_percent / 100)
     const taxableAmount = subtotal - discountAmt
     const taxAmount = Math.round(taxableAmount * (item.tax_rate / 100) * 100) / 100
-    const isInterstate = placeOfSupply && placeOfSupply !== SELLER_STATE
+    
+    // Case-insensitive comparison for safer state detection
+    const isInterstate = placeOfSupply && placeOfSupply.toLowerCase() !== SELLER_STATE.toLowerCase()
 
     let cgst = 0, sgst = 0, igst = 0
     if (isInterstate) {
@@ -232,8 +235,15 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
     if (soError) throw soError
 
     const invoiceNumber = await generateNumber('invoice')
-    const dueDate = new Date()
+    
+    // Use Sales Order date as base for Invoice Date
+    const soDate = so.order_date ? new Date(so.order_date) : new Date()
+    const invoiceDateStr = so.order_date || new Date().toISOString().split('T')[0]
+    
+    // Calculate Due Date based on SO date (30 days)
+    const dueDate = new Date(soDate)
     dueDate.setDate(dueDate.getDate() + 30)
+    const dueDateStr = dueDate.toISOString().split('T')[0]
 
     // Auto-fill place of supply from customer's state
     const customerState = so.customers?.state || ''
@@ -269,8 +279,8 @@ export async function createInvoiceFromSO(salesOrderId: string, placeOfSupply: s
             invoice_number: invoiceNumber,
             sales_order_id: salesOrderId,
             customer_id: so.customer_id,
-            invoice_date: new Date().toISOString().split('T')[0],
-            due_date: dueDate.toISOString().split('T')[0],
+            invoice_date: invoiceDateStr,
+            due_date: dueDateStr,
             status: 'draft',
             place_of_supply: resolvedPlaceOfSupply,
             reverse_charge: false,

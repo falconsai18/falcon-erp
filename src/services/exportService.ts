@@ -310,7 +310,7 @@ export async function generateInvoicePDF(invoiceId: string) {
         .from('invoices')
         .select(`
       *,
-      customers(name, phone, email, gst_number, pan_number),
+      customers(name, phone, email, gst_number, pan_number, address_line1, city, state, pincode),
       sales_orders(order_number),
       invoice_items(*, products(name, sku, hsn_code, unit_of_measure))
     `)
@@ -333,14 +333,20 @@ export async function generateInvoicePDF(invoiceId: string) {
     doc.setFillColor(255, 255, 255)
     doc.rect(0, 0, pageWidth, 32, 'F')
 
+    const titleText = inv.status === 'draft' ? 'PROFORMA INVOICE' : 'TAX INVOICE'
+
     doc.setDrawColor(234, 179, 8) // amber-500
     doc.setLineWidth(0.5)
     doc.rect(margin, 10, 42, 10, 'S')
 
     doc.setTextColor(0, 0, 0)
-    doc.setFontSize(14)
+    doc.setFontSize(11) // Scaled for potentially longer Proforma title
     doc.setFont('helvetica', 'bold')
-    doc.text('TAX INVOICE', margin + 4, 17)
+    doc.text(titleText, margin + 4, 17)
+
+    // Copy Checkboxes at top right
+    doc.setFontSize(8)
+    doc.text('ORIGINAL [ ]  DUPLICATE [ ]  TRIPLICATE [ ]', pageWidth - margin, 12, { align: 'right' })
 
     doc.setFontSize(9)
     doc.setFont('helvetica', 'normal')
@@ -426,9 +432,20 @@ export async function generateInvoicePDF(invoiceId: string) {
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(75, 85, 99)
     let buyerY = y + 19
+    if (inv.customers?.address_line1) { doc.text(inv.customers.address_line1, buyerX + 4, buyerY); buyerY += 4 }
+    
+    // Joint city, state, pincode to avoid leading/trailing commas
+    const cityStateZip = [inv.customers?.city, inv.customers?.state, inv.customers?.pincode].filter(Boolean).join(', ')
+    if (cityStateZip) { doc.text(cityStateZip, buyerX + 4, buyerY); buyerY += 4 }
+    
     if (inv.customers?.phone) { doc.text(`Phone: ${inv.customers.phone}`, buyerX + 4, buyerY); buyerY += 4 }
     if (inv.customers?.email) { doc.text(`Email: ${inv.customers.email}`, buyerX + 4, buyerY); buyerY += 4 }
-    if (inv.customers?.gst_number) { doc.text(`GSTIN: ${inv.customers.gst_number}`, buyerX + 4, buyerY); buyerY += 4 }
+    if (inv.customers?.gst_number) { 
+        doc.setFont('helvetica', 'bold')
+        doc.text(`GSTIN: ${inv.customers.gst_number}`, buyerX + 4, buyerY)
+        doc.setFont('helvetica', 'normal')
+        buyerY += 4 
+    }
     if (inv.place_of_supply) { doc.text(`Place of Supply: ${inv.place_of_supply}`, buyerX + 4, buyerY); buyerY += 4 }
 
     y += 50
@@ -640,6 +657,12 @@ export async function generateInvoicePDF(invoiceId: string) {
         doc.setTextColor(107, 114, 128)
         doc.text(footerText, pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: 'center' })
     }
+
+    // Centered "Thank you" line above signature
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(0, 0, 0)
+    doc.text('Thank you for your business!', pageWidth / 2, doc.internal.pageSize.getHeight() - 40, { align: 'center' })
 
     // ============ SIGNATURE AREA ============
     doc.setDrawColor(209, 213, 219)

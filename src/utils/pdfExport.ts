@@ -108,16 +108,10 @@ export async function printInvoicePDF(invoiceId: string) {
             hsnSummary[hsn].igst += item.igst_amount
         })
 
-        const copies = [
-            'Original for Recipient',
-            'Duplicate for Transporter',
-            'Triplicate for Supplier'
-        ]
-
-        const renderInvoice = (copyLabel: string, isLast: boolean) => `
-            <div class="invoice-container ${!isLast ? 'page-break' : ''}">
-                <div style="text-align: right; font-weight: bold; font-size: 10px; margin-bottom: 5px; color: #666;">
-                    ${copyLabel.toUpperCase()}
+        const renderInvoice = () => `
+            <div class="invoice-container">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; font-size: 10px; font-weight: bold; margin-bottom: 5px;">
+                    <span>ORIGINAL [ ]  DUPLICATE [ ]  TRIPLICATE [ ]</span>
                 </div>
                 <!-- HEADER -->
                 <table class="header-table">
@@ -134,7 +128,9 @@ export async function printInvoicePDF(invoiceId: string) {
                             </div>
                         </td>
                         <td width="40%" style="text-align: right;">
-                            <div class="invoice-title">TAX INVOICE</div>
+                            <div class="invoice-title">
+                                ${invoice.status === 'draft' ? 'PROFORMA INVOICE' : 'TAX INVOICE'}
+                            </div>
                             <table style="width: 100%; margin-top: 10px;">
                                 <tr><td style="text-align: right;"><b>Invoice No:</b></td><td style="text-align: right;">${invoice.invoice_number}</td></tr>
                                 <tr><td style="text-align: right;"><b>Date:</b></td><td style="text-align: right;">${formatDate(invoice.invoice_date)}</td></tr>
@@ -153,8 +149,9 @@ export async function printInvoicePDF(invoiceId: string) {
                             <b>Bill To:</b><br/>
                             <div style="font-size: 14px; font-weight: bold; margin: 5px 0;">${customer?.name || 'Walk-in Customer'}</div>
                             <div>${customer?.address_line1 || ''}</div>
-                            <div>${customer?.city || ''}, ${customer?.state || ''}</div>
-                            <div style="margin-top: 5px;"><b>GSTIN:</b> ${customer?.gst_number || 'N/A'}</div>
+                            <div>${[customer?.city, customer?.state].filter(Boolean).join(', ')} - ${customer?.pincode || ''}</div>
+                            <div><b>Phone:</b> ${customer?.phone || '-'}</div>
+                            <div style="margin-top: 5px;"><b>GSTIN: ${customer?.gst_number || ''}</b></div>
                         </td>
                         <td width="50%" style="border: 1px solid #ddd; padding: 10px;">
                             <table style="width: 100%;">
@@ -173,7 +170,7 @@ export async function printInvoicePDF(invoiceId: string) {
                         <tr>
                             <th width="30">Sr</th>
                             <th>Description</th>
-                            <th width="80">HSN/SAC</th>
+                            <th width="95">HSN/SAC</th>
                             <th width="60">Batch</th>
                             <th width="40">Qty</th>
                             <th width="70">Rate</th>
@@ -282,6 +279,7 @@ ${invoice.round_off !== 0 ? `
                             </td>
                         </tr>
                     </table>
+                    <div style="text-align: center; font-size: 11px; font-weight: bold; margin-top: 15px;">Thank you for your business!</div>
                 </div>
             </div>
         `
@@ -318,7 +316,7 @@ ${invoice.round_off !== 0 ? `
             </style>
         </head>
         <body>
-            ${copies.map((label, index) => renderInvoice(label, index === copies.length - 1)).join('')}
+            ${renderInvoice()}
             <script>
                 window.onload = function() { 
                     setTimeout(() => { window.print(); }, 500);
