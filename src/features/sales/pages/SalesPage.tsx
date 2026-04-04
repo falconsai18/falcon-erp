@@ -78,14 +78,45 @@ function StatusProgress({ current }: { current: string }) {
 function OrderDetail({ orderId, onClose, onRefresh }: {
     orderId: string; onClose: () => void; onRefresh: () => void
 }) {
+    const navigate = useNavigate()
     const [order, setOrder] = useState<SalesOrder | null>(null)
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
     const [creatingInvoice, setCreatingInvoice] = useState(false)
+    const [existingInvoice, setExistingInvoice] = useState<any>(null)
+    const [checkingInvoice, setCheckingInvoice] = useState(false)
 
     useEffect(() => {
         loadOrder()
     }, [orderId])
+
+    useEffect(() => {
+        if (order?.id) {
+            checkExistingInvoice()
+        }
+    }, [order?.id])
+
+    const checkExistingInvoice = async () => {
+        try {
+            setCheckingInvoice(true)
+            const { data, error } = await supabase
+                .from('invoices')
+                .select('id, invoice_number, status')
+                .eq('sales_order_id', order?.id)
+                .maybeSingle()
+
+            if (error && error.code !== 'PGRST116') {
+                console.error('Error checking invoice:', error)
+                return
+            }
+
+            setExistingInvoice(data)
+        } catch (err: any) {
+            console.error('Failed to check existing invoice:', err.message)
+        } finally {
+            setCheckingInvoice(false)
+        }
+    }
 
     const loadOrder = async () => {
         try {
@@ -118,10 +149,25 @@ function OrderDetail({ orderId, onClose, onRefresh }: {
         if (!order) return
         try {
             setCreatingInvoice(true)
+            
+            // Double-check: Safety protection against duplicate invoices
+            const { data: checkAgain, error: checkError } = await supabase
+                .from('invoices')
+                .select('id, invoice_number')
+                .eq('sales_order_id', order.id)
+                .maybeSingle()
+
+            if (checkAgain) {
+                toast.error(`Invoice already exists: ${checkAgain.invoice_number}`)
+                await checkExistingInvoice() // Refresh the state
+                return
+            }
+            
             const SELLER_STATE = import.meta.env.VITE_SELLER_STATE || 'Maharashtra'
             const invoice = await createInvoiceFromSO(order.id, SELLER_STATE)
             toast.success(`Invoice ${invoice.invoice_number} created!`)
             loadOrder()
+            await checkExistingInvoice() // Refresh invoice check
             onRefresh()
         } catch (err: any) {
             toast.error('Failed to create invoice: ' + err.message)
@@ -176,10 +222,26 @@ function OrderDetail({ orderId, onClose, onRefresh }: {
                         </Button>
                     )}
                     {order.status !== 'draft' && order.status !== 'cancelled' && (
-                        <Button size="sm" variant="secondary" onClick={handleCreateInvoice} isLoading={creatingInvoice}
-                            icon={<FileText size={14} />}>
-                            Create Invoice
-                        </Button>
+                        !existingInvoice ? (
+                            <Button size="sm" variant="secondary" onClick={handleCreateInvoice} isLoading={creatingInvoice}
+                                icon={<FileText size={14} />}>
+                                Create Invoice
+                            </Button>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Button variant="secondary" disabled>
+                                    Already Invoiced
+                                </Button>
+                                <span style={{ fontSize: '12px', color: '#059669' }}>
+                                    ✓ Invoice {existingInvoice.invoice_number} created
+                                </span>
+                                {existingInvoice.status === 'draft' && (
+                                    <Button size="sm" onClick={() => navigate(`/invoices/${existingInvoice.id}`)}>
+                                        Edit Draft
+                                    </Button>
+                                )}
+                            </div>
+                        )
                     )}
                     <button onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200">
                         <X size={16} />
@@ -1017,7 +1079,7 @@ export function SalesPage() {
                                                 <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{formatCurrency(o.total_amount)}</span>
                                             </td>
                                             <td className="px-4 py-3">
-                                                {can('delete', 'sales_orders') && (o.status === 'draft' || o.status === 'cancelled' || o.status === 'confirmed') && (
+                                                {can('delete', 'sales_orders') && (o.status === 'draft' || o.status === 'cancelled' || o.status === 'confirmed' || o.status === 'shipped') && (
                                                     <button title="Delete" onClick={(e) => { e.stopPropagation(); setDeletingOrder(o); setIsDeleteModalOpen(true) }}
                                                         className="p-1.5 rounded-lg text-gray-500 dark:text-dark-500 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-200"><Trash2 size={14} /></button>
                                                 )}
@@ -1060,9 +1122,20 @@ export function SalesPage() {
                     <Button variant="secondary" onClick={() => { setIsDeleteModalOpen(false); setDeletingOrder(null) }}>Cancel</Button>
                     <Button variant="danger" onClick={handleDelete} isLoading={isDeleting}>Delete</Button>
                 </>}>
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-red-500/5 border border-red-500/20">
-                    <AlertCircle size={20} className="text-red-400 mt-0.5" />
-                    <p className="text-sm text-white">Delete order <strong>{deletingOrder?.order_number}</strong>? This will delete all items too.</p>
+                <div className={`flex items-start gap-3 p-4 rounded-lg border ${
+                    deletingOrder?.status === 'shipped'
+                        ? 'bg-yellow-500/10 border-yellow-500/30'
+                        : 'bg-red-500/5 border-red-500/20'
+                }`}>
+                    <AlertCircle size={20} className={`mt-0.5 ${
+                        deletingOrder?.status === 'shipped' ? 'text-yellow-400' : 'text-red-400'
+                    }`} />
+                    <div className="space-y-2">
+                        <p className="text-sm text-white">Delete order <strong>{deletingOrder?.order_number}</strong>? This will delete all items too.</p>
+                        {deletingOrder?.status === 'shipped' && (
+                            <p className="text-xs text-yellow-300 font-semibold">⚠️ Warning: This order has been shipped. Deleting may cause data inconsistency. Use only for testing/cleanup.</p>
+                        )}
+                    </div>
                 </div>
             </Modal>
         </div>

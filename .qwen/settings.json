@@ -29,7 +29,11 @@
       "Bash(c:\\users\\falcon\\.cargo\\bin)",
       "Bash(\"c:\\users\\falcon\\.cargo\\bin\\cargo.exe\" *)",
       "Bash(cmd *)",
-      "Bash(\"f:\\fsg erp\\falcon-super-gold-erp\\run-tauri.bat\")"
+      "Bash(\"f:\\fsg erp\\falcon-super-gold-erp\\run-tauri.bat\")",
+      "Bash(git stash)",
+      "Bash(git checkout *)",
+      "Bash(select-string *)",
+      "Bash(type *)"
     ]
   },
   "$version": 3

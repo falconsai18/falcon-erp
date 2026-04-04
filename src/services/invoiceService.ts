@@ -134,7 +134,7 @@ export function calculateInvoiceTotals(items: InvoiceItem[]) {
   if (paise === 0) {
     total_amount = exactTotal
     round_off = 0
-  } else if (paise >= 50) {
+  } else if (paise > 50) {
     total_amount = Math.ceil(exactTotal)
     round_off = Math.round((exactTotal - total_amount) * 100) / 100
   } else {

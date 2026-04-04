@@ -117,13 +117,15 @@ function InvoiceDetail({ invoiceId, onClose, onRefresh }: {
                             await printInvoicePDF(invoiceId)
                         } catch (err: any) { toast.error(err.message) }
                     }}>Print</Button>
-                    <Button size="sm" variant="secondary" icon={<Download size={14} />} onClick={async () => {
-                        try {
-                            const { generateInvoicePDF } = await import('@/services/exportService')
-                            await generateInvoicePDF(invoiceId)
-                            toast.success('PDF downloaded!')
-                        } catch (err: any) { toast.error(err.message) }
-                    }}>PDF</Button>
+                    {invoice.status === 'draft' && (
+                        <Button size="sm" variant="secondary" icon={<Download size={14} />} onClick={async () => {
+                            try {
+                                const { generateInvoicePDF } = await import('@/services/exportService')
+                                await generateInvoicePDF(invoiceId)
+                                toast.success('Proforma PDF downloaded!')
+                            } catch (err: any) { toast.error(err.message) }
+                        }}>Proforma PDF</Button>
+                    )}
                     <button title="Close" onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-dark-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200"><X size={16} /></button>
                 </div>
             </div>
