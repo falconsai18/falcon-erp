@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bell, Check, Trash2, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useOnClickOutside } from '@/hooks/useOnClickOutside'
@@ -22,11 +22,27 @@ export function NotificationBell() {
 
     useOnClickOutside(containerRef, () => setIsOpen(false))
 
+    const fetchData = useCallback(async () => {
+        if (!user) return
+        try {
+            const [data, count] = await Promise.all([
+                getNotifications(user.id),
+                getUnreadCount(user.id)
+            ])
+            setNotifications(data)
+            setUnreadCount(count)
+        } catch (error) {
+            console.error('Failed to fetch notifications', error)
+        }
+    }, [user])
+
     // Initial Load & Realtime Subscription
     useEffect(() => {
         if (!user) return
 
-        fetchData()
+        queueMicrotask(() => {
+            void fetchData()
+        })
 
         const channel = supabase
             .channel('notifications-changes')
@@ -43,21 +59,7 @@ export function NotificationBell() {
             .subscribe()
 
         return () => { supabase.removeChannel(channel) }
-    }, [user?.id])
-
-    const fetchData = async () => {
-        if (!user) return
-        try {
-            const [data, count] = await Promise.all([
-                getNotifications(user.id),
-                getUnreadCount(user.id)
-            ])
-            setNotifications(data)
-            setUnreadCount(count)
-        } catch (error) {
-            console.error('Failed to fetch notifications', error)
-        }
-    }
+    }, [user, fetchData])
 
     const handleMarkAsRead = async (id: string, link?: string) => {
         try {

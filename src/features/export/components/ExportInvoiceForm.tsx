@@ -70,7 +70,9 @@ export function ExportInvoiceForm({
 
     useEffect(() => {
         if (initialData) {
-            setFormData((prev) => ({ ...prev, ...initialData }))
+            queueMicrotask(() => {
+                setFormData((prev) => ({ ...prev, ...initialData }))
+            })
         }
     }, [initialData])
 

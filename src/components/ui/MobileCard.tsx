@@ -128,7 +128,7 @@ export function MobileCard({
     }
 
     setIsSwiping(false);
-  }, [isSwiping, leftActions.length, rightActions.length, expandable, onPress]);
+  }, [isSwiping, isExpanded, leftActions.length, rightActions.length, expandable, onPress]);
 
   const handleActionPress = useCallback((action: SwipeAction) => {
     if (action.confirm) {

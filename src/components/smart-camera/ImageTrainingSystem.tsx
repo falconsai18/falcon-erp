@@ -409,10 +409,6 @@ export function TrainingStats() {
     totalImages: 0
   });
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   const loadStats = async () => {
     try {
       const { data: products } = await supabase.from('products').select('id');
@@ -429,6 +425,12 @@ export function TrainingStats() {
       console.error('Failed to load stats:', error);
     }
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadStats();
+    });
+  }, []);
 
   return (
     <div className="grid grid-cols-3 gap-3">

@@ -93,22 +93,3 @@ export function AuditExport({ logs, filters }: AuditExportProps) {
     </Button>
   )
 }
-
-// Export all logs (for full data export)
-export async function exportAllAuditLogs(
-  filters: {
-    dateFrom?: string
-    dateTo?: string
-    userId?: string
-    actionType?: string
-    entityType?: string
-  }
-): Promise<void> {
-  try {
-    // This would fetch all matching logs and export them
-    // For now, we'll show a coming soon message
-    toast.info('Full export feature coming soon')
-  } catch (error: any) {
-    toast.error('Export failed: ' + error.message)
-  }
-}

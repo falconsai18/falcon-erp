@@ -113,7 +113,7 @@ export async function getBatches(
 
     // Get QC counts for each batch
     const batchIds = (data || []).map((b: any) => b.id)
-    let qcMap = new Map<string, number>()
+    const qcMap = new Map<string, number>()
 
     if (batchIds.length > 0) {
         const { data: qcData } = await supabase

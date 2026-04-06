@@ -77,14 +77,16 @@ export function ExportOrderForm({
 
     useEffect(() => {
         if (initialData) {
-            setFormData((prev) => ({
-                ...prev,
-                ...initialData,
-                total_amount_usd: prev.total_amount_usd,
-            }))
-            if (initialData.items && initialData.items.length > 0) {
-                setItems(initialData.items)
-            }
+            queueMicrotask(() => {
+                setFormData((prev) => ({
+                    ...prev,
+                    ...initialData,
+                    total_amount_usd: prev.total_amount_usd,
+                }))
+                if (initialData.items && initialData.items.length > 0) {
+                    setItems(initialData.items)
+                }
+            })
         }
     }, [initialData])
 

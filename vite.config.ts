@@ -4,6 +4,27 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('purify')) return 'vendor-pdf'
+          if (id.includes('recharts')) return 'vendor-charts'
+          if (id.includes('@supabase')) return 'vendor-supabase'
+          if (
+            id.includes('react-dom') ||
+            id.includes('react-router') ||
+            id.includes('/react/') ||
+            id.includes('scheduler')
+          ) {
+            return 'vendor-react'
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 900,
+  },
   plugins: [
     react(),
     VitePWA({

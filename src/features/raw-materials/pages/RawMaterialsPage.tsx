@@ -198,7 +198,9 @@ export function RawMaterialsPage() {
         try {
             const { data } = await supabase.from('suppliers').select('id, name').eq('status', 'active').order('name')
             setSuppliers((data || []).map((s: any) => ({ value: s.id, label: s.name })))
-        } catch { }
+        } catch {
+            /* ignore */
+        }
     }
 
     const fetchLowStock = async () => {

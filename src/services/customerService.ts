@@ -112,19 +112,77 @@ export async function getCustomers(
     params: PaginationParams,
     filters?: { status?: string; type?: string; search?: string }
 ): Promise<PaginatedResult<Customer>> {
-    const filterArr = []
+    const from = (params.page - 1) * params.pageSize
+    const to = from + params.pageSize - 1
+
+    // Step 1: Fetch customers with pagination
+    let query = supabase
+        .from('customers')
+        .select('*', { count: 'exact' })
+
     if (filters?.status && filters.status !== 'all') {
-        filterArr.push({ column: 'status', value: filters.status })
+        query = query.eq('status', filters.status)
     }
     if (filters?.type && filters.type !== 'all') {
-        filterArr.push({ column: 'customer_type', value: filters.type })
+        query = query.eq('customer_type', filters.type)
+    }
+    if (filters?.search) {
+        const searchTerms = filters.search.split(/\s+/).filter(Boolean)
+        query = searchTerms.reduce((q, term) => 
+            q.or(`name.ilike.%${term}%,phone.ilike.%${term}%,gst_number.ilike.%${term}%,email.ilike.%${term}%`), query
+        )
     }
 
-    return fetchPaginated<Customer>('customers', params, {
-        filters: filterArr,
-        search: filters?.search ? { columns: ['name', 'email', 'phone', 'gst_number', 'city', 'state'], query: filters.search } : undefined,
-        orderBy: { column: 'created_at', ascending: false },
-    })
+    query = query.order('created_at', { ascending: false })
+        .range(from, to)
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+
+    // Step 2: Fetch unpaid invoices for these customers
+    const customerIds = (data || []).map(c => c.id)
+    if (customerIds.length === 0) {
+        return {
+            data: [],
+            count: 0,
+            page: params.page,
+            pageSize: params.pageSize,
+            totalPages: 0,
+        }
+    }
+
+    const { data: invoices, error: invError } = await supabase
+        .from('invoices')
+        .select('customer_id, balance_amount, status')
+        .in('customer_id', customerIds)
+        .in('status', ['sent', 'partial'])
+
+    if (invError) throw invError
+
+    // Step 3: Calculate outstanding for each customer
+    const invoicesByCustomer = (invoices || []).reduce((acc, inv) => {
+        if (!acc[inv.customer_id]) {
+            acc[inv.customer_id] = []
+        }
+        acc[inv.customer_id].push(inv)
+        return acc
+    }, {} as Record<string, { balance_amount: number | null }[]>)
+
+    const customersWithOutstanding = (data || []).map(customer => ({
+        ...customer,
+        outstanding_amount: (invoicesByCustomer[customer.id] || []).reduce(
+            (sum, inv) => sum + (inv.balance_amount || 0), 0
+        )
+    }))
+
+    return {
+        data: customersWithOutstanding,
+        count: count || 0,
+        page: params.page,
+        pageSize: params.pageSize,
+        totalPages: Math.ceil((count || 0) / params.pageSize),
+    }
 }
 
 export async function getCustomerById(id: string): Promise<Customer> {
@@ -215,19 +273,29 @@ export async function getCustomerStats(): Promise<{
     blocked: number
     totalOutstanding: number
 }> {
-    const { data, error } = await supabase
-        .from('customers')
-        .select('status, outstanding_amount')
+    const [{ data: customers, error: custError }, { data: openInvoices, error: invError }] =
+        await Promise.all([
+            supabase.from('customers').select('status'),
+            supabase
+                .from('invoices')
+                .select('balance_amount')
+                .in('status', ['sent', 'partial'])
+                .not('status', 'eq', 'cancelled'),
+        ])
 
-    if (error) throw error
+    if (custError) throw custError
+    if (invError) throw invError
 
-    const customers = data || []
+    const rows = customers || []
     return {
-        total: customers.length,
-        active: customers.filter(c => c.status === 'active').length,
-        inactive: customers.filter(c => c.status === 'inactive').length,
-        blocked: customers.filter(c => c.status === 'blocked').length,
-        totalOutstanding: customers.reduce((sum, c) => sum + (c.outstanding_amount || 0), 0),
+        total: rows.length,
+        active: rows.filter(c => c.status === 'active').length,
+        inactive: rows.filter(c => c.status === 'inactive').length,
+        blocked: rows.filter(c => c.status === 'blocked').length,
+        totalOutstanding: (openInvoices || []).reduce(
+            (sum, inv) => sum + (inv.balance_amount || 0),
+            0
+        ),
     }
 }
 

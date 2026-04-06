@@ -15,7 +15,7 @@ const isUUID = (str: string) => {
 const getEntityNameFromTitle = () => {
     const title = document.title;
     // Pattern: "Entity Name | Falcon ERP" or "Entity Name - Falcon ERP"
-    const match = title.match(/^(.+?)\s*[\|\-]\s*Falcon/);
+    const match = title.match(/^(.+?)\s*(?:\||-)\s*Falcon/);
     return match ? match[1].trim() : null;
 };
 

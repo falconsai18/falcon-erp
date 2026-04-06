@@ -178,8 +178,10 @@ export function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose }:
       initialExpanded[activeSection.title] = true
     }
 
-    setExpandedSections(initialExpanded)
-    setIsInitialized(true)
+    queueMicrotask(() => {
+      setExpandedSections(initialExpanded)
+      setIsInitialized(true)
+    })
   }, [filteredSections, location.pathname])
 
   // Save to localStorage whenever expandedSections changes (skip initial render)

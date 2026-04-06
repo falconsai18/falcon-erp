@@ -231,9 +231,9 @@ export function extractBatchInfo(text: string): {
 
   // Date patterns
   const datePatterns = [
-    /exp(?:iry)?[\s\w]*[\s:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    /best[\s\w]*before[\s:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    /use[\s\w]*before[\s:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i
+    /exp(?:iry)?[\s\w]*[\s:]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i,
+    /best[\s\w]*before[\s:]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i,
+    /use[\s\w]*before[\s:]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i
   ];
 
   for (const pattern of datePatterns) {
@@ -246,9 +246,9 @@ export function extractBatchInfo(text: string): {
 
   // Manufacturing date
   const mfgPatterns = [
-    /mfg[\s\w]*[\s:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    /manufacturing[\s\w]*[\s:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    /mfd[\s.:]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i
+    /mfg[\s\w]*[\s:]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i,
+    /manufacturing[\s\w]*[\s:]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i,
+    /mfd[\s.:]*(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i
   ];
 
   for (const pattern of mfgPatterns) {

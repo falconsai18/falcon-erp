@@ -8,8 +8,15 @@ import {
   generateWorkflowData, 
   executeWorkflowAction, 
   QRWorkflowData,
-  WorkflowAction 
+  WorkflowAction,
+  type EntityType,
 } from '@/services/qrWorkflowService';
+
+const ENTITY_TYPES: EntityType[] = ['product', 'batch', 'material', 'work_order', 'customer', 'supplier']
+
+function isEntityType(t: string): t is EntityType {
+  return (ENTITY_TYPES as readonly string[]).includes(t)
+}
 import { MobileBottomSheet } from './MobileBottomSheet';
 
 interface SmartQRScannerProps {
@@ -137,18 +144,20 @@ export function SmartQRScanner({ isOpen, onClose, onScan, onError }: SmartQRScan
       // Parse QR code
       const parsed = parseQRCodeData(qrData);
       
-      if (!parsed) {
+      if (!parsed || typeof parsed.t !== 'string' || typeof parsed.id !== 'string' || !isEntityType(parsed.t)) {
         throw new Error('Invalid QR code format');
       }
 
+      const entityType = parsed.t
+
       // Fetch entity data and generate workflow
-      const entityData = await fetchEntityData(parsed.t, parsed.id);
+      const entityData = await fetchEntityData(entityType, parsed.id);
       
       if (!entityData) {
         throw new Error('Entity not found');
       }
 
-      const workflowData = await generateWorkflowData(parsed.t, entityData);
+      const workflowData = await generateWorkflowData(entityType, entityData);
       setScannedData(workflowData);
       setShowWorkflow(true);
       
@@ -161,7 +170,7 @@ export function SmartQRScanner({ isOpen, onClose, onScan, onError }: SmartQRScan
     }
   };
 
-  const fetchEntityData = async (type: string, id: string) => {
+  const fetchEntityData = async (type: EntityType, id: string) => {
     // In real implementation, fetch from Supabase
     // For now, return mock data
     return {

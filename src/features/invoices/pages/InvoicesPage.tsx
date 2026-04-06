@@ -357,32 +357,7 @@ function GenerateInvoiceModal({ isOpen, onClose, onCreated }: {
 
             const invoice = await createInvoiceFromSO(selectedSOId, placeOfSupply, user?.id)
             onClose() // Close first
-
-            toast.success(`Invoice ${invoice.invoice_number} generated!`, {
-                action: {
-                    label: 'Send Now →',
-                    onClick: () => {
-                        // We need a way to open detailed view. 
-                        // Since we don't have direct access to set invoice from here easily without prop drilling or context,
-                        // we can rely on list refresh and maybe a URL param or just let user find it. 
-                        // BUT, user asked to select it.
-                        // Let's retry fetchData and then set it? 
-                        // The simplest way is to pass a callback "onOpenDetail"
-                        // For now we will just show toast as requested, but the onClick might need onCreated to handle it?
-                        // Actually, onCreated just refreshes data. 
-                        // We can modify onCreated to accept an ID? No, keeps it simple.
-                        // Let's just emit success and let user click it in list for now OR navigate if we had a route.
-                        // Wait, the requirement says: onClick: () => setSelectedInvoice(invoice)
-                        // This implies GenerateInvoiceModal should receive setSelectedInvoice or similar.
-                        // Let's pass a callback `onSuccess` that handles this.
-                    }
-                },
-                duration: 8000,
-            })
-            // ACTUALLY, to strictly follow "onClick: () => setSelectedInvoice(invoice)", we need to pass that setter.
-            // Let's modify the props of GenerateInvoiceModal
             onCreated(invoice)
-            // We will change onCreated signature in parent.
         } catch (err: any) { toast.error(err.message) }
         finally { setCreating(false) }
     }

@@ -143,10 +143,6 @@ export function StockAlertBadgeCompact({ materialId, currentStock }: { materialI
   const [daysLeft, setDaysLeft] = useState<number | null>(null)
   const [status, setStatus] = useState<'critical' | 'warning' | 'safe' | 'static'>('safe')
 
-  useEffect(() => {
-    calculateDaysLeft()
-  }, [materialId, currentStock])
-
   const calculateDaysLeft = async () => {
     try {
       const thirtyDaysAgo = new Date()
@@ -176,6 +172,12 @@ export function StockAlertBadgeCompact({ materialId, currentStock }: { materialI
       console.error('Failed to calculate days left:', error)
     }
   }
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void calculateDaysLeft()
+    })
+  }, [materialId, currentStock])
 
   const statusColors = {
     critical: 'bg-red-500',

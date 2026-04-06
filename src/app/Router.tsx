@@ -2,44 +2,45 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AppShell } from '@/components/layout/AppShell'
-import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
-import { ProductsPage } from '@/features/products/pages/ProductsPage'
-import { InventoryPage } from '@/features/inventory/pages/InventoryPage'
-import { CustomersPage } from '@/features/customers/pages/CustomersPage'
-import { SalesPage } from '@/features/sales/pages/SalesPage'
-import { InvoicesPage } from '@/features/invoices/pages/InvoicesPage'
-import { QuotationsPage } from '@/features/quotations/pages/QuotationsPage'
-import { PurchasePage } from '@/features/purchase/pages/PurchasePage'
-import { GRNPage } from '@/features/grn/pages/GRNPage'
-import { CreditNotesPage } from '@/features/credit-notes/pages/CreditNotesPage'
-import { DebitNotesPage } from '@/features/debit-notes/pages/DebitNotesPage'
-import { ChallansPage } from '@/features/challans/pages/ChallansPage'
-import { BatchesPage } from '@/features/batches/pages/BatchesPage'
-import { QualityChecksPage } from '@/features/quality-checks/pages/QualityChecksPage'
-import { FormulationsPage } from '@/features/formulations/pages/FormulationsPage'
-import { SupplierPaymentsPage } from '@/features/supplier-payments/pages/SupplierPaymentsPage'
-import { SuppliersPage } from '@/features/suppliers/pages/SuppliersPage'
-import { RawMaterialsPage } from '@/features/raw-materials/pages/RawMaterialsPage'
-import { ProductionPage } from '@/features/production/pages/ProductionPage'
-import { ReportsPage } from '@/features/reports/pages/ReportsPage'
-import { SettingsPage } from '@/features/settings/pages/SettingsPage'
-import { ExportDashboardPage } from '@/features/export/pages/ExportDashboardPage'
-import { ExportCustomersPage } from '@/features/export/pages/ExportCustomersPage'
-import { ExportOrdersPage } from '@/features/export/pages/ExportOrdersPage'
-import { ExportOrderDetailPage } from '@/features/export/pages/ExportOrderDetailPage'
-import { ExportInvoicesPage } from '@/features/export/pages/ExportInvoicesPage'
-import { ShipmentsPage } from '@/features/export/pages/ShipmentsPage'
-import { PackingListsPage } from '@/features/export/pages/PackingListsPage'
-import { ExportPaymentsPage } from '@/features/export/pages/ExportPaymentsPage'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { useEffect, lazy, Suspense } from 'react'
-import BulkInwardingPage from '@/features/inventory/pages/BulkInwarding'
-
-const CustomerLedgerPage = lazy(() => import('@/features/customers/pages/CustomerLedgerPage'))
-const SupplierLedgerPage = lazy(() => import('@/features/suppliers/pages/SupplierLedgerPage'))
-const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'))
-const AuditLogsPage = lazy(() => import('@/features/audit/pages/AuditLogsPage'))
-const GSTReportsPage = lazy(() => import('@/features/gst/pages/GSTReportsPage'))
+import { useEffect } from 'react'
+import {
+    DashboardPage,
+    ProductsPage,
+    InventoryPage,
+    CustomersPage,
+    SalesPage,
+    InvoicesPage,
+    QuotationsPage,
+    PurchasePage,
+    GRNPage,
+    CreditNotesPage,
+    DebitNotesPage,
+    ChallansPage,
+    BatchesPage,
+    QualityChecksPage,
+    FormulationsPage,
+    SupplierPaymentsPage,
+    SuppliersPage,
+    RawMaterialsPage,
+    ProductionPage,
+    ReportsPage,
+    SettingsPage,
+    ExportDashboardPage,
+    ExportCustomersPage,
+    ExportOrdersPage,
+    ExportOrderDetailPage,
+    ExportInvoicesPage,
+    ShipmentsPage,
+    PackingListsPage,
+    ExportPaymentsPage,
+    BulkInwardingPage,
+    CustomerLedgerPage,
+    SupplierLedgerPage,
+    UsersPage,
+    AuditLogsPage,
+    GSTReportsPage,
+} from '@/app/lazyPages'
 
 export function AppRouter() {
     const { checkSession } = useAuthStore()
@@ -86,16 +87,12 @@ export function AppRouter() {
                     } />
                     <Route path="/customers/:id/ledger" element={
                         <ProtectedRoute requiredPermission={{ action: 'read', resource: 'customers' }}>
-                            <Suspense fallback={<LoadingFallback />}>
-                                <CustomerLedgerPage />
-                            </Suspense>
+                            <CustomerLedgerPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/suppliers/:id/ledger" element={
                         <ProtectedRoute requiredPermission={{ action: 'read', resource: 'suppliers' }}>
-                            <Suspense fallback={<LoadingFallback />}>
-                                <SupplierLedgerPage />
-                            </Suspense>
+                            <SupplierLedgerPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/sales" element={
@@ -225,37 +222,22 @@ export function AppRouter() {
                     } />
                     <Route path="/users" element={
                         <ProtectedRoute requiredPermission={{ action: 'read', resource: 'users' }}>
-                            <Suspense fallback={<LoadingFallback />}>
-                                <UsersPage />
-                            </Suspense>
+                            <UsersPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/audit-logs" element={
                         <ProtectedRoute requiredPermission={{ action: 'read', resource: 'audit_logs' }}>
-                            <Suspense fallback={<LoadingFallback />}>
-                                <AuditLogsPage />
-                            </Suspense>
+                            <AuditLogsPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/gst-reports" element={
                         <ProtectedRoute requiredPermission={{ action: 'read', resource: 'reports' }}>
-                            <Suspense fallback={<LoadingFallback />}>
-                                <GSTReportsPage />
-                            </Suspense>
+                            <GSTReportsPage />
                         </ProtectedRoute>
                     } />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
-    )
-}
-
-function LoadingFallback() {
-    return (
-        <div className="p-6 animate-pulse">
-            <div className="h-10 w-48 bg-gray-200 dark:bg-dark-300 rounded-lg mb-6" />
-            <div className="h-32 w-full bg-gray-200 dark:bg-dark-300 rounded-xl" />
-        </div>
     )
 }

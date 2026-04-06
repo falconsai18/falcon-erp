@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { MobileHeader } from './MobileHeader'
 import Breadcrumbs from '../shared/Breadcrumbs'
+import { RouteLoadingFallback } from '../shared/RouteLoadingFallback'
 
 export function AppShell() {
     // Mobile sidebar state
@@ -45,7 +46,9 @@ export function AppShell() {
                 {/* Main Content */}
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-50 dark:bg-dark">
                     <Breadcrumbs />
-                    <Outlet />
+                    <Suspense fallback={<RouteLoadingFallback />}>
+                        <Outlet />
+                    </Suspense>
                 </main>
             </div>
         </div>

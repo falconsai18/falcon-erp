@@ -151,14 +151,6 @@ export function AuditFilters({ onFilterChange, className }: AuditFiltersProps) {
   const [users, setUsers] = useState<{ id: string; full_name: string }[]>([])
   const [showFilters, setShowFilters] = useState(false)
 
-  useEffect(() => {
-    loadUsers()
-  }, [])
-
-  useEffect(() => {
-    onFilterChange(filters)
-  }, [filters])
-
   const loadUsers = async () => {
     try {
       const { data } = await supabase
@@ -171,6 +163,16 @@ export function AuditFilters({ onFilterChange, className }: AuditFiltersProps) {
       console.error('Failed to load users:', error)
     }
   }
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadUsers()
+    })
+  }, [])
+
+  useEffect(() => {
+    onFilterChange(filters)
+  }, [filters])
 
   const updateFilter = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))

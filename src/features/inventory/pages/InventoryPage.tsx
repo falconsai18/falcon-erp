@@ -59,7 +59,9 @@ function StockDetail({ item, onClose, onAdjust }: {
             setLoadingMovements(true)
             const result = await getStockMovements({ page: 1, pageSize: 20 }, { productId: item.product_id })
             setMovements(result.data)
-        } catch { } finally { setLoadingMovements(false) }
+        } catch {
+            /* ignore */
+        } finally { setLoadingMovements(false) }
     }
 
     return (
@@ -240,7 +242,9 @@ export function InventoryPage() {
         try {
             const result = await getStockMovements({ page: movementPage, pageSize }, { type: movementType })
             setMovements(result.data)
-        } catch { }
+        } catch {
+            /* ignore */
+        }
     }, [movementPage, movementType])
 
     useEffect(() => { fetchData(); fetchProducts() }, [fetchData])

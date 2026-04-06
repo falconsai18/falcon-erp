@@ -1,4 +1,3 @@
-// @ts-nocheck - QRCode library has complex types
 import QRCode from 'qrcode';
 
 export interface QRCodeOptions {
@@ -21,7 +20,7 @@ export async function generateQRCode(
       dark: options.color?.dark || '#000000',
       light: options.color?.light || '#ffffff'
     },
-    type: 'image/png'
+    type: 'image/png' as const,
   };
 
   try {
@@ -32,7 +31,12 @@ export async function generateQRCode(
   }
 }
 
-export async function generateQRCodeForProduct(product: any): Promise<string> {
+export async function generateQRCodeForProduct(product: {
+  id: string
+  name?: string | null
+  sku?: string | null
+  product_code?: string | null
+}): Promise<string> {
   const data = JSON.stringify({
     v: 1,
     t: 'product',
@@ -45,7 +49,11 @@ export async function generateQRCodeForProduct(product: any): Promise<string> {
   return generateQRCode(data, { width: 300 });
 }
 
-export async function generateQRCodeForBatch(batch: any): Promise<string> {
+export async function generateQRCodeForBatch(batch: {
+  id: string
+  batch_number?: string | null
+  product_name?: string | null
+}): Promise<string> {
   const data = JSON.stringify({
     v: 1,
     t: 'batch',
@@ -58,7 +66,11 @@ export async function generateQRCodeForBatch(batch: any): Promise<string> {
   return generateQRCode(data, { width: 300 });
 }
 
-export async function generateQRCodeForWorkOrder(order: any): Promise<string> {
+export async function generateQRCodeForWorkOrder(order: {
+  id: string
+  work_order_number?: string | null
+  product_name?: string | null
+}): Promise<string> {
   const data = JSON.stringify({
     v: 1,
     t: 'work_order',
@@ -71,9 +83,14 @@ export async function generateQRCodeForWorkOrder(order: any): Promise<string> {
   return generateQRCode(data, { width: 300 });
 }
 
-export function parseQRCodeData(qrString: string): any | null {
+/** Parsed JSON (or URL-derived) payload from a QR scan. */
+export function parseQRCodeData(qrString: string): Record<string, unknown> | null {
   try {
-    return JSON.parse(qrString);
+    const data = JSON.parse(qrString) as unknown
+    if (data !== null && typeof data === 'object' && !Array.isArray(data)) {
+      return data as Record<string, unknown>
+    }
+    return null
   } catch {
     // Try to parse as URL
     if (qrString.includes('/products/')) {

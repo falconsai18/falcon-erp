@@ -54,13 +54,15 @@ export function ShipmentForm({ orderId, onSubmit, onCancel, isLoading = false }:
 
     useEffect(() => {
         if (order) {
-            setFormData((prev) => ({
-                ...prev,
-                export_order_id: order.id,
-                shipment_mode: order.shipment_mode,
-                port_of_loading: order.port_of_loading,
-                port_of_destination: order.port_of_destination,
-            }))
+            queueMicrotask(() => {
+                setFormData((prev) => ({
+                    ...prev,
+                    export_order_id: order.id,
+                    shipment_mode: order.shipment_mode,
+                    port_of_loading: order.port_of_loading,
+                    port_of_destination: order.port_of_destination,
+                }))
+            })
         }
     }, [order])
 

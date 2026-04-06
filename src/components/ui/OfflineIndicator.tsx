@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSync } from '@/hooks/useSync';
 import { useOffline } from '@/hooks/useOffline';
 import { Cloud, CloudOff, RefreshCw } from 'lucide-react';
@@ -7,10 +7,16 @@ import { cn } from '@/lib/utils';
 export function OfflineIndicator() {
   const { isOnline } = useOffline();
   const { pendingCount, isSyncing, lastSyncTime, sync } = useSync();
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const formatLastSync = () => {
     if (!lastSyncTime) return 'Never synced';
-    const minutes = Math.floor((Date.now() - lastSyncTime.getTime()) / 60000);
+    const minutes = Math.floor((now - lastSyncTime.getTime()) / 60000);
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);

@@ -110,7 +110,6 @@ const getActionConfig = (action: string) => {
 
     let color = 'text-gray-500 bg-gray-100 dark:bg-dark-200 dark:text-gray-400'
     let icon = Activity
-    let label = action
 
     // Determine Color
     if (['create', 'created', 'received', 'approved'].some(s => act.includes(s))) {
@@ -156,14 +155,6 @@ export default function AuditLogsPage() {
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(true)
     const pageSize = 50
-
-    useEffect(() => {
-        loadUsers()
-    }, [])
-
-    useEffect(() => {
-        loadLogs(true)
-    }, [userId, entityType, dateRange])
 
     const loadUsers = async () => {
         try {
@@ -217,6 +208,16 @@ export default function AuditLogsPage() {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            void loadUsers()
+        })
+    }, [])
+
+    useEffect(() => {
+        loadLogs(true)
+    }, [userId, entityType, dateRange])
 
     // Group logs by date
     const groupedLogs = useMemo(() => {

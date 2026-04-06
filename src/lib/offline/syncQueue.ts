@@ -99,28 +99,31 @@ async function syncItem(item: any): Promise<void> {
   const { table, action, data } = item;
   
   switch (action) {
-    case 'create':
+    case 'create': {
       const { error: createError } = await supabase
         .from(table)
         .insert(data);
       if (createError) throw createError;
       break;
+    }
       
-    case 'update':
+    case 'update': {
       const { error: updateError } = await supabase
         .from(table)
         .update(data)
         .eq('id', data.id);
       if (updateError) throw updateError;
       break;
+    }
       
-    case 'delete':
+    case 'delete': {
       const { error: deleteError } = await supabase
         .from(table)
         .delete()
         .eq('id', data.id);
       if (deleteError) throw deleteError;
       break;
+    }
   }
 }
 

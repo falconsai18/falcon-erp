@@ -170,10 +170,6 @@ export function VelocityBadge({ materialId, currentStock, className, showLabel =
 export function VelocityDot({ materialId, currentStock }: { materialId: string; currentStock: number }) {
   const [type, setType] = useState<VelocityType>('normal')
 
-  useEffect(() => {
-    calculateType()
-  }, [materialId, currentStock])
-
   const calculateType = async () => {
     try {
       const thirtyDaysAgo = new Date()
@@ -209,6 +205,12 @@ export function VelocityDot({ materialId, currentStock }: { materialId: string; 
       console.error('Failed to calculate velocity type:', error)
     }
   }
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void calculateType()
+    })
+  }, [materialId, currentStock])
 
   const colors = {
     fast: 'bg-emerald-500',
