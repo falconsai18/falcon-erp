@@ -6,9 +6,9 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 // ERP Logo Component
 function ERPLogo({ size = 180 }: { size?: number }) {
     return (
-        <img 
-            src="/logo.png" 
-            alt="FALCON ERP" 
+        <img
+            src="./logo.png"
+            alt="FALCON ERP"
             className="mx-auto object-contain"
             style={{ width: size, height: 'auto' }}
         />

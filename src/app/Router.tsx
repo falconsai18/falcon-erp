@@ -1,9 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useEffect } from 'react'
+
+/**
+ * Detect if running in Electron (production build uses file:// protocol).
+ * BrowserRouter requires http:// protocol; HashRouter works with file://.
+ */
+const isElectron = typeof window !== 'undefined' && !!(window as any).electron
 import {
     DashboardPage,
     ProductsPage,
@@ -49,8 +55,10 @@ export function AppRouter() {
         checkSession()
     }, [checkSession])
 
+    const Router = isElectron ? HashRouter : BrowserRouter
+
     return (
-        <BrowserRouter>
+        <Router>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route
@@ -238,6 +246,6 @@ export function AppRouter() {
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-        </BrowserRouter>
+        </Router>
     )
 }

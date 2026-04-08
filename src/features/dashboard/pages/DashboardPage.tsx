@@ -547,6 +547,31 @@ export function DashboardPage() {
                 </div>
             )}
 
+            {/* Quick Actions - Full Width */}
+            <div className="glass-card p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-3">
+                    {QUICK_ACTIONS.map((action) => (
+                        <button
+                            key={action.label}
+                            onClick={() => navigate(action.path)}
+                            title={action.label}
+                            className={cn(
+                                'flex flex-col items-center gap-2 p-3 rounded-xl border border-dark-300/50',
+                                'hover:border-brand-500/30 hover:bg-dark-200/50 transition-all group'
+                            )}
+                        >
+                            <div className={cn('p-2 rounded-lg', action.bg)}>
+                                <action.icon size={18} className={action.color} />
+                            </div>
+                            <span className="text-[10px] text-gray-500 dark:text-dark-500 group-hover:text-white transition-colors text-center leading-tight hidden sm:block">
+                                {action.label}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Revenue Chart */}
@@ -645,31 +670,6 @@ export function DashboardPage() {
                             <p className="text-sm text-dark-500">No orders yet</p>
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* Quick Actions - Full Width */}
-            <div className="glass-card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-3">
-                    {QUICK_ACTIONS.map((action) => (
-                        <button
-                            key={action.label}
-                            onClick={() => navigate(action.path)}
-                            title={action.label}
-                            className={cn(
-                                'flex flex-col items-center gap-2 p-3 rounded-xl border border-dark-300/50',
-                                'hover:border-brand-500/30 hover:bg-dark-200/50 transition-all group'
-                            )}
-                        >
-                            <div className={cn('p-2 rounded-lg', action.bg)}>
-                                <action.icon size={18} className={action.color} />
-                            </div>
-                            <span className="text-[10px] text-gray-500 dark:text-dark-500 group-hover:text-white transition-colors text-center leading-tight hidden sm:block">
-                                {action.label}
-                            </span>
-                        </button>
-                    ))}
                 </div>
             </div>
 

@@ -1,0 +1,78 @@
+# Falcon ERP - Electron Builder Configuration
+# Windows 7 Compatible (Electron 22.3.27)
+
+# === Application Info ===
+appId: com.falconerp.desktop
+productName: Falcon ERP
+copyright: Copyright © 2026 Falcon ERP Team
+
+# === Build Directories ===
+directories:
+  output: release
+  buildResources: build
+
+# === Files to Include in ASAR ===
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+# === Extra Resources (outside ASAR) ===
+# config.json is optional at runtime — do NOT bundle
+# Users place it next to the exe or in %APPDATA%/Falcon ERP/
+
+# === ASAR Configuration ===
+asar: true
+asarUnpack:
+  - "**/*.node"
+
+# === Code Signing ===
+# Disabled to avoid winCodeSign extraction/symlink privilege errors on Windows
+forceCodeSigning: false
+
+# === Windows Configuration ===
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+
+  icon: build/icon.ico
+  publisherName: Falcon ERP
+  requestedExecutionLevel: asInvoker
+  signAndEditExecutable: false
+
+# === NSIS Installer Configuration ===
+nsis:
+  warningsAsErrors: false
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Falcon ERP
+  perMachine: true
+  allowElevation: true
+  deleteAppDataOnUninstall: false
+  displayLanguageSelector: false
+  unicode: true
+  artifactName: Falcon-ERP-Setup-${version}.${ext}
+  include: build/installer.nsh
+
+# === Portable Configuration ===
+portable:
+  artifactName: Falcon-ERP-Portable-${version}.${ext}
+  requestExecutionLevel: user
+
+# === Electron Download Settings ===
+electronDownload:
+  version: "22.3.27"
+  cache: "electron-cache"
+
+# === Publish (disabled — no auto-updates) ===
+publish: null

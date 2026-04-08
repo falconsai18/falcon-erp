@@ -24,7 +24,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
             {/* Center - Logo/Brand */}
             <div className="flex items-center gap-2">
                 {/* TAL Logo */}
-                <img src="/logo.svg" alt="TAL Logo" className="h-10 w-auto flex-shrink-0" />
+                <img src="./logo.png" alt="FALCON ERP" className="h-10 w-auto flex-shrink-0" />
                 <span className="font-bold text-gray-900 dark:text-white text-lg">FALCON</span>
             </div>
 
