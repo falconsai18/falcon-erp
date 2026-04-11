@@ -141,7 +141,7 @@ export async function getCustomers(
     if (error) throw error
 
     // Step 2: Fetch unpaid invoices for these customers
-    const customerIds = (data || []).map(c => c.id)
+    const customerIds = (data || []).map((c: { id: string }) => c.id)
     if (customerIds.length === 0) {
         return {
             data: [],
@@ -161,7 +161,7 @@ export async function getCustomers(
     if (invError) throw invError
 
     // Step 3: Calculate outstanding for each customer
-    const invoicesByCustomer = (invoices || []).reduce((acc, inv) => {
+    const invoicesByCustomer = (invoices || []).reduce((acc: Record<string, { balance_amount: number | null }[]>, inv: { customer_id: string; balance_amount: number | null; status: string }) => {
         if (!acc[inv.customer_id]) {
             acc[inv.customer_id] = []
         }
@@ -169,10 +169,10 @@ export async function getCustomers(
         return acc
     }, {} as Record<string, { balance_amount: number | null }[]>)
 
-    const customersWithOutstanding = (data || []).map(customer => ({
+    const customersWithOutstanding = (data || []).map((customer: Customer) => ({
         ...customer,
         outstanding_amount: (invoicesByCustomer[customer.id] || []).reduce(
-            (sum, inv) => sum + (inv.balance_amount || 0), 0
+            (sum: number, inv: { balance_amount: number | null }) => sum + (inv.balance_amount || 0), 0
         )
     }))
 
@@ -190,44 +190,54 @@ export async function getCustomerById(id: string): Promise<Customer> {
 }
 
 export async function createCustomer(data: CustomerFormData): Promise<Customer> {
-    const payload: any = {
-        name: data.name.trim(),
-        email: data.email.trim() || null,
-        phone: data.phone.trim() || null,
-        alt_phone: data.alt_phone.trim() || null,
-        gst_number: data.gst_number.trim().toUpperCase() || null,
-        pan_number: data.pan_number.trim().toUpperCase() || null,
-        customer_type: data.customer_type,
-        credit_limit: Number(data.credit_limit),
-        credit_days: Number(data.credit_days),
-        status: data.status,
-        notes: data.notes.trim() || null,
-        address_line1: data.address_line1.trim() || null,
-        address_line2: data.address_line2.trim() || null,
-        city: data.city.trim() || null,
-        state: data.state.trim() || null,
-        pincode: data.pincode.trim() || null,
-        country: data.country.trim() || null,
-    }
-    return createRecord<Customer>('customers', payload)
+  const payload: any = {
+    name: data.name.trim(),
+    email: data.email.trim() || null,
+    phone: data.phone.trim() || null,
+    alt_phone: data.alt_phone.trim() || null,
+    gst_number: data.gst_number.trim().toUpperCase() || null,
+    pan_number: data.pan_number.trim().toUpperCase() || null,
+    customer_type: data.customer_type,
+    credit_limit: Number(data.credit_limit),
+    credit_days: Number(data.credit_days),
+    status: data.status,
+    notes: data.notes.trim() || null,
+    address_line1: data.address_line1.trim() || null,
+    address_line2: data.address_line2.trim() || null,
+    city: data.city.trim() || null,
+    state: data.state.trim() || null,
+    pincode: data.pincode.trim() || null,
+    country: data.country.trim() || null,
+  }
+  const customer = await createRecord<Customer>('customers', payload)
+  await syncPrimaryAddress(customer.id, data)
+  return customer
 }
 
 export async function updateCustomer(id: string, data: CustomerFormData): Promise<Customer> {
-    const payload: any = {
-        name: data.name.trim(),
-        email: data.email.trim() || null,
-        phone: data.phone.trim() || null,
-        alt_phone: data.alt_phone.trim() || null,
-        gst_number: data.gst_number.trim().toUpperCase() || null,
-        pan_number: data.pan_number.trim().toUpperCase() || null,
-        customer_type: data.customer_type,
-        credit_limit: Number(data.credit_limit),
-        credit_days: Number(data.credit_days),
-        status: data.status,
-        notes: data.notes.trim() || null,
-        updated_at: new Date().toISOString(),
-    }
-    return updateRecord<Customer>('customers', id, payload)
+  const payload: any = {
+    name: data.name.trim(),
+    email: data.email.trim() || null,
+    phone: data.phone.trim() || null,
+    alt_phone: data.alt_phone.trim() || null,
+    gst_number: data.gst_number.trim().toUpperCase() || null,
+    pan_number: data.pan_number.trim().toUpperCase() || null,
+    customer_type: data.customer_type,
+    credit_limit: Number(data.credit_limit),
+    credit_days: Number(data.credit_days),
+    status: data.status,
+    notes: data.notes.trim() || null,
+    address_line1: data.address_line1.trim() || null,
+    address_line2: data.address_line2.trim() || null,
+    city: data.city.trim() || null,
+    state: data.state.trim() || null,
+    pincode: data.pincode.trim() || null,
+    country: data.country.trim() || null,
+    updated_at: new Date().toISOString(),
+  }
+  const customer = await updateRecord<Customer>('customers', id, payload)
+  await syncPrimaryAddress(id, data)
+  return customer
 }
 
 export async function deleteCustomer(id: string): Promise<void> {
@@ -245,6 +255,44 @@ export async function getCustomerAddresses(customerId: string): Promise<Customer
 
     if (error) throw error
     return data || []
+}
+
+async function syncPrimaryAddress(customerId: string, data: CustomerFormData): Promise<void> {
+  if (!data.address_line1.trim()) return
+
+  const { data: existing } = await supabase
+    .from('customer_addresses')
+    .select('id')
+    .eq('customer_id', customerId)
+    .eq('address_type', 'billing')
+    .eq('is_default', true)
+    .maybeSingle()
+
+  if (existing) {
+    await supabase
+      .from('customer_addresses')
+      .update({
+        address_line1: data.address_line1.trim(),
+        address_line2: data.address_line2.trim() || null,
+        city: data.city.trim(),
+        state: data.state.trim(),
+        pincode: data.pincode.trim() || null,
+      })
+      .eq('id', existing.id)
+  } else {
+    await supabase
+      .from('customer_addresses')
+      .insert({
+        customer_id: customerId,
+        address_type: 'billing',
+        address_line1: data.address_line1.trim(),
+        address_line2: data.address_line2.trim() || null,
+        city: data.city.trim(),
+        state: data.state.trim(),
+        pincode: data.pincode.trim() || null,
+        is_default: true,
+      })
+  }
 }
 
 export async function createAddress(customerId: string, data: AddressFormData): Promise<CustomerAddress> {
@@ -289,11 +337,11 @@ export async function getCustomerStats(): Promise<{
     const rows = customers || []
     return {
         total: rows.length,
-        active: rows.filter(c => c.status === 'active').length,
-        inactive: rows.filter(c => c.status === 'inactive').length,
-        blocked: rows.filter(c => c.status === 'blocked').length,
+        active: rows.filter((c: { status: string }) => c.status === 'active').length,
+        inactive: rows.filter((c: { status: string }) => c.status === 'inactive').length,
+        blocked: rows.filter((c: { status: string }) => c.status === 'blocked').length,
         totalOutstanding: (openInvoices || []).reduce(
-            (sum, inv) => sum + (inv.balance_amount || 0),
+            (sum: number, inv: { balance_amount: number | null }) => sum + (inv.balance_amount || 0),
             0
         ),
     }

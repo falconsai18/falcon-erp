@@ -28,3 +28,17 @@ dist-ssr
 src-tauri/
 rustup-init.exe
 run-tauri.bat
+
+# Electron
+release/
+electron-cache/
+build/*.nsh
+!build/installer.nsh
+*.exe
+*.blockmap
+latest.yml
+
+# Config (contains secrets)
+config.json
+
+config.json

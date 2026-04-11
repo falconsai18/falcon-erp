@@ -353,12 +353,12 @@ export async function getPOItemsForDN(poId: string): Promise<any[]> {
 export async function getDebitNoteStats() {
     const { data, error } = await supabase.from('debit_notes').select('status, total_amount')
     if (error) throw error
-    const debitNotes = data || []
+    const debitNotes = (data || []) as DebitNote[]
     return {
         total: debitNotes.length,
-        draft: debitNotes.filter(dn => dn.status === 'draft').length,
-        approved: debitNotes.filter(dn => dn.status === 'approved').length,
-        cancelled: debitNotes.filter(dn => dn.status === 'cancelled').length,
-        totalValue: debitNotes.reduce((sum, dn) => sum + (dn.total_amount || 0), 0),
+        draft: debitNotes.filter((dn: DebitNote) => dn.status === 'draft').length,
+        approved: debitNotes.filter((dn: DebitNote) => dn.status === 'approved').length,
+        cancelled: debitNotes.filter((dn: DebitNote) => dn.status === 'cancelled').length,
+        totalValue: debitNotes.reduce((sum: number, dn: DebitNote) => sum + (dn.total_amount || 0), 0),
     }
 }

@@ -1,4 +1,4 @@
-# 💼 How Falcon Super Gold ERP Helps Your Business
+# 💼 How Falcon ERP Helps Your Business
 
 ## 🎯 The Big Picture
 
@@ -9,7 +9,7 @@
 - When should we reorder?
 - Who changed what in the system?
 
-**Solution:** Falcon Super Gold ERP automates all of this in one beautiful dashboard.
+**Solution:** Falcon ERP automates all of this in one beautiful dashboard.
 
 ---
 
@@ -362,7 +362,7 @@ Many ERPs don't track changes. This one:
 
 The difference isn't just efficiency—it's the ability to **scale without chaos**.
 
-**Falcon Super Gold ERP** isn't just software. It's your business copilot.
+**Falcon ERP** isn't just software. It's your business copilot.
 
 ---
 

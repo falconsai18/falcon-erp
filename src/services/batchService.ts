@@ -355,7 +355,7 @@ export async function deleteBatch(id: string): Promise<void> {
         .or(`batch_id.eq.${id},batch_number.eq.${batch.batch_number}`)
     
     if (qcs && qcs.length > 0) {
-        const qcIds = qcs.map(q => q.id)
+        const qcIds = qcs.map((q: { id: string }) => q.id)
         await supabase.from('quality_check_items').delete().in('quality_check_id', qcIds)
         await supabase.from('quality_checks').delete().in('id', qcIds)
     }
@@ -383,14 +383,14 @@ export async function getBatchStats() {
     const { data, error } = await supabase.from('batches').select('quality_status, is_expired, is_near_expiry')
     if (error) throw error
 
-    const batches = data || []
+    const batches = (data || []) as Batch[]
     return {
         total: batches.length,
-        pending: batches.filter(b => b.quality_status === 'pending').length,
-        passed: batches.filter(b => b.quality_status === 'pass').length,
-        failed: batches.filter(b => b.quality_status === 'fail').length,
-        expired: batches.filter(b => b.is_expired).length,
-        nearExpiry: batches.filter(b => b.is_near_expiry && !b.is_expired).length,
+        pending: batches.filter((b: Batch) => b.quality_status === 'pending').length,
+        passed: batches.filter((b: Batch) => b.quality_status === 'pass').length,
+        failed: batches.filter((b: Batch) => b.quality_status === 'fail').length,
+        expired: batches.filter((b: Batch) => b.is_expired).length,
+        nearExpiry: batches.filter((b: Batch) => b.is_near_expiry && !b.is_expired).length,
     }
 }
 

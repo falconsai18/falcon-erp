@@ -2,7 +2,7 @@
 
 ## 1. Executive summary
 
-**Falcon Super Gold ERP** (often referred to as **Falcon ERP** in code) is a **browser-based business application** for companies that need to run **sales, purchase, inventory, manufacturing, quality, and financial reporting** in one place. It is built for **Indian regulatory reality** (GST, tax splits, HSN-driven line items) while also supporting an **International Trade / export** workflow (export customers, orders, invoices, shipments, packing lists, payments).
+**Falcon ERP** (often referred to as **Falcon ERP** in code) is a **browser-based business application** for companies that need to run **sales, purchase, inventory, manufacturing, quality, and financial reporting** in one place. It is built for **Indian regulatory reality** (GST, tax splits, HSN-driven line items) while also supporting an **International Trade / export** workflow (export customers, orders, invoices, shipments, packing lists, payments).
 
 The app is a **single-page application (SPA)** powered by **React 19**, **TypeScript**, and **Vite**, with **Supabase** as the backend (PostgreSQL + Auth + realtime where used). It is designed to be **deployed on the edge** (e.g. Vercel) and used as a **Progressive Web App (PWA)** for installable, offline-friendly behaviour where configured.
 

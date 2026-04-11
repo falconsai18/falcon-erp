@@ -1,4 +1,4 @@
--- Seed Script for Falcon Super Gold ERP
+-- Seed Script for Falcon ERP
 BEGIN;
 
 WITH new_product AS (

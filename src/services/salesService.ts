@@ -271,14 +271,14 @@ export async function deleteSalesOrder(id: string): Promise<void> {
 export async function getSalesOrderStats() {
     const { data, error } = await supabase.from('sales_orders').select('status, payment_status, total_amount')
     if (error) throw error
-    const orders = data || []
+    const orders = (data || []) as any[]
     return {
         total: orders.length,
-        draft: orders.filter(o => o.status === 'draft').length,
-        confirmed: orders.filter(o => o.status === 'confirmed').length,
-        processing: orders.filter(o => o.status === 'processing').length,
-        delivered: orders.filter(o => o.status === 'delivered').length,
-        totalValue: orders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-        unpaid: orders.filter(o => o.payment_status === 'unpaid').length,
+        draft: orders.filter((o: any) => o.status === 'draft').length,
+        confirmed: orders.filter((o: any) => o.status === 'confirmed').length,
+        processing: orders.filter((o: any) => o.status === 'processing').length,
+        delivered: orders.filter((o: any) => o.status === 'delivered').length,
+        totalValue: orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0),
+        unpaid: orders.filter((o: any) => o.payment_status === 'unpaid').length,
     }
 }

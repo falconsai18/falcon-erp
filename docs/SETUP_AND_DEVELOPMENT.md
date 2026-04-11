@@ -10,6 +10,7 @@ For **developers** and **operators** who deploy or extend the application.
 - **npm** (comes with Node)
 - A **Supabase project** (PostgreSQL + Auth) with schema and policies matching this app
 - Optional: **Google Cloud Vision API** key for smart-camera / OCR features (see env vars)
+- **Desktop `.exe` (optional):** [Rust](https://rustup.rs/) stable toolchain + Windows **Visual Studio Build Tools** (C++ workload) for Tauri builds
 
 ---
 
@@ -103,14 +104,35 @@ The project uses ESLint with TypeScript; many `any` usages are **warnings** to a
 
 ---
 
-## 9. PWA (Progressive Web App)
+## 9. Desktop app — Tauri (`src-tauri/`)
+
+The repo includes a **[Tauri v1](https://v1.tauri.app/)** shell so you can ship a **native Windows installer** (NSIS / MSI) instead of only the browser.
+
+| Command | Purpose |
+|---------|---------|
+| `npm run tauri:dev` | Runs Vite on port **3007** and opens the app in a **desktop window** (needs Rust installed). |
+| `npm run tauri:build` | Runs `npm run build`, then compiles Rust and produces **installers** under `src-tauri/target/release/bundle/`. |
+
+**Requirements on Windows:** Rust (`rustup`), and **MSVC** build tools (Visual Studio installer → “Desktop development with C++” or Build Tools).
+
+**“Offline” vs “online” (important):**
+
+- The **`.exe` is not a full offline ERP** by itself. The UI is still the same React app; **data lives in Supabase**, so **most features need internet** to talk to your database.
+- Tauri gives you: **installable app**, **no browser tab**, **stricter desktop window**, optional **file system / updater** APIs.
+- **True offline** (full sales/inventory without network) would require a dedicated sync strategy (local DB + queue) beyond what the web app guarantees today. The PWA/service worker helps **cache assets** and can soften **flaky** connections; it does not replace Supabase for authoritative data.
+
+**Config:** `src-tauri/tauri.conf.json` — `devPath` matches Vite **`http://localhost:3007`**, `distDir` is `../dist`, CSP allows `https://*.supabase.co`.
+
+---
+
+## 10. PWA (Progressive Web App)
 
 - **vite-plugin-pwa** generates a service worker and precache list.
 - After install, users may get **cached assets**; API calls to Supabase can use **runtime caching** rules defined in `vite.config.ts` (verify behaviour for your compliance needs).
 
 ---
 
-## 10. Deployment (typical: Vercel)
+## 11. Deployment (typical: Vercel)
 
 1. Connect the Git repo to Vercel (or similar).
 2. Set **environment variables** in the host dashboard (same names as `VITE_*`).
@@ -119,14 +141,14 @@ The project uses ESLint with TypeScript; many `any` usages are **warnings** to a
 
 ---
 
-## 11. Database & migrations
+## 12. Database & migrations
 
 - Schema lives in **Supabase** (SQL migrations or dashboard). This repo does not ship a single SQL dump for all environments; use your team’s **migration process**.
 - **RLS policies** must align with the app’s `users` table / role field and `auth.uid()`.
 
 ---
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 | Issue | What to check |
 |-------|----------------|
@@ -137,7 +159,7 @@ The project uses ESLint with TypeScript; many `any` usages are **warnings** to a
 
 ---
 
-## 13. Documentation index
+## 14. Documentation index
 
 - **[README.md](README.md)** — Doc index  
 - **[OVERVIEW_AND_REPORT.md](OVERVIEW_AND_REPORT.md)** — Product overview  

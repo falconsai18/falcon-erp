@@ -768,7 +768,7 @@ export function SettingsPage() {
                                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">System Information</h3>
                                 <div className="space-y-3">
                                     {[
-                                        { label: 'Application', value: 'Falcon Super Gold ERP v1.0' },
+                                        { label: 'Application', value: 'Falcon ERP v1.0' },
                                         { label: 'Company', value: company?.name || 'Not set' },
                                         { label: 'Frontend', value: 'React + TypeScript + Vite' },
                                         { label: 'UI Library', value: 'Tailwind CSS + Custom Components' },

@@ -50,8 +50,8 @@ export function VelocityBadge({ materialId, currentStock, className, showLabel =
         .eq('raw_material_id', materialId)
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      const totalConsumed = consumed?.reduce((sum, item) => sum + (item.issued_quantity || 0), 0) || 0
-      const totalAdded = added?.reduce((sum, item) => sum + (item.accepted_quantity || 0), 0) || 0
+      const totalConsumed = consumed?.reduce((sum: number, item: { issued_quantity: number }) => sum + (item.issued_quantity || 0), 0) || 0
+      const totalAdded = added?.reduce((sum: number, item: { accepted_quantity: number }) => sum + (item.accepted_quantity || 0), 0) || 0
 
       // Calculate initial stock 30 days ago
       const initialStock = currentStock + totalConsumed - totalAdded
@@ -70,7 +70,7 @@ export function VelocityBadge({ materialId, currentStock, className, showLabel =
           .eq('raw_material_id', materialId)
           .gte('created_at', sixtyDaysAgo.toISOString())
 
-        const totalSixtyDayConsumption = sixtyDayConsumption?.reduce((sum, item) => sum + (item.issued_quantity || 0), 0) || 0
+        const totalSixtyDayConsumption = sixtyDayConsumption?.reduce((sum: number, item: { issued_quantity: number }) => sum + (item.issued_quantity || 0), 0) || 0
         
         if (totalSixtyDayConsumption === 0) {
           type = 'dead'
@@ -181,7 +181,7 @@ export function VelocityDot({ materialId, currentStock }: { materialId: string; 
         .eq('raw_material_id', materialId)
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      const totalConsumed = consumed?.reduce((sum, item) => sum + (item.issued_quantity || 0), 0) || 0
+      const totalConsumed = consumed?.reduce((sum: number, item: { issued_quantity: number }) => sum + (item.issued_quantity || 0), 0) || 0
 
       if (totalConsumed === 0) {
         setType('dead')
@@ -194,7 +194,7 @@ export function VelocityDot({ materialId, currentStock }: { materialId: string; 
         .eq('raw_material_id', materialId)
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      const totalAdded = added?.reduce((sum, item) => sum + (item.accepted_quantity || 0), 0) || 0
+      const totalAdded = added?.reduce((sum: number, item: { accepted_quantity: number }) => sum + (item.accepted_quantity || 0), 0) || 0
       const initialStock = currentStock + totalConsumed - totalAdded
       const rate = initialStock > 0 ? totalConsumed / initialStock : 0
 

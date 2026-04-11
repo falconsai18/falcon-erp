@@ -381,13 +381,13 @@ export async function getSOItemsForChallan(soId: string): Promise<any[]> {
 export async function getChallanStats() {
     const { data, error } = await supabase.from('delivery_challans').select('status')
     if (error) throw error
-    const challans = data || []
+    const challans = (data || []) as DeliveryChallan[]
     return {
         total: challans.length,
-        draft: challans.filter(c => c.status === 'draft').length,
-        dispatched: challans.filter(c => c.status === 'dispatched').length,
-        delivered: challans.filter(c => c.status === 'delivered').length,
-        cancelled: challans.filter(c => c.status === 'cancelled').length,
+        draft: challans.filter((c: DeliveryChallan) => c.status === 'draft').length,
+        dispatched: challans.filter((c: DeliveryChallan) => c.status === 'dispatched').length,
+        delivered: challans.filter((c: DeliveryChallan) => c.status === 'delivered').length,
+        cancelled: challans.filter((c: DeliveryChallan) => c.status === 'cancelled').length,
     }
 }
 

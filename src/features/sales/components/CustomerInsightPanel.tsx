@@ -51,12 +51,12 @@ export function CustomerInsightPanel({ customerId }: CustomerInsightPanelProps) 
       const { data: orderItems } = await supabase
         .from('sales_order_items')
         .select('product_id, quantity, products(name)')
-        .in('sales_order_id', orders?.map(o => o.id) || [])
+        .in('sales_order_id', orders?.map((o: { id: string }) => o.id) || [])
 
       // Calculate metrics
       const totalOrders = allOrders?.length || 0
       const averageOrderValue = totalOrders > 0
-        ? (allOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0) / totalOrders
+        ? (allOrders?.reduce((sum: number, o: { total_amount: number; order_date: string }) => sum + (o.total_amount || 0), 0) || 0) / totalOrders
         : 0
 
       // Days since last order

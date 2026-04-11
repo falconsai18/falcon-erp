@@ -1,4 +1,4 @@
-# Falcon Super Gold ERP
+# Falcon ERP
 
 A **React + TypeScript + Vite** ERP for manufacturing and sales, with **India GST** workflows, **inventory & production**, and an **international export** module. Backend: **Supabase** (PostgreSQL + Auth).
 

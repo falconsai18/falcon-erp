@@ -165,7 +165,7 @@ export async function createWorkOrder(data: WorkOrderFormData, userId?: string):
         .select('duration_minutes')
         .eq('formulation_id', data.formulation_id)
 
-    const totalMinutes = (stepsData || []).reduce((sum, s) => sum + (s.duration_minutes || 0), 0)
+    const totalMinutes = (stepsData || []).reduce((sum: number, s: { duration_minutes: number | null }) => sum + (s.duration_minutes || 0), 0)
     const endDate = new Date(Date.now() + (totalMinutes || 1440) * 60 * 1000).toISOString().split('T')[0]
 
     const insertData = {
@@ -480,7 +480,7 @@ export async function deleteWorkOrder(id: string): Promise<void> {
     // 1. Delete Quality Checks and Items
     const { data: qcs } = await supabase.from('quality_checks').select('id').eq('work_order_id', id)
     if (qcs && qcs.length > 0) {
-        const qcIds = qcs.map(q => q.id)
+        const qcIds = qcs.map((q: { id: string }) => q.id)
         await supabase.from('quality_check_items').delete().in('quality_check_id', qcIds)
         await supabase.from('quality_checks').delete().in('id', qcIds)
     }
@@ -534,12 +534,12 @@ export async function getWorkOrderStats() {
     const { data, error } = await supabase.from('work_orders').select('status')
     if (error) throw error
 
-    const orders = data || []
+    const orders = (data || []) as WorkOrder[]
     return {
         total: orders.length,
-        draft: orders.filter(o => o.status === 'draft').length,
-        planned: orders.filter(o => o.status === 'planned').length,
-        inProgress: orders.filter(o => o.status === 'in_progress').length,
-        completed: orders.filter(o => o.status === 'completed').length,
+        draft: orders.filter((o: WorkOrder) => o.status === 'draft').length,
+        planned: orders.filter((o: WorkOrder) => o.status === 'planned').length,
+        inProgress: orders.filter((o: WorkOrder) => o.status === 'in_progress').length,
+        completed: orders.filter((o: WorkOrder) => o.status === 'completed').length,
     }
 }

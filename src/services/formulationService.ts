@@ -250,12 +250,12 @@ export async function getFormulationStats() {
     const { data, error } = await supabase.from('formulations').select('status')
     if (error) throw error
 
-    const formulations = data || []
+    const formulations = (data || []) as Formulation[]
     return {
         total: formulations.length,
-        draft: formulations.filter(f => f.status === 'draft').length,
-        approved: formulations.filter(f => f.status === 'approved').length,
-        obsolete: formulations.filter(f => f.status === 'obsolete').length,
+        draft: formulations.filter((f: Formulation) => f.status === 'draft').length,
+        approved: formulations.filter((f: Formulation) => f.status === 'approved').length,
+        obsolete: formulations.filter((f: Formulation) => f.status === 'obsolete').length,
     }
 }
 

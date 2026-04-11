@@ -437,16 +437,16 @@ export async function getInvoicePayments(invoiceId: string): Promise<any[]> {
 export async function getInvoiceStats() {
     const { data, error } = await supabase.from('invoices').select('status, total_amount, paid_amount, balance_amount')
     if (error) throw error
-    const invoices = data || []
+    const invoices = (data || []) as any[]
     return {
         total: invoices.length,
-        draft: invoices.filter(i => i.status === 'draft').length,
-        sent: invoices.filter(i => i.status === 'sent').length,
-        paid: invoices.filter(i => i.status === 'paid').length,
-        overdue: invoices.filter(i => i.status === 'overdue').length,
-        totalValue: invoices.reduce((s, i) => s + (i.total_amount || 0), 0),
-        totalPaid: invoices.reduce((s, i) => s + (i.paid_amount || 0), 0),
-        totalPending: invoices.reduce((s, i) => s + (i.balance_amount || 0), 0),
+        draft: invoices.filter((i: any) => i.status === 'draft').length,
+        sent: invoices.filter((i: any) => i.status === 'sent').length,
+        paid: invoices.filter((i: any) => i.status === 'paid').length,
+        overdue: invoices.filter((i: any) => i.status === 'overdue').length,
+        totalValue: invoices.reduce((s: number, i: any) => s + (i.total_amount || 0), 0),
+        totalPaid: invoices.reduce((s: number, i: any) => s + (i.paid_amount || 0), 0),
+        totalPending: invoices.reduce((s: number, i: any) => s + (i.balance_amount || 0), 0),
     }
 }
 

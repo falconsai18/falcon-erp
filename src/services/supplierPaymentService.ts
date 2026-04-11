@@ -210,17 +210,17 @@ export async function getSupplierBillStats() {
 
     if (error) throw error
 
-    const bills = data || []
+    const bills = (data || []) as SupplierBill[]
     return {
         total: bills.length,
-        unpaid: bills.filter(b => b.status === 'unpaid').length,
-        partial: bills.filter(b => b.status === 'partial').length,
-        paid: bills.filter(b => b.status === 'paid').length,
-        overdue: bills.filter(b => b.status === 'overdue').length,
-        cancelled: bills.filter(b => b.status === 'cancelled').length,
-        totalValue: bills.reduce((s, b) => s + (b.total_amount || 0), 0),
-        totalPaid: bills.reduce((s, b) => s + (b.paid_amount || 0), 0),
-        totalPending: bills.reduce((s, b) => s + (b.balance_amount || 0), 0),
+        unpaid: bills.filter((b: SupplierBill) => b.status === 'unpaid').length,
+        partial: bills.filter((b: SupplierBill) => b.status === 'partial').length,
+        paid: bills.filter((b: SupplierBill) => b.status === 'paid').length,
+        overdue: bills.filter((b: SupplierBill) => b.status === 'overdue').length,
+        cancelled: bills.filter((b: SupplierBill) => b.status === 'cancelled').length,
+        totalValue: bills.reduce((s: number, b: SupplierBill) => s + (b.total_amount || 0), 0),
+        totalPaid: bills.reduce((s: number, b: SupplierBill) => s + (b.paid_amount || 0), 0),
+        totalPending: bills.reduce((s: number, b: SupplierBill) => s + (b.balance_amount || 0), 0),
     }
 }
 
@@ -330,7 +330,7 @@ export async function createSupplierBillFromGRN(grnId: string, userId?: string):
                 total_amount: totalAmount,
             }
         })
-        .filter(item => item.quantity > 0)
+        .filter((item: SupplierBillItem) => item.quantity > 0)
 
     const totals = calculateBillTotals(billItems)
 

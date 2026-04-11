@@ -320,15 +320,15 @@ export async function convertToSalesOrder(quotationId: string, userId?: string):
 export async function getQuotationStats() {
     const { data, error } = await supabase.from('quotations').select('status, total_amount')
     if (error) throw error
-    const quotations = data || []
+    const quotations = (data || []) as Quotation[]
     return {
         total: quotations.length,
-        draft: quotations.filter(q => q.status === 'draft').length,
-        sent: quotations.filter(q => q.status === 'sent').length,
-        accepted: quotations.filter(q => q.status === 'accepted').length,
-        rejected: quotations.filter(q => q.status === 'rejected').length,
-        expired: quotations.filter(q => q.status === 'expired').length,
-        converted: quotations.filter(q => q.status === 'converted').length,
-        totalValue: quotations.reduce((sum, q) => sum + (q.total_amount || 0), 0),
+        draft: quotations.filter((q: Quotation) => q.status === 'draft').length,
+        sent: quotations.filter((q: Quotation) => q.status === 'sent').length,
+        accepted: quotations.filter((q: Quotation) => q.status === 'accepted').length,
+        rejected: quotations.filter((q: Quotation) => q.status === 'rejected').length,
+        expired: quotations.filter((q: Quotation) => q.status === 'expired').length,
+        converted: quotations.filter((q: Quotation) => q.status === 'converted').length,
+        totalValue: quotations.reduce((sum: number, q: Quotation) => sum + (q.total_amount || 0), 0),
     }
 }

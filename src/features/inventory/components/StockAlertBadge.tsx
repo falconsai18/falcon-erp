@@ -41,7 +41,7 @@ export function StockAlertBadge({ materialId, currentStock, reorderLevel, classN
         .eq('raw_material_id', materialId)
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      const totalConsumed = consumed?.reduce((sum, item) => sum + (item.issued_quantity || 0), 0) || 0
+      const totalConsumed = consumed?.reduce((sum: number, item: { issued_quantity: number }) => sum + (item.issued_quantity || 0), 0) || 0
       const avgDailyConsumption = totalConsumed / 30
 
       let daysUntilStockout: number | null = null
@@ -154,7 +154,7 @@ export function StockAlertBadgeCompact({ materialId, currentStock }: { materialI
         .eq('raw_material_id', materialId)
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      const totalConsumed = consumed?.reduce((sum, item) => sum + (item.issued_quantity || 0), 0) || 0
+      const totalConsumed = consumed?.reduce((sum: number, item: { issued_quantity: number }) => sum + (item.issued_quantity || 0), 0) || 0
       const avgDaily = totalConsumed / 30
 
       if (avgDaily === 0) {

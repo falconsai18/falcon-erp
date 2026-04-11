@@ -324,7 +324,7 @@ function CreatePOWizard({
 
         if (!existing || existing.length === 0) return false
 
-        const duplicate = existing.find(po => {
+        const duplicate = existing.find((po: { total_amount: number }) => {
             const diff = Math.abs(po.total_amount - totalAmount) / (totalAmount || 1)
             return diff < 0.05
         })
@@ -551,7 +551,7 @@ export function PurchasePage() {
     // Load suppliers for filter
     useEffect(() => {
         supabase.from('suppliers').select('id, name').eq('status', 'active').order('name')
-            .then(({ data }) => setSuppliers(data || []))
+            .then(({ data }: { data: { id: string; name: string }[] | null }) => setSuppliers(data || []))
     }, [])
 
     const fetchData = useCallback(async () => {

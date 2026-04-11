@@ -293,7 +293,7 @@ export async function getProductionReport(): Promise<ProductionReport> {
     const orders = ordRes.data || []
     const materials = matRes.data || []
 
-    const completed = orders.filter(o => o.status === 'completed')
+    const completed = orders.filter((o: any) => o.status === 'completed')
     const totalProduced = completed.reduce((s: number, o: any) => s + (o.actual_quantity || 0), 0)
     const totalPlanned = completed.reduce((s: number, o: any) => s + (o.planned_quantity || 0), 0)
 
@@ -412,7 +412,7 @@ export async function getProductPLReport(
 
     if (prodError) throw prodError
 
-    const productMap = new Map(products?.map(p => [p.id, p]) || [])
+    const productMap = new Map<string, any>(products?.map((p: any) => [p.id, p]) || [])
 
     // Group by product
     const plMap = new Map<string, {
@@ -458,7 +458,7 @@ export async function getProductPLReport(
     }
 
     return Array.from(plMap.values())
-        .sort((a, b) => b.profit - a.profit)
+        .sort((a: { profit: number }, b: { profit: number }) => b.profit - a.profit)
 }
 
 // E4: Stock Valuation Report
@@ -470,7 +470,7 @@ export async function getStockValuationReport() {
 
     if (error) throw error
 
-    const items = (data || []).map(inv => {
+    const items = (data || []).map((inv: any) => {
         const product = inv.products as any
         const costPrice = inv.unit_cost || product?.cost_price || 0
         const sellingPrice = product?.selling_price || 0
@@ -492,10 +492,10 @@ export async function getStockValuationReport() {
     })
 
     const totals = {
-        total_cost_value: items.reduce((sum, i) => sum + i.cost_value, 0),
-        total_retail_value: items.reduce((sum, i) => sum + i.retail_value, 0),
-        total_potential_profit: items.reduce((sum, i) => sum + i.potential_profit, 0)
+        total_cost_value: items.reduce((sum: number, i: { cost_value: number }) => sum + i.cost_value, 0),
+        total_retail_value: items.reduce((sum: number, i: { retail_value: number }) => sum + i.retail_value, 0),
+        total_potential_profit: items.reduce((sum: number, i: { potential_profit: number }) => sum + i.potential_profit, 0)
     }
 
-    return { items: items.sort((a, b) => b.cost_value - a.cost_value), totals }
+    return { items: items.sort((a: { cost_value: number }, b: { cost_value: number }) => b.cost_value - a.cost_value), totals }
 }

@@ -386,7 +386,7 @@ function CreateOrderWizard({ isOpen, onClose, onCreated, customers }: {
             .in('status', ['unpaid', 'partial', 'overdue'])
 
         const outstanding = invoices?.reduce(
-            (sum, inv) => sum + (Number(inv.balance_amount) || 0), 0
+            (sum: number, inv: { balance_amount: number | null }) => sum + (Number(inv.balance_amount) || 0), 0
         ) ?? 0
 
         const newTotal = outstanding + Number(orderAmount)
@@ -424,7 +424,7 @@ function CreateOrderWizard({ isOpen, onClose, onCreated, customers }: {
         if (!existing || existing.length === 0) return false
 
         // Check if similar amount exists (within 5% tolerance)
-        const duplicate = existing.find(so => {
+        const duplicate = existing.find((so: { total_amount: number }) => {
             const diff = Math.abs(so.total_amount - totalAmount) / totalAmount
             return diff < 0.05 // Within 5% = potential duplicate
         })

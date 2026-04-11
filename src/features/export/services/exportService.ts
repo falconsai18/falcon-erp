@@ -154,7 +154,7 @@ export async function getExportOrders(filters?: ExportOrderFilters): Promise<Exp
     const { data, error } = await query
     if (error) throw error
 
-    return data?.map(order => ({
+    return data?.map((order: any) => ({
         ...order,
         customer: order.export_customers
     })) || []
@@ -381,7 +381,7 @@ export async function recalculateOrderTotals(orderId: string): Promise<void> {
         .select('amount_usd')
         .eq('export_order_id', orderId)
 
-    const totalUSD = items?.reduce((sum, item) => sum + item.amount_usd, 0) || 0
+    const totalUSD = items?.reduce((sum: number, item: { amount_usd: number }) => sum + item.amount_usd, 0) || 0
 
     const { data: order } = await supabase
         .from('export_orders')
@@ -439,7 +439,7 @@ export async function getExportInvoices(filters?: ExportInvoiceFilters): Promise
     const { data, error } = await query
     if (error) throw error
 
-    return data?.map(invoice => ({
+    return data?.map((invoice: any) => ({
         ...invoice,
         customer: invoice.export_customers,
         order: invoice.export_orders
@@ -581,7 +581,7 @@ export async function getPackingLists(filters?: {
     const { data, error } = await query
     if (error) throw error
 
-    return data?.map(pl => ({
+    return data?.map((pl: any) => ({
         ...pl,
         order: pl.export_orders
     })) || []
@@ -722,7 +722,7 @@ export async function getShipments(filters?: ExportShipmentFilters): Promise<Exp
     const { data, error } = await query
     if (error) throw error
 
-    return data?.map(shipment => ({
+    return data?.map((shipment: any) => ({
         ...shipment,
         order: shipment.export_orders,
         customer: shipment.export_orders.export_customers
@@ -940,7 +940,7 @@ export async function getExportPayments(filters?: ExportPaymentFilters): Promise
     const { data, error } = await query
     if (error) throw error
 
-    return data?.map(payment => ({
+    return data?.map((payment: any) => ({
         ...payment,
         customer: payment.export_customers,
         order: payment.export_orders,
@@ -983,7 +983,7 @@ export async function createExportPayment(data: ExportPaymentFormData): Promise<
             .select('received_amount_usd')
             .eq('export_invoice_id', data.export_invoice_id)
 
-        const totalReceived = invoicePayments?.reduce((sum, p) => sum + p.received_amount_usd, 0) || 0
+        const totalReceived = invoicePayments?.reduce((sum: number, p: { received_amount_usd: number }) => sum + p.received_amount_usd, 0) || 0
         
         const { data: invoice } = await supabase
             .from('export_invoices')
@@ -1069,8 +1069,8 @@ export async function getExportDashboardStats(): Promise<ExportDashboardStats> {
         .select('total_amount_usd, total_amount_inr')
         .eq('status', 'DELIVERED')
 
-    const totalRevenueUSD = revenueData?.reduce((sum, order) => sum + order.total_amount_usd, 0) || 0
-    const totalRevenueINR = revenueData?.reduce((sum, order) => sum + order.total_amount_inr, 0) || 0
+    const totalRevenueUSD = revenueData?.reduce((sum: number, order: { total_amount_usd: number; total_amount_inr: number }) => sum + order.total_amount_usd, 0) || 0
+    const totalRevenueINR = revenueData?.reduce((sum: number, order: { total_amount_usd: number; total_amount_inr: number }) => sum + order.total_amount_inr, 0) || 0
 
     // Get active orders
     const { count: activeOrdersCount } = await supabase
@@ -1090,7 +1090,7 @@ export async function getExportDashboardStats(): Promise<ExportDashboardStats> {
         .select('amount_usd')
         .in('status', ['SENT', 'PAYMENT_PENDING', 'PARTIALLY_PAID'])
 
-    const pendingPaymentsAmount = pendingPayments?.reduce((sum, inv) => sum + inv.amount_usd, 0) || 0
+    const pendingPaymentsAmount = pendingPayments?.reduce((sum: number, inv: { amount_usd: number }) => sum + inv.amount_usd, 0) || 0
 
     // Get overdue payments
     const { data: overduePayments } = await supabase
@@ -1099,21 +1099,21 @@ export async function getExportDashboardStats(): Promise<ExportDashboardStats> {
         .in('status', ['SENT', 'PAYMENT_PENDING', 'PARTIALLY_PAID'])
         .lt('invoice_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
 
-    const overduePaymentsAmount = overduePayments?.reduce((sum, inv) => sum + inv.amount_usd, 0) || 0
+    const overduePaymentsAmount = overduePayments?.reduce((sum: number, inv: { amount_usd: number }) => sum + inv.amount_usd, 0) || 0
 
     // Get forex gain/loss
     const { data: forexData } = await supabase
         .from('export_payments')
         .select('forex_gain_loss')
 
-    const netForexGainLoss = forexData?.reduce((sum, payment) => sum + (payment.forex_gain_loss || 0), 0) || 0
+    const netForexGainLoss = forexData?.reduce((sum: number, payment: { forex_gain_loss: number | null }) => sum + (payment.forex_gain_loss || 0), 0) || 0
 
     // Get documents status
     const { data: documentsData } = await supabase
         .from('export_documents')
         .select('status')
 
-    const documentsReadyCount = documentsData?.filter(doc => doc.status === 'READY' || doc.status === 'SUBMITTED').length || 0
+    const documentsReadyCount = documentsData?.filter((doc: { status: string }) => doc.status === 'READY' || doc.status === 'SUBMITTED').length || 0
     const documentsTotalCount = documentsData?.length || 0
 
     return {
@@ -1145,7 +1145,7 @@ export async function getTopExportBuyers(limit: number = 5): Promise<TopExportBu
 
     if (error) throw error
 
-    const grouped = data?.reduce((acc, order: { customer_id: string; total_amount_usd: number; export_customers?: { company_name?: string; country?: string } | { company_name?: string; country?: string }[] }) => {
+    const grouped = data?.reduce((acc: Record<string, TopExportBuyer>, order: { customer_id: string; total_amount_usd: number; export_customers?: { company_name?: string; country?: string } | { company_name?: string; country?: string }[] }) => {
         const customerId = order.customer_id
         const cust = Array.isArray(order.export_customers) ? order.export_customers[0] : order.export_customers
         if (!acc[customerId]) {
@@ -1162,8 +1162,8 @@ export async function getTopExportBuyers(limit: number = 5): Promise<TopExportBu
         return acc
     }, {} as Record<string, TopExportBuyer>)
 
-    return Object.values(grouped || {})
-        .sort((a, b) => b.total_revenue_usd - a.total_revenue_usd)
+    return (Object.values(grouped || {}) as TopExportBuyer[])
+        .sort((a: TopExportBuyer, b: TopExportBuyer) => b.total_revenue_usd - a.total_revenue_usd)
         .slice(0, limit)
 }
 
@@ -1179,7 +1179,7 @@ export async function getMonthlyExportTrend(months: number = 12): Promise<Monthl
 
     const monthlyData: Record<string, MonthlyExportTrend> = {}
     
-    data?.forEach(order => {
+    data?.forEach((order: { created_at: string; total_amount_usd: number }) => {
         const month = new Date(order.created_at).toISOString().slice(0, 7)
         if (!monthlyData[month]) {
             monthlyData[month] = {
@@ -1204,7 +1204,7 @@ export async function getOrdersByStatusCount(): Promise<OrderStatusCount[]> {
 
     const statusCounts: Record<string, number> = {}
     
-    data?.forEach(order => {
+    data?.forEach((order: { status: string }) => {
         statusCounts[order.status] = (statusCounts[order.status] || 0) + 1
     })
 
@@ -1291,7 +1291,7 @@ export async function getOverduePayments(): Promise<ExportPayment[]> {
 
     if (error) throw error
 
-    return data?.map(invoice => ({
+    return data?.map((invoice: any) => ({
         ...invoice,
         customer: invoice.export_customers
     })) || []

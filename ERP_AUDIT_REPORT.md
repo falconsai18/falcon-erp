@@ -1,4 +1,4 @@
-# Falcon Super Gold ERP - Complete System Audit
+# Falcon ERP - Complete System Audit
 
 **Date:** February 16, 2026  
 **Scope:** All modules in `src/features/`, `src/services/`, `src/components/`

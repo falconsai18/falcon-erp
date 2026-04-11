@@ -143,11 +143,11 @@ export async function deleteRawMaterial(id: string): Promise<void> {
 export async function getRawMaterialStats() {
     const { data, error } = await supabase.from('raw_materials').select('status, current_stock, reorder_point, unit_cost')
     if (error) throw error
-    const items = data || []
+    const items = (data || []) as RawMaterial[]
     return {
         total: items.length,
-        active: items.filter(i => i.status === 'active').length,
-        lowStock: items.filter(i => i.current_stock <= i.reorder_point).length,
-        totalValue: items.reduce((sum, i) => sum + (i.current_stock * i.unit_cost), 0),
+        active: items.filter((i: RawMaterial) => i.status === 'active').length,
+        lowStock: items.filter((i: RawMaterial) => i.current_stock <= i.reorder_point).length,
+        totalValue: items.reduce((sum: number, i: RawMaterial) => sum + (i.current_stock * i.unit_cost), 0),
     }
 }

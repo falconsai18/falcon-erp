@@ -57,12 +57,16 @@ export async function fetchPaginated<T>(
     // Pagination
     query = query.range(from, to)
 
-    const { data, error, count } = await query
+    console.log(`[BaseService] Fetching ${table}...`, { params, options })
+
+    const { data, error, count, status } = await query
 
     if (error) {
-        console.error(`Fetch ${table} error:`, error)
+        console.error(`[BaseService] ❌ Fetch ${table} error:`, { error, status })
         throw error
     }
+
+    console.log(`[BaseService] ✅ Fetch ${table} result:`, { count, dataCount: data?.length })
 
     return {
         data: (data || []) as T[],
@@ -85,13 +89,25 @@ export async function fetchById<T>(table: string, id: string, select?: string): 
 }
 
 export async function createRecord<T>(table: string, payload: Partial<T>): Promise<T> {
-    const { data, error } = await supabase
+    console.log(`[BaseService] Creating record in ${table}...`, payload)
+    
+    const { data, error, status, statusText } = await supabase
         .from(table)
         .insert(payload)
         .select()
         .single()
 
-    if (error) throw error
+    if (error) {
+        console.error(`[BaseService] ❌ Create ${table} error:`, {
+            error,
+            status,
+            statusText,
+            payload
+        })
+        throw error
+    }
+    
+    console.log(`[BaseService] ✅ Create ${table} success:`, data)
     return data as T
 }
 

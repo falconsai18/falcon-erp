@@ -4,6 +4,7 @@ import { Bell, Search, Command } from 'lucide-react'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { CommandPalette } from '@/components/shared/CommandPalette'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { SyncButton } from './SyncButton'
 
 const PAGE_TITLES: Record<string, string> = {
     '/': 'Dashboard',
@@ -69,6 +70,8 @@ export function Topbar() {
 
             {/* Right - Actions */}
             <div className="flex items-center gap-3">
+                <SyncButton />
+                
                 {/* Notifications */}
                 <NotificationBell />
 

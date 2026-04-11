@@ -1,4 +1,4 @@
-# Falcon Super Gold ERP — Documentation
+# Falcon ERP — Documentation
 
 Welcome. This folder is the **official documentation set** for the Falcon ERP web application (React + Supabase). Start here, then open the guides below.
 

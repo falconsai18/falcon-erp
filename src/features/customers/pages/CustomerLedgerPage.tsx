@@ -152,7 +152,7 @@ function PaymentModal({ customerId, customerName, outstanding, onClose, onSucces
         try {
             const { data: { user } } = await supabase.auth.getUser()
             const { data: profile } = await supabase
-                .from('user_profiles')
+                .from('users')
                 .select('company_id')
                 .eq('id', user!.id)
                 .maybeSingle()

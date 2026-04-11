@@ -1,0 +1,42 @@
+{
+  "appId": "com.falconerp.desktop",
+  "productName": "Falcon ERP",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "node_modules/better-sqlite3/**/*"
+  ],
+  "extraMetadata": {
+    "main": "electron/main.js"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "src-tauri/icons/icon.ico",
+    "sign": null,
+    "signDlls": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": true,
+    "allowToChangeInstallationDirectory": true,
+    "installerIcon": "src-tauri/icons/icon.ico",
+    "uninstallerIcon": "src-tauri/icons/icon.ico",
+    "installerHeaderIcon": "src-tauri/icons/icon.ico",
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Falcon ERP",
+    "language": "1033"
+  },
+  "npmRebuild": true,
+  "electronDownload": {
+    "version": "32.2.5"
+  }
+}

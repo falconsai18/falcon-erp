@@ -247,20 +247,20 @@ export async function getInventoryStats() {
 
     return {
         totalBatches: items.length,
-        totalQuantity: items.reduce((s, i) => s + (i.quantity || 0), 0),
-        totalValue: items.reduce((s, i) => s + ((i.quantity || 0) * (i.unit_cost || 0)), 0),
+        totalQuantity: items.reduce((s: number, i: any) => s + (i.quantity || 0), 0),
+        totalValue: items.reduce((s: number, i: any) => s + ((i.quantity || 0) * (i.unit_cost || 0)), 0),
         lowStock: items.filter((i: any) => (i.available_quantity || 0) <= (i.products?.reorder_point || 0)).length,
-        expiring30: items.filter(i => {
+        expiring30: items.filter((i: any) => {
             if (!i.expiry_date) return false
             const days = Math.ceil((new Date(i.expiry_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
             return days >= 0 && days <= 30
         }).length,
-        expiring90: items.filter(i => {
+        expiring90: items.filter((i: any) => {
             if (!i.expiry_date) return false
             const days = Math.ceil((new Date(i.expiry_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
             return days >= 0 && days <= 90
         }).length,
-        expired: items.filter(i => {
+        expired: items.filter((i: any) => {
             if (!i.expiry_date) return false
             return new Date(i.expiry_date) < today
         }).length,

@@ -1,0 +1,765 @@
+
+
+
+
+
+
+last two pages bbelow
+
+dviree
+Senior Member
+Nov 5, 2022
+Add bookmark
+#201
+KemikalElite said:
+I'm trying to flash a test run of this to make sure it works before loading a custom ROM on the phone.
+
+When I try installing the drivers from the OP I get the "The system cannot find the file specified." error.
+
+When I use the L2 drivers or QDLoader HS-USB Driver_64bit_Setup.exe Windows installs it but the tool gets stuck on param preload.
+
+Downloading the driver from Windows Update does not work.
+
+I'm using the stock USB cable. I can't think of anything else to try other than a different computer. Its possible Microsoft changed something since 2019 to prevent the driver from working properly.
+
+EDIT: I got it working. This took over 5 hours of searching posts and trying every possible combination of steps I could think of.
+I had to disable driver signature enforcement through the Windows startup options, even though these should be signed drivers. I have no idea why that is. I never got any sort of warning that the device wouldn't work due to driver signatures or lack of. I tried this as a last resort remembering its worked for older devices in the past.
+I am one thousand percent done with Microsoft's nonsense at this point.
+
+I ran the process twice including installing drivers to ensure this works and I can repeat the steps. For anyone else that knows everything else is correct try disabling driver signature enforcement.
+
+The first run I tested with the stock OnePlus cable directly into a USB 3 port.
+The second run I used a third party magnetic cable connected through a USB hub.
+So in my experience the cable or port used shouldn't matter as long as it shows in device manager.
+If you are having issues getting the phone to register, make sure the cable is no longer than 3 feet. I have had issues getting data transferred over 6 foot cables.
+
+Start Menu > Power > Hold Shift and click Restart > Troubleshoot > Advanced Options > Startup Settings > Reboot
+
+When the computer reboots, at the startup settings screen press 7 to boot with signature enforcement disabled.
+
+Once the desktop loads open Device Manager and the MSMDownloadTool.
+
+With the phone off, hold Volume Up and Volume Down while plugging in the usb cable (dont press the power button)
+
+In Device Manager you may see "Qualcomm HS-USB QDLoader 9008" under the COM Ports category. If this is here, right click it and click Uninstall Device. In the popup check Delete driver and click Uninstall.
+
+At this point the device icon should change to a yellow triangle or it may already be there if no driver was installed.
+
+Now run the QDLoader_HS-USB_Driver_64Bit_Setup.exe clicking Next until the end, then Finish. You can select No to reboot Windows since the driver should work fine without rebooting.
+In my experience the Setup.exe method was the only driver that worked for me.
+
+Now Windows should actually be ready to flash the phone. With the MSM Tool in focus again hold down both volume keys and connect the usb cable. (remember dont press the power button)
+
+Once you hear the Windows chime of the device connecting click Start on the MSM Tool.
+
+If it doesn't start flashing the device may have already been in EDL mode in which case you will need to force the phone to reboot into fastboot mode, power it off, and then repeat the steps in enter EDL mode.
+You can manually reboot the phone out of EDL mode by disconnecting the cable and holding both volume keys and the power button.
+
+I hope my solution and listing the steps in detail helps someone else.
+Click to expand...
+Thank you for this! My old op7pro finally booted! I love u!
+ Like Quote ReplyReport
+foomo
+Member
+Dec 28, 2022
+Add bookmark
+#202
+Thanks, worked perfectly!
+ Like Quote ReplyReport
+9bH
+9bH
+New member
+Jan 1, 2023
+Add bookmark
+#203
+Some_Random_Username said:
+Disclaimer: By attempting any of the processes listed in this thread you accept full responsibility for your actions. I will not be held responsible if your device stops working, catches fire, or turns into a hipster and claims to have been modified before it was cool.
+
+Hi everyone, similar to the previous threads for
+OP3, OP3T, OP5, OP5T, OP6, OP6T and OP7, here are the EDL packages (also known as MSM tool or unbrick tool) that can revive a bricked OnePlus 7 Pro.
+They can also be used to rollback your phone to a previous release of OOS.
+
+GM1910, GM1911, GM1913 and GM1917 models are supported.
+
+Here are the files uploaded on AndroidFileHost ordered by Android version and firmware your device will be restored to:
+
+GM21AA tools (international firmware):
+
+
+GM21BA tools (european firmware):
+
+
+Instructions:
+
+Power your device off
+Maintain volume up and volume down keys to get into Qualcomm EDL mode.
+Launch MsmDownloadTool V4.0.exe.
+Click on Enum to be sure your device is detected and press Start.
+Wait ~300 seconds
+Enjoy your brand new device
+
+FAQ:
+
+My device isn't detected when I click on "Enum" button
+
+Go to device manager and make sure your phone shows up as QDLOADER 9008.
+If it shows up as QHUSB_BULK, it means Qualcomm driver wasn't installed automatically by Windows Update. Download the latest one from Microsoft website at http://download.windowsupdate.com/c..._fba473728483260906ba044af3c063e309e6259d.cab (source https://www.catalog.update.microsof...updateid=8ee52ba0-bdef-4009-88cf-335a678dd67a ) and install it manually by right clicking on QHUSB_BULK and selecting "Update driver software" and "Browse my computer for driver software" to where you downloaded CAB file.
+
+My device doesn't stay in EDL mode for more than 10 seconds
+
+Some units can have this problem and there isn't a lot of things to do to fix that, except being fast after plugging your phone to your computer.
+
+There is however apparently a "one-off" solution to this problem available at https://xdaforums.com/showpost.php?p=80021106&postcount=21 . I would like to investigate more on that but sadly don't own the device so can't confirm it.
+
+MSM tool is stuck on "Param pre-processing"
+
+Ensure you're using the Qualcomm drivers linked in first part of this FAQ.
+
+What is SMT Download mode?
+
+Just don't try to unlock that mode, it will wipe your IMEI and your Widevine certificate if you use it.
+
+Additional credits:
+
+@Titokhan for inspiration in writing
+@headsh0t95 for suggesting me to request an access to upload files on AndroidFileHost a few months ago for my previous threads
+@AndroidFileHost for the hosting
+OnePlus for the device and OS
+Click to expand...
+
+I'm running windows 10 and I followed all the steps here, but still getting this error and my device Can not be detected see the screenshot below-any Idea on how to fix this issue
+Attachments
+drivers manager.png
+drivers manager.png
+128.4 KB · Views: 245
+Last edited: Jan 2, 2023
+ Like Quote ReplyReport
+macs18max
+Senior Member
+Jan 15, 2023
+Add bookmark
+#204
+Does anybody have the OnePlus 7 pro firmware H.31? Can somebody please upload load it. I have update from h.31 to h.33 but my codm lags too much.
+
+I have tried oxygen updater app, xda site and several other sites. But they all point to the same server and this version of firmware is missing from the site/server. Rest other firmware is available such as h.30 and h.33 but only h.31 is missing, and I feel that was the best version of A12 till date. I know it is a huge file, I hope somebody is kind enough to upload it or point me to a working link.
+
+IMG_20230114_153313.jpg
+Toggle signature
+My Contributions
+
+CM13. 6.0.0 MarshMallow for HTC HD2
+CM12.1 5.1.1 Lollipop for HTC HD2
+Slimroms 5.1.1 Lollipop for HTC HD2
+CM11 4.4.4 KitKat for HTC HD2
+Carbon 4.4.4 for HTC HD2
+SlimKAT 4.4.4 for HTC HD2
+Kernel 3.0.101 for HTC HD2
+Slimrom 4.2.2 JellyBean for HTC HD2
+Xylon-EV 4.2.2 JellyBean for HTC HD2
+ Like Quote ReplyReport
+saj13h
+New member
+Feb 20, 2023
+Add bookmark
+#205
+Hello!
+
+I need help please.
+
+I bought this op7 pro on facebook marketplace. It was keep booting looping. So I flashed stock os on edl mode. But it’s still looping. Help.
+Attachments
+0E1547B0-F17F-463E-B93C-91C32910AA30.png
+0E1547B0-F17F-463E-B93C-91C32910AA30.png
+7.3 MB · Views: 123
+Last edited: Feb 20, 2023
+ Like Quote ReplyReport
+Alexander_orlov
+Member
+Jun 13, 2023
+Add bookmark
+#206
+Alexander_orlov said:
+Just in case, if there is no mirrors/server down on the site androidfilehost.com and onepluscommunityserver.com .
+Taken from xda.
+
+https://darkwolf24th.ru/nextcloud/index.php/s/igfrrCNaRdCDzTy the term is indefinite and unlimited speed in Russian (depends on the region). Max speed 700Mbit.
+
+Good luck.
+
+UPD: Added files Oneplus 9 Pro
+
+Dear sirs, my server is crashing at the end of May due to a defective Samsung EVO 870 ssd with a factory date of manufacture - 01.2021, purchased 04.2021 and used for 2 years.
+
+I replaced a new SSD Samsung PM893 OEM version with a spare drive (RAID 1 mirror) + a new 4TB hard drive for data storage
+
+Server reinstalled it from the OS with saving data and links.
+Files will be transferred to HDD
+
+I managed to copy the working files to the defective ssd, if suddenly the files are damaged, please write to here or PM. I will replace.
+
+Hope everything is well on my server :)
+
+It's been a tough day...
+ Like Quote ReplyReport
+HippoMan
+HippoMan
+Senior Member
+Jun 13, 2023
+Add bookmark
+#207
+Alexander_orlov said:
+Dear sirs, my server is crashing at the end of May due to a defective Samsung EVO 870 ssd with a factory date of manufacture - 01.2021, purchased 04.2021 and used for 2 years.
+
+I replaced a new SSD Samsung PM893 OEM version with a spare drive (RAID 1 mirror) + a new 4TB hard drive for data storage
+
+Server reinstalled it from the OS with saving data and links.
+Files will be transferred to HDD
+
+I managed to copy the working files to the defective ssd, if suddenly the files are damaged, please write to here or PM. I will replace.
+
+Hope everything is well on my server :)
+
+It's been a tough day...
+Click to expand...
+I think you might have accidentally posted this message to the wrong discussion group.
+
+This current thread concerns software tools for OnePlus Android devices.
+Like Reactions:Some_Random_Username
+ Like Quote ReplyReport
+Alexander_orlov
+Member
+Jun 13, 2023
+Add bookmark
+#208
+HippoMan said:
+I think you might have accidentally posted this message to the wrong discussion group.
+
+This current thread concerns software tools for OnePlus Android devices.
+about my links to my cloud.
+they often download firmware, if there is no mirrors/server down on the site androidfilehost.com and onepluscommunityserver.com .
+
+https://xdaforums.com/t/op7pro-late...f-unbrick-tools.3956595/page-10#post-87438191
+ Like Quote ReplyReport
+kevskevskevs
+New member
+Aug 6, 2023
+Add bookmark
+#209
+Hi I got a oneplus 7 pro GM1917, It got stucked on the oneplus logo when I restarted it multiple times and I think it got bricked so I tried to flash it with the msm download tool, but when the download completes it just disconnect for a bit then connect again and start to download again, can someone help me, thank you
+ Like Quote ReplyReport
+danielsinnema
+danielsinnema
+Senior Member
+Aug 16, 2023
+Add bookmark
+#210
+No mirrors found on android file host
+Toggle signature
+Devices in use:
+
+Phone: OnePlus One
+Build: LRX22G 5.0.2 (Cyanogen OS 12)
+Recovery: TWRP 2.8.6.0
+Memory: 64GB (Sandstone Black)
+
+Tablet: Asus Nexus 7 [2013] (Wi-Fi)
+Build: LMY47V 5.1.1 (Google Stock ROM)
+Recovery: TWRP 2.8.6.0
+Memory: 32GB
+
+Devices I don't use anymore:
+Motorola Moto G 2013, Samsung Galaxy S3 Mini, Samsung Galaxy Mini
+ Like Quote ReplyReport
+Some_Random_Username
+Some_Random_Username
+XDA OG
+Aug 16, 2023
+Add bookmark
+#211
+danielsinnema said:
+No mirrors found on android file host
+As mentioned in the OP, you can also download from https://onepluscommunityserver.com/ , that I own.
+ Like Quote ReplyReport
+V0idst4r
+V0idst4r
+Senior Member
+Sep 19, 2023
+Add bookmark
+#212
+Why include ratted tools?
+
+VirusTotal
+VirusTotal
+www.virustotal.com
+https://www.joesandbox.com/analysis/778258/0/html
+
+Compare this with unratted msmdownloadtool
+VirusTotal
+VirusTotal
+www.virustotal.com
+
+Literally get off XDA, actually
+Last edited: Sep 19, 2023
+(y) Thanks in advance to all forum posters!
+OnePlus 9 (daily, DivestOS, deblobbed)
+OnePlus 7 Pro (project device)
+ Like Quote ReplyReport
+Some_Random_Username
+Some_Random_Username
+XDA OG
+Sep 19, 2023
+Add bookmark
+#213
+V0idst4r said:
+Why include ratted tools?
+
+VirusTotal
+VirusTotal
+www.virustotal.com
+https://www.joesandbox.com/analysis/778258/0/html
+
+Compare this with unratted msmdownloadtool
+VirusTotal
+VirusTotal
+www.virustotal.com
+
+Literally get off XDA, actually
+Click to expand...
+I invite you to further elaborate your thoughts instead of solely linking to Virus Total and Joe Sandbox. Please feel free to share your concerns here, and/or report this thread to the forum moderators if you deem that is the more appropriate redressal mechanism.
+ Like Quote ReplyReport
+V0idst4r
+V0idst4r
+Senior Member
+Sep 19, 2023
+Add bookmark
+#214
+Some_Random_Username said:
+I invite you to further elaborate your thoughts instead of solely linking to Virus Total and Joe Sandbox. Please feel free to share your concerns here, and/or report this thread to the forum moderators if you deem that is the more appropriate redressal mechanism.
+Alright here's the rundown
+1. It's packed with VMProtect: you can tell right off the bat in any disassembly tools by the .vmp0 and .vmp1 sections, the original isn't
+2. It's 5MBs larger than the real MSMDownloadTool
+3. It drops 200+ files compared to the 1-3 that the real version does, I personally witnessed the rather strange .dat files it drops into some hierarchy in System32
+4. It contacts an extra IP address as compared to the original according to the VirusTotal sandboxes
+5. The same hash has been uploaded to VirusTotal under multiple names, such as ***.exe, MsmDownloadTool V5.0, etc. This is usually indication that it is malicious, as they have tried to fake rebrand it to V5 to encourage more people to download it thinking they have outdated tools.
+
+I'm willing to accept this might have been a mistake on your behalf, as you seem to have just compiled a bunch of different firmwares provided by others. For reference this was included in guacamole_21_P.32_210127.
+(y) Thanks in advance to all forum posters!
+OnePlus 9 (daily, DivestOS, deblobbed)
+OnePlus 7 Pro (project device)
+ Like Quote ReplyReport
+Some_Random_Username
+Some_Random_Username
+XDA OG
+Sep 20, 2023
+Add bookmark
+#215
+V0idst4r said:
+Alright here's the rundown
+1. It's packed with VMProtect: you can tell right off the bat in any disassembly tools by the .vmp0 and .vmp1 sections, the original isn't
+2. It's 5MBs larger than the real MSMDownloadTool
+3. It drops 200+ files compared to the 1-3 that the real version does, I personally witnessed the rather strange .dat files it drops into some hierarchy in System32
+4. It contacts an extra IP address as compared to the original according to the VirusTotal sandboxes
+5. The same hash has been uploaded to VirusTotal under multiple names, such as ***.exe, MsmDownloadTool V5.0, etc. This is usually indication that it is malicious, as they have tried to fake rebrand it to V5 to encourage more people to download it thinking they have outdated tools.
+
+I'm willing to accept this might have been a mistake on your behalf, as you seem to have just compiled a bunch of different firmwares provided by others. For reference this was included in guacamole_21_P.32_210127.
+Click to expand...
+1. OnePlus has started using VM Protect in their MSM download tools from 2019 onwards, as documented here. This was firstly a thing on the 7T (it shipped with OOS 10), so eventually it came to their older devices too (guacamole_21_P.32_210127 is the MSM archive for OOS 10.3.8). Such a move is extremely likely to be due to flashing unlocked software to carrier units, as documented at https://xdaforums.com/t/guide-how-to-convert-tmobile-op7-to-international.3935947/ and https://xdaforums.com/t/t-mobile-6t...thout-unlocked-bootloader-sim-unlock.3888307/ . This conversion process further made the news at https://www.xda-developers.com/t-mobile-oneplus-7-pro-international-firmware-install/ and https://www.xda-developers.com/t-mobile-oneplus-6t-international-without-unlocked-bootloader/ , ultimately encouraging OnePlus to close the loopholes that enabled it to exist. I further notice that you do not provide a source (eg forum thread) for the file that you tell to be "real" (I'm assuming you refer to this VirusTotal link).
+
+2. 3. 4. As I've previously said, OnePlus did not always bundle the same executable version in their MSM tool archives. As for why the size/number of files/number of contacted IPs increased, I don't know, but I guess they had their reasons, such as including VMProtect.
+
+5. I'm not sure how that's supposed to be relevant... What I notice though is that even if the name of the executable with an MD5 hash of c1f55aabc4db1326d66077f818d7bbe6 (indeed bundled in guacamole_21_P.32_210127) is MsmDownloadTool V4.0.exe , the Windows file properties indicate the version number is 5.0.15.0 (see screenshot).
+
+Lastly, please be advised that all files listed in this thread (except guacamole_21_O.07_190512_unlocked.zip , guacamole_21_P.01_211210_repack.zip , guacamole_21_E.08_190515_unlocked.rar , guacamole_21_E.01_211210_repack.zip ) have been retrieved by me from OnePlus' servers.
+
+guacamole_21_E.08_190515_unlocked.rar and guacamole_21_O.07_190512_unlocked.zip have been reuploaded (link) by @SkandaH from those two threads (1, 2).
+guacamole_21_P.01_211210_repack.zip and guacamole_21_E.01_211210_repack.zip were originally given to me in .tar.bz2 format. After verification by a reliable source that they were the same stored in OnePlus' internal servers, I have reuploaded them.
+
+Further, in October 2021, I have offered @Timmmmaaahh! to share the original download links from OnePlus' servers and passwords. I'm still happy to share them with him (or any other moderator) should this be required.
+Attachments
+Capture d’écran 2023-09-19 221753.png
+Capture d’écran 2023-09-19 221753.png
+28.5 KB · Views: 91
+ Like Quote ReplyReport
+Alexxxx1
+Alexxxx1
+Senior Member
+Sep 28, 2023
+Add bookmark
+#216
+I have OOS12, build No - GM1913_11_H.40 , is it safe to use MSM tool to rollback to 11.0.5 or to recover form custom rom, for example Crdroid based on OOS12?
+Thanks in advance!
+Toggle signature
+Oneplus 12 [GLobal | MTS]
+- Recovery: Stock
+- Rom: OxygenOS 16
+________________________________________________
+
+Poco X7 Pro [Global, Yettel)
+-Recovery: Stock
+-Rom: HyperOS 3
+ Like Quote ReplyReport
+darksx
+Senior Member
+Sep 28, 2023
+Add bookmark
+#217
+Alexxxx1 said:
+I have OOS12, build No - GM1913_11_H.40 , is it safe to use MSM tool to rollback to 11.0.5 or to recover form custom rom, for example Crdroid based on OOS12?
+Thanks in advance!
+I think you can,although i only recovered multiple times from LineageOS.good luck
+Like Reactions:Alexxxx1 and Some_Random_Username
+ Like Quote ReplyReport
+ZhouXiaoyu
+ZhouXiaoyu
+New member
+Sep 29, 2023
+Add bookmark
+#218
+Alexxxx1 said:
+我有 OOS12，版本号 - GM1913_11_H.40 ，使用 MSM 工具回滚到 11.0.5 或恢复表单自定义 rom（例如基于 OOS12 的 Crdroid）是否安全？
+提前致谢！
+你能给我发一份吗？感激的！qianhong1212009972@gmail.com
+ Like Quote ReplyReport
+firoshg
+New member
+Oct 15, 2023
+Add bookmark
+#219
+Hi Everyone, I'm having a oneplus 7pro International version. It randomly rebooted one day and was not turning back on. It turned on twice when i pressed powerbutton + Vol Up, but later even that doesn't seem to work now. I somehow managed to enter EDL mode using the vol up button and power button combo. But whenever i try to run MSM tools, it starts but the device gets disconnected after reaching firehose check. and sometimes it gives sahara communication error. I tried reinstalling qualcom drivers manually. I cant seem to turn the phone off as the screen is always blank and cant exit edl mode. Please help.
+Attachments
+before error.png
+before error.png
+183.1 KB · Views: 101
+after error.png
+after error.png
+182.5 KB · Views: 85
+Recording 2023-10-15 150540.mp4
+1.8 MB · Views: 0
+Last edited: Oct 17, 2023
+ Like Quote ReplyReport
+Some_Random_Username
+Some_Random_Username
+XDA OG
+Oct 16, 2023
+Add bookmark
+#220
+firoshg said:
+Hi Everyone, I'm having a oneplus 7pro International version. It randomly rebooted one day and was not turning back on. I somehow managed to enter EDL mode using the vol up button and power button combo. But whenever i try to run MSM tools, it starts but the device gets disconnected after reaching firehose check. and sometimes it gives sahara communication error. I tried reinstalling qualcom drivers manually. I cant seem to turn the phone off as the screen is always blank and cant exit edl mode. Please help.
+I'm afraid it might mean your device is dead.
+
+L_e_x_t_e_r
+Senior Member
+Oct 17, 2023
+Add bookmark
+#221
+Is there a A12 version for MSM?
+Like Reactions:Vasilis#21
+ Like Quote ReplyReport
+h168i
+Member
+Nov 24, 2023
+Add bookmark
+#222
+Reserved
+Last edited: Nov 25, 2023
+ Like Quote ReplyReport
+jogai
+jogai
+Senior Member
+Dec 29, 2023
+Add bookmark
+#223
+What should I do if I get "FirehoseCheckRSP failed, Errno: 258"? The driver is correct, I tried multiple usb ports, but I'm running out of ideas.
+ Like Quote ReplyReport
+shadybackhand
+Member
+May 15, 2024
+Add bookmark
+#224
+What ever happened with that whole rat accusatoin of injecting malware from a dozen or so posts back?
+ Like Quote ReplyReport
+Some_Random_Username
+Some_Random_Username
+XDA OG
+May 16, 2024
+Add bookmark
+#225
+shadybackhand said:
+What ever happened with that whole rat accusatoin of injecting malware from a dozen or so posts back?
+Their author never replied to post 215 (posted on September 19th 2023), and their profile page indicates they didn't login past September 20th 2023.
+
+Further, I wasn't contacted by any forum moderator.
+ Like Quote ReplyReport
+shadybackhand
+Member
+May 17, 2024
+Add bookmark
+#226
+Some_Random_Username said:
+Their author never replied to post 215 (posted on September 19th 2023), and their profile page indicates they didn't login past September 20th 2023.
+
+Further, I wasn't contacted by any forum moderator.
+What a friggin dirt bag if they intentionally put something like that out there for other enthusiasts to unknowingly install malware like that on the premise of blindly trusting. This world is getting worse and worse it seems.
+ Like Quote ReplyReport
+alecxs
+alecxs
+Forum Moderator
+Staff member
+May 17, 2024
+Add bookmark
+#227
+What's the deal? Isn't OOS malware in itself already?
+
+www.xda-developers.com
+OxygenOS is Allegedly Data-mining Personally Identifiable Information for Analytics
+OxygenOS developed by OnePlus is lauded as one of the best OEM flavours of Android around, but yet it is not without its flaws. Privacy concerns galore.
+www.xda-developers.com
+Toggle signature
+*** read before you post ***
+
+Like Reactions:Kierkegard
+ Like Quote ReplyReport
+Some_Random_Username
+Some_Random_Username
+XDA OG
+May 19, 2024
+Add bookmark
+#228
+shadybackhand said:
+What a friggin dirt bag if they intentionally put something like that out there for other enthusiasts to unknowingly install malware like that on the premise of blindly trusting. This world is getting worse and worse it seems.
+I'm afraid you misread my post
+Love Reactions:alecxs
+ Like Quote ReplyReport
+robbyg75
+Member
+Jul 30, 2024
+Add bookmark
+#229
+When I try to flash my OP7 Pro Always get this error: Firehose GetUfsInfo Failed
+Could anyone help me?
+Thanks!
+Attachments
+error.jpg
+error.jpg
+139.8 KB · Views: 145
+ Like Quote ReplyReport
+Hirs_E_Fruit
+Senior Member
+Sep 17, 2024
+Add bookmark
+#230
+Could it be that these tools do not work on Windows 11?
+I can't get it to work.
+
+I used it years ago without any problems on Windows 10.
+ Like Quote ReplyReport
+r0snexus
+r0snexus
+New member
+Mar 20, 2025
+Add bookmark
+#231
+Just wanted to drop a quick update—huge thanks to this thread! I was able to successfully unbrick my OnePlus 7 Pro and restore it to OxygenOS 11.0.5.1 using the MSM Download Tool and firmware provided in the OP.
+
+One thing that may have contributed to my success: I had the drivers from oneplususbdrivers.com installed beforehand. Not sure if that made a difference, but I had no issues with my PC recognizing the device in EDL mode.
+
+For anyone struggling with driver issues, that might be worth checking out. Again, big thanks to everyone contributing to this thread—lifesaver! 🚀
+Like Reactions:dobi3 and Some_Random_Username
+ Like Quote ReplyReport
+SeanCoLtd
+SeanCoLtd
+New member
+May 28, 2025
+Add bookmark
+#232
+Some_Random_Username said:
+Disclaimer: By attempting any of the processes listed in this thread you accept full responsibility for your actions. I will not be held responsible if your device stops working, catches fire, or turns into a hipster and claims to have been modified before it was cool.
+
+Hi everyone, similar to the previous threads for
+OP3, OP3T, OP5, OP5T, OP6, OP6T and OP7, here are the EDL packages (also known as MSM tool or unbrick tool) that can revive a bricked OnePlus 7 Pro.
+They can also be used to rollback your phone to a previous release of OOS.
+
+GM1910, GM1911, GM1913 and GM1917 models are supported.
+
+Here are the files uploaded on AndroidFileHost ordered by Android version and firmware your device will be restored to:
+
+GM21AA tools (international firmware):
+
+
+GM21BA tools (european firmware):
+
+
+Instructions:
+
+Power your device off
+Maintain volume up and volume down keys to get into Qualcomm EDL mode.
+Launch MsmDownloadTool V4.0.exe.
+Click on Enum to be sure your device is detected and press Start.
+Wait ~300 seconds
+Enjoy your brand new device
+
+FAQ:
+
+My device isn't detected when I click on "Enum" button
+
+Go to device manager and make sure your phone shows up as QDLOADER 9008.
+If it shows up as QHUSB_BULK, it means Qualcomm driver wasn't installed automatically by Windows Update. Download the latest one from Microsoft website at http://download.windowsupdate.com/c..._fba473728483260906ba044af3c063e309e6259d.cab (source https://www.catalog.update.microsof...updateid=8ee52ba0-bdef-4009-88cf-335a678dd67a ) and install it manually by right clicking on QHUSB_BULK and selecting "Update driver software" and "Browse my computer for driver software" to where you downloaded CAB file.
+
+My device doesn't stay in EDL mode for more than 10 seconds
+
+Some units can have this problem and there isn't a lot of things to do to fix that, except being fast after plugging your phone to your computer.
+
+There is however apparently a "one-off" solution to this problem available at https://xdaforums.com/showpost.php?p=80021106&postcount=21 . I would like to investigate more on that but sadly don't own the device so can't confirm it.
+
+MSM tool is stuck on "Param pre-processing"
+
+Ensure you're using the Qualcomm drivers linked in first part of this FAQ.
+
+What is SMT Download mode?
+
+Just don't try to unlock that mode, it will wipe your IMEI and your Widevine certificate if you use it.
+
+Additional credits:
+
+@Titokhan for inspiration in writing
+@headsh0t95 for suggesting me to request an access to upload files on AndroidFileHost a few months ago for my previous threads
+@AndroidFileHost for the hosting
+OnePlus for the device and OS
+Click to collapse
+Is there a problem with AntiRollBack if I was already on Android 12 with OOS12?
+ Like Quote ReplyReport
+Kierkegard
+Member
+Jul 27, 2025
+Add bookmark
+#233
+All the links for MSM Android 9, 10, and 11 on Androidfilehost are dead. It says OOPS! no mirrors found.
+Thankfully the downloads here are still working: https://onepluscommunityserver.com/
+ Like Quote ReplyReport
+V@xda
+V@xda
+New member
+Sep 1, 2025
+Add bookmark
+#234
+macs18max said:
+Does anybody have the OnePlus 7 pro firmware H.31? Can somebody please upload load it. I have update from h.31 to h.33 but my codm lags too much.
+
+I have tried oxygen updater app, xda site and several other sites. But they all point to the same server and this version of firmware is missing from the site/server. Rest other firmware is available such as h.30 and h.33 but only h.31 is missing, and I feel that was the best version of A12 till date. I know it is a huge file, I hope somebody is kind enough to upload it or point me to a working link.
+
+View attachment 5810579
+Can u plz help provide working link of msm package for GM1910 oneplus7pro Chinese firmware as Europen and global version of oxygen os does not work on gm1910?
+ Like Quote ReplyReport
+ughhhhhhh
+ughhhhhhh
+Member
+Dec 4, 2025
+Add bookmark
+#235
+Some_Random_Username said:
+Disclaimer: By attempting any of the processes listed in this thread you accept full responsibility for your actions. I will not be held responsible if your device stops working, catches fire, or turns into a hipster and claims to have been modified before it was cool.
+
+Hi everyone, similar to the previous threads for
+OP3, OP3T, OP5, OP5T, OP6, OP6T and OP7, here are the EDL packages (also known as MSM tool or unbrick tool) that can revive a bricked OnePlus 7 Pro.
+They can also be used to rollback your phone to a previous release of OOS.
+
+GM1910, GM1911, GM1913 and GM1917 models are supported.
+
+Here are the files uploaded on AndroidFileHost ordered by Android version and firmware your device will be restored to:
+
+GM21AA tools (international firmware):
+
+
+GM21BA tools (european firmware):
+
+
+Instructions:
+
+Power your device off
+Maintain volume up and volume down keys to get into Qualcomm EDL mode.
+Launch MsmDownloadTool V4.0.exe.
+Click on Enum to be sure your device is detected and press Start.
+Wait ~300 seconds
+Enjoy your brand new device
+
+FAQ:
+
+My device isn't detected when I click on "Enum" button
+
+Go to device manager and make sure your phone shows up as QDLOADER 9008.
+If it shows up as QHUSB_BULK, it means Qualcomm driver wasn't installed automatically by Windows Update. Download the latest one from Microsoft website at http://download.windowsupdate.com/c..._fba473728483260906ba044af3c063e309e6259d.cab (source https://www.catalog.update.microsof...updateid=8ee52ba0-bdef-4009-88cf-335a678dd67a ) and install it manually by right clicking on QHUSB_BULK and selecting "Update driver software" and "Browse my computer for driver software" to where you downloaded CAB file.
+
+My device doesn't stay in EDL mode for more than 10 seconds
+
+Some units can have this problem and there isn't a lot of things to do to fix that, except being fast after plugging your phone to your computer.
+
+There is however apparently a "one-off" solution to this problem available at https://xdaforums.com/showpost.php?p=80021106&postcount=21 . I would like to investigate more on that but sadly don't own the device so can't confirm it.
+
+MSM tool is stuck on "Param pre-processing"
+
+Ensure you're using the Qualcomm drivers linked in first part of this FAQ.
+
+What is SMT Download mode?
+
+Just don't try to unlock that mode, it will wipe your IMEI and your Widevine certificate if you use it.
+
+Additional credits:
+
+@Titokhan for inspiration in writing
+@headsh0t95 for suggesting me to request an access to upload files on AndroidFileHost a few months ago for my previous threads
+@AndroidFileHost for the hosting
+OnePlus for the device and OS
+Click to expand...
+I need for oneplus 7 pro indian model
+Like Reactions:You
+Like Like Quote ReplyReport
+qq749
+qq749
+New member
+Mar 13, 2026
+Add bookmark
+#236
+one puls7pro
+ Like Quote ReplyReport
+cloneboysa
+Member
+Mar 13, 2026
+Add bookmark
+#237
+Hi all, I'm plugging my phone in, and Im getting the QHUSB_BULK, so I need the drivers. The link isn't working. I have this link:
+Microsoft Update Catalog
+but I'm not sure what to download. What do I do?
+ Like Quote ReplyReport
+darksx
+Senior Member
+Mar 14, 2026
+Add bookmark
+#238
+cloneboysa said:
+Hi all, I'm plugging my phone in, and Im getting the QHUSB_BULK, so I need the drivers. The link isn't working. I have this link:
+Microsoft Update Catalog
+but I'm not sure what to download. What do I do?
+here you go and good luck
+Attachments
+QDLoader+HS-USB+Driver_64bit.zip
+11 MB · Views: 7
+Like Reactions:dobi3
+ Like Quote ReplyReport
+cloneboysa
+Member
+Mar 14, 2026
+Add bookmark
+#239
+darksx said:
+here you go and good luck
+Much appreciated! Hope it works, really missing my phone!
+ Like Quote ReplyReport
+Falconsai
+Falconsai
+New member
+17 minutes ago
+Add bookmark
+#240
+ughhhhhhh said:
+I need for oneplus 7 pro indian model
+any updates on this?

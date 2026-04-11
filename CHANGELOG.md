@@ -1,4 +1,4 @@
-# Falcon Super Gold ERP - Change Log
+# Falcon ERP - Change Log
 
 ## Project Timeline & Session History
 

@@ -51,7 +51,7 @@ export function NotificationBell() {
                 schema: 'public',
                 table: 'notifications',
                 filter: `user_id=eq.${user.id}`
-            }, (payload) => {
+            }, (payload: { new: Notification }) => {
                 setNotifications(prev => [payload.new as Notification, ...prev])
                 setUnreadCount(prev => prev + 1)
                 toast.info('New Notification: ' + (payload.new as any).title)

@@ -59,7 +59,7 @@ export async function calculateCreditScore(customerId: string): Promise<CreditSc
         let totalDays = 0
         let count = 0
 
-        payments.forEach(pay => {
+        payments.forEach((pay: any) => {
             const invoice = pay.invoices as any
             if (invoice?.invoice_date && pay.payment_date) {
                 const start = new Date(invoice.invoice_date).getTime()
@@ -89,7 +89,7 @@ export async function calculateCreditScore(customerId: string): Promise<CreditSc
         .eq('customer_id', customerId)
         .gte('invoice_date', sixMonthsAgo.toISOString().split('T')[0])
 
-    const totalLast6Months = recentInvoices?.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0) || 0
+    const totalLast6Months = recentInvoices?.reduce((sum: number, inv: any) => sum + (Number(inv.total_amount) || 0), 0) || 0
     breakdown.orderVolume.totalLast6Months = totalLast6Months
 
     if (totalLast6Months >= 50000) breakdown.orderVolume.score = 30
@@ -174,14 +174,14 @@ export async function getAllCustomerScores(): Promise<CreditScoreResult[]> {
     if (!customers || customers.length === 0) return []
 
     const results = await Promise.all(
-        customers.map(c =>
+        customers.map((c: { id: string }) =>
             calculateCreditScore(c.id).catch(() => null)
         )
     )
 
     return results
         .filter((r): r is CreditScoreResult => r !== null)
-        .sort((a, b) => b.totalScore - a.totalScore)
+        .sort((a: CreditScoreResult, b: CreditScoreResult) => b.totalScore - a.totalScore)
 }
 
 export async function applyRecommendedLimit(

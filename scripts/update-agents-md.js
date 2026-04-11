@@ -162,7 +162,7 @@ function generateAgentsMd(data) {
   
   const now = new Date().toISOString().split('T')[0];
   
-  return `# Falcon Super Gold ERP - Agent Documentation
+  return `# Falcon ERP - Agent Documentation
 *Auto-generated on ${now}*
 
 ## 📊 Quick Stats

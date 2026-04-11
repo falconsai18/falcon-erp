@@ -133,12 +133,12 @@ export async function deleteSupplier(id: string): Promise<void> {
 export async function getSupplierStats() {
     const { data, error } = await supabase.from('suppliers').select('status, rating')
     if (error) throw error
-    const suppliers = data || []
+    const suppliers = (data || []) as Supplier[]
     return {
         total: suppliers.length,
-        active: suppliers.filter(s => s.status === 'active').length,
-        inactive: suppliers.filter(s => s.status === 'inactive').length,
-        avgRating: suppliers.length ? +(suppliers.reduce((sum, s) => sum + (s.rating || 0), 0) / suppliers.length).toFixed(1) : 0,
+        active: suppliers.filter((s: Supplier) => s.status === 'active').length,
+        inactive: suppliers.filter((s: Supplier) => s.status === 'inactive').length,
+        avgRating: suppliers.length ? +(suppliers.reduce((sum: number, s: Supplier) => sum + (s.rating || 0), 0) / suppliers.length).toFixed(1) : 0,
     }
 }
 
@@ -188,38 +188,38 @@ export async function getSupplierLedger(supplierId: string): Promise<LedgerEntry
 
     // Transform into unified ledger entries
     const ledgerEntries: LedgerEntry[] = [
-        ...(bills.data || []).map(bill => ({
+        ...(bills.data || []).map((bill: { id: string; bill_number: string; bill_date: string; total_amount: number; balance_amount: number; status: string }) => ({
             id: bill.id,
             date: bill.bill_date,
             type: 'bill' as const,
             reference: bill.bill_number,
             description: `Bill ${bill.bill_number}`,
             debit: 0,
-            credit: bill.total_amount, // Bills INCREASE what we owe (Credit)
-            balance: 0, // Will calculate below
+            credit: bill.total_amount,
+            balance: 0,
             status: bill.status,
             amount: bill.total_amount,
             balance_due: bill.balance_amount
         })),
-        ...(payments.data || []).map(pay => ({
+        ...(payments.data || []).map((pay: { id: string; payment_number: string; payment_date: string; amount: number; payment_method: string; reference_number: string | null; supplier_bill_id: string }) => ({
             id: pay.id,
             date: pay.payment_date,
             type: 'payment' as const,
             reference: pay.payment_number || pay.reference_number || `PAY-${pay.id.slice(0, 8)}`,
             description: `Payment via ${pay.payment_method}${pay.reference_number ? ` (${pay.reference_number})` : ''}`,
-            debit: pay.amount, // Payments DECREASE what we owe (Debit)
+            debit: pay.amount,
             credit: 0,
             balance: 0,
             status: 'completed',
             amount: pay.amount
         })),
-        ...(debitNotes.data || []).map(dn => ({
+        ...(debitNotes.data || []).map((dn: { id: string; debit_note_number: string; issue_date: string; total_amount: number; status: string }) => ({
             id: dn.id,
             date: dn.issue_date,
             type: 'debit_note' as const,
             reference: dn.debit_note_number,
             description: `Debit Note ${dn.debit_note_number}`,
-            debit: dn.total_amount, // Debit Notes DECREASE what we owe (Debit)
+            debit: dn.total_amount,
             credit: 0,
             balance: 0,
             status: dn.status,
@@ -228,11 +228,11 @@ export async function getSupplierLedger(supplierId: string): Promise<LedgerEntry
     ];
 
     // Sort by date (oldest first for balance calculation)
-    ledgerEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    ledgerEntries.sort((a: LedgerEntry, b: LedgerEntry) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // Calculate running balance (Credit increases, Debit decreases)
     let runningBalance = 0;
-    ledgerEntries.forEach(entry => {
+    ledgerEntries.forEach((entry: LedgerEntry) => {
         runningBalance += entry.credit - entry.debit;
         entry.balance = runningBalance;
     });

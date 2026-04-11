@@ -57,7 +57,7 @@ export function SalesTrendChart({ className }: SalesTrendChartProps) {
           .gte('order_date', monthStart.split('T')[0])
           .lte('order_date', monthEnd.split('T')[0])
 
-        const total = orders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
+        const total = orders?.reduce((sum: number, o: { total_amount: number }) => sum + (o.total_amount || 0), 0) || 0
         months.push({
           month: date.toLocaleDateString('en-US', { month: 'short' }),
           total,
@@ -103,7 +103,7 @@ export function SalesTrendChart({ className }: SalesTrendChartProps) {
         .select('id, name')
         .in('id', productIds)
 
-      const productNameMap = new Map(products?.map((p: any) => [p.id, p.name]) || [])
+      const productNameMap = new Map<string, string>(products?.map((p: any) => [p.id, p.name] as [string, string]) || [])
 
       const productMap: Record<string, { name: string; quantity: number; revenue: number }> = {}
       orderItems?.forEach((item: any) => {

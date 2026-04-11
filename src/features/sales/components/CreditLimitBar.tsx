@@ -51,11 +51,11 @@ export function CreditLimitBar({ customerId, orderAmount = 0 }: CreditLimitBarPr
         .in('status', ['unpaid', 'partial', 'overdue'])
 
       const outstanding = invoices?.reduce(
-        (sum, inv) => sum + (Number(inv.balance_amount) || 0), 0
+        (sum: number, inv: { balance_amount: number | null; status: string }) => sum + (Number(inv.balance_amount) || 0), 0
       ) ?? 0
 
-      const overdue = invoices?.filter(inv => inv.status === 'overdue').reduce(
-        (sum, inv) => sum + (Number(inv.balance_amount) || 0), 0
+      const overdue = invoices?.filter((inv: { balance_amount: number | null; status: string }) => inv.status === 'overdue').reduce(
+        (sum: number, inv: { balance_amount: number | null; status: string }) => sum + (Number(inv.balance_amount) || 0), 0
       ) ?? 0
 
       const available = Math.max(0, creditLimit - outstanding)

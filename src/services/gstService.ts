@@ -91,12 +91,12 @@ export async function getGSTR1Data(fromDate: string, toDate: string) {
     const summary: GSTRSummary = {
         period: `${new Date(fromDate).toLocaleString('default', { month: 'short' })} ${new Date(fromDate).getFullYear()}`,
         totalInvoices: gstr1Invoices.length,
-        totalTaxableValue: gstr1Invoices.reduce((sum, inv) => sum + inv.taxableValue, 0),
-        totalCGST: gstr1Invoices.reduce((sum, inv) => sum + inv.cgst, 0),
-        totalSGST: gstr1Invoices.reduce((sum, inv) => sum + inv.sgst, 0),
-        totalIGST: gstr1Invoices.reduce((sum, inv) => sum + inv.igst, 0),
-        totalTax: gstr1Invoices.reduce((sum, inv) => sum + inv.totalTax, 0),
-        totalValue: gstr1Invoices.reduce((sum, inv) => sum + inv.invoiceValue, 0)
+        totalTaxableValue: gstr1Invoices.reduce((sum: number, inv: GSTR1Invoice) => sum + inv.taxableValue, 0),
+        totalCGST: gstr1Invoices.reduce((sum: number, inv: GSTR1Invoice) => sum + inv.cgst, 0),
+        totalSGST: gstr1Invoices.reduce((sum: number, inv: GSTR1Invoice) => sum + inv.sgst, 0),
+        totalIGST: gstr1Invoices.reduce((sum: number, inv: GSTR1Invoice) => sum + inv.igst, 0),
+        totalTax: gstr1Invoices.reduce((sum: number, inv: GSTR1Invoice) => sum + inv.totalTax, 0),
+        totalValue: gstr1Invoices.reduce((sum: number, inv: GSTR1Invoice) => sum + inv.invoiceValue, 0)
     }
 
     return { summary, invoices: gstr1Invoices }
@@ -158,11 +158,11 @@ export async function getGSTR3BSummary(fromDate: string, toDate: string): Promis
 
     if (outError) throw outError
 
-    const outwardTaxableSupplies = outwardData?.reduce((sum, i) => sum + (i.subtotal || 0), 0) || 0
-    const outwardTaxAmount = outwardData?.reduce((sum, i) => sum + (i.tax_amount || 0), 0) || 0
-    const totalOutCGST = outwardData?.reduce((sum, i) => sum + (i.cgst_amount || 0), 0) || 0
-    const totalOutSGST = outwardData?.reduce((sum, i) => sum + (i.sgst_amount || 0), 0) || 0
-    const totalOutIGST = outwardData?.reduce((sum, i) => sum + (i.igst_amount || 0), 0) || 0
+    const outwardTaxableSupplies = outwardData?.reduce((sum: number, i: { subtotal: number | null }) => sum + (i.subtotal || 0), 0) || 0
+    const outwardTaxAmount = outwardData?.reduce((sum: number, i: { tax_amount: number | null }) => sum + (i.tax_amount || 0), 0) || 0
+    const totalOutCGST = outwardData?.reduce((sum: number, i: { cgst_amount: number | null }) => sum + (i.cgst_amount || 0), 0) || 0
+    const totalOutSGST = outwardData?.reduce((sum: number, i: { sgst_amount: number | null }) => sum + (i.sgst_amount || 0), 0) || 0
+    const totalOutIGST = outwardData?.reduce((sum: number, i: { igst_amount: number | null }) => sum + (i.igst_amount || 0), 0) || 0
 
     // 2. Input Tax Credit (Purchases)
     // Assuming supplier_bills table exists and has tax columns. 

@@ -473,13 +473,13 @@ export async function createGRNFromPO(poId: string, userId?: string): Promise<GR
 export async function getGRNStats() {
     const { data, error } = await supabase.from('grn').select('status')
     if (error) throw error
-    const grns = data || []
+    const grns = (data || []) as GRN[]
     return {
         total: grns.length,
-        draft: grns.filter(g => g.status === 'draft').length,
-        inspecting: grns.filter(g => g.status === 'inspecting').length,
-        accepted: grns.filter(g => g.status === 'accepted').length,
-        partial: grns.filter(g => g.status === 'partial').length,
-        rejected: grns.filter(g => g.status === 'rejected').length,
+        draft: grns.filter((g: GRN) => g.status === 'draft').length,
+        inspecting: grns.filter((g: GRN) => g.status === 'inspecting').length,
+        accepted: grns.filter((g: GRN) => g.status === 'accepted').length,
+        partial: grns.filter((g: GRN) => g.status === 'partial').length,
+        rejected: grns.filter((g: GRN) => g.status === 'rejected').length,
     }
 }

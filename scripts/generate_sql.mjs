@@ -10,7 +10,7 @@ try {
   const rawData = fs.readFileSync(productsPath, 'utf8');
   const products = JSON.parse(rawData);
 
-  let sql = `-- Seed Script for Falcon Super Gold ERP\n`;
+  let sql = `-- Seed Script for Falcon ERP\n`;
   sql += `BEGIN;\n\n`;
 
   for (const p of products) {

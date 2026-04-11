@@ -1,8 +1,8 @@
 # Falcon ERP — Project Context
 
-> Last Updated: 07-Apr-2026 (Phase 2: lazy routes; docs pack; quality/eslint fixes)
-> Status: 🟢 LIVE (Production Ready)
-> Hosting: Vercel | Database: Supabase | Repo: GitHub (single branch)
+> Last Updated: 06-Apr-2026 (Offline Desktop Conversion Complete)
+> Status: 🟢 OFFLINE ARCHITECTURE COMPLETE
+> Hosting: Vercel (Web) / Windows Tauri App (Desktop) | Database: Supabase / Local SQLite
 
 ## About
 Falcon ERP is a React + TypeScript ERP for manufacturing/sales operations focused on India workflows (GST, invoice/payout flows, inventory and production). It provides protected CRUD screens for core masters (products/customers/suppliers) plus operational modules (sales, invoices, credit/debit notes, GRN/challan, production/QC), and includes an International Trade export module (frontend) for export orders, invoices, shipments, packing lists, and payments.
@@ -36,6 +36,7 @@ Falcon ERP is a React + TypeScript ERP for manufacturing/sales operations focuse
 | Vite build / dev server (port `3007`) | `vite.config.ts` |
 | Project context / handoff (this file) | `context.md` |
 | Documentation hub (overview, user guide, dev setup) | `docs/README.md` |
+| **Tauri** desktop shell (Windows `.exe` / installer) | `src-tauri/` — `npm run tauri:dev` / `npm run tauri:build` (requires Rust + MSVC on Windows); see `docs/SETUP_AND_DEVELOPMENT.md` §9 |
 
 ## Database Tables
 | Table Name | Key Columns | Purpose |
@@ -45,6 +46,14 @@ Falcon ERP is a React + TypeScript ERP for manufacturing/sales operations focuse
 | inventory | id, product_id, batch_number, mfg_date, expiry_date, quantity, available_quantity, unit_cost | Batch-wise stock tracking |
 | inventory_movements | id, product_id, movement_type (in/out/adj), quantity, reference_id | Ledger of all stock changes |
 | users | id, email, full_name, role (admin/manager/staff) | Public profile sync with Auth |
+
+## Recent Major Updates (06-Apr-2026) 💎
+- **Offline Desktop Conversion Complete**: Built a complete offline-first Windows Desktop application using Tauri v1 and SQLite, without needing to rewrite any of the 33+ service files.
+- **Smart Data Proxy (`supabase.ts`)**: Implemented a unified DB client that automatically detects the environment. In browser mode (Vercel), it returns the real Supabase client. In Desktop mode (Tauri), it returns our custom `QueryBuilder` tied to local SQLite `invoke` commands.
+- **Local Authentication**: Modified `authStore.ts` to support both online Supabase sessions and offline SQLite hashing (using SHA-256). First launch sets the local admin password securely.
+- **File Storage**: Images are now handled by Tauri's native `fs` and saved to `%APPDATA%/falcon_erp/images`, served transparently via the `asset://localhost/` protocol.
+- **Dual-Mode Sync Engine**: Added `src/lib/sync.ts` that provides Initial Cloud Pull (seed all 40+ tables from Vercel to Local on first run) and Incremental Sync (push `_sync_log` updates to Cloud, pull newer records down).
+- **Windows Installers**: Generates standalone `.exe` (NSIS) and `.msi` (WiX) installers.
 
 ## Recent Major Updates (07-Apr-2026) 💎
 - **Customer list pagination**: Fixed `getCustomers` offset (`page` is 1-based). Page 1 was skipping the first `pageSize` rows, so small datasets (e.g. a single customer) could appear empty in **Customers**.

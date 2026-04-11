@@ -33,7 +33,21 @@
       "Bash(git stash)",
       "Bash(git checkout *)",
       "Bash(select-string *)",
-      "Bash(type *)"
+      "Bash(type *)",
+      "Bash(npm uninstall *)",
+      "Bash(rmdir *)",
+      "Bash(mkdir *)",
+      "Bash(d *)",
+      "Bash(@rmdir *)",
+      "Bash(del *)",
+      "Bash(wmic *)",
+      "WebSearch",
+      "WebFetch(www.cnblogs.com)",
+      "WebFetch(mintlify.com)",
+      "Bash(node *)",
+      "Bash(\"f:\\fsg erp\\falcon-super-gold-erp\\node_modules\\7zip-bin\\win\\x64\\7za.exe\" *)",
+      "Bash(call *)",
+      "Bash(xcopy *)"
     ]
   },
   "$version": 3

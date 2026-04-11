@@ -333,12 +333,12 @@ export async function getQCStats() {
     const { data, error } = await supabase.from('quality_checks').select('result')
     if (error) throw error
 
-    const checks = data || []
+    const checks = (data || []) as QualityCheck[]
     return {
         total: checks.length,
-        pending: checks.filter(c => c.result === 'pending').length,
-        passed: checks.filter(c => c.result === 'pass').length,
-        failed: checks.filter(c => c.result === 'fail').length,
+        pending: checks.filter((c: QualityCheck) => c.result === 'pending').length,
+        passed: checks.filter((c: QualityCheck) => c.result === 'pass').length,
+        failed: checks.filter((c: QualityCheck) => c.result === 'fail').length,
     }
 }
 

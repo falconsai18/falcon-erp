@@ -414,7 +414,7 @@ export function TrainingStats() {
       const { data: products } = await supabase.from('products').select('id');
       const { data: training } = await supabase.from('product_training_data').select('*');
       
-      const totalImages = training?.reduce((acc, t) => acc + (t.image_urls?.length || 0), 0) || 0;
+      const totalImages = training?.reduce((acc: number, t: { image_urls?: string[] }) => acc + (t.image_urls?.length || 0), 0) || 0;
       
       setStats({
         totalProducts: products?.length || 0,

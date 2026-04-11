@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase } from '@/lib/supabase'
+import { localAuth } from '@/lib/localAuth'
 import { UserRole } from '@/config/permissions'
 
 interface AuthUser {
@@ -32,54 +33,54 @@ export const useAuthStore = create<AuthStore>()(
             user: null,
             isLoading: true,
             isAuthenticated: false,
-
+ 
             login: async (email: string, password: string) => {
                 try {
                     set({ isLoading: true })
-
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email,
-                        password,
-                    })
-
-                    if (error) {
+ 
+                    const result = await localAuth.signIn(email, password)
+ 
+                    if (result.error) {
                         set({ isLoading: false })
-                        return { success: false, error: error.message }
+                        return { success: false, error: result.error.message }
                     }
+ 
+                    if (result.data?.user) {
+                        // Fetch the real session ID from the SAME supabase instance
+                        const { data: { session } } = await supabase.auth.getSession()
+                        const userId = session?.user?.id || result.data.user.id
 
-                    if (data.user) {
-                        // Fetch full profile from public.users
+                        // Fetch full profile from public.users (was 'user_profiles')
                         let profile = null
                         try {
                             const { data: profileData, error: profileError } = await supabase
                                 .from('users')
                                 .select('*')
-                                .eq('id', data.user.id)
+                                .eq('id', userId)
                                 .single()
-
+ 
                             if (profileError) throw profileError
                             profile = profileData
                         } catch (err) {
-                            console.error('Error fetching user profile:', err)
-                            // Fallback if profile doesn't exist yet, but enforce strict typing later
+                            console.error('[AuthStore] Error fetching user profile:', err)
                         }
-
+ 
                         if (profile && !profile.is_active) {
-                            await supabase.auth.signOut()
+                            await localAuth.signOut()
                             set({ isLoading: false, user: null })
                             return { success: false, error: 'Account is deactivated. Contact administrator.' }
                         }
-
-                        // Update last_login timestamp
+ 
+                        // Update last_login timestamp in users
                         await supabase
                             .from('users')
                             .update({ last_login: new Date().toISOString() })
-                            .eq('id', data.user.id)
-
+                            .eq('id', userId)
+ 
                         const user: AuthUser = {
-                            id: data.user.id,
-                            email: data.user.email || '',
-                            full_name: profile?.full_name || data.user.email?.split('@')[0] || 'User',
+                            id: userId,
+                            email: result.data.user.email || '',
+                            full_name: profile?.full_name || result.data.user.email?.split('@')[0] || 'User',
                             role: (profile?.role as UserRole) || 'viewer',
                             phone: profile?.phone,
                             avatar_url: profile?.avatar_url,
@@ -88,11 +89,11 @@ export const useAuthStore = create<AuthStore>()(
                             department: profile?.department,
                             permissions: profile?.permissions || {},
                         }
-
+ 
                         set({ user, isAuthenticated: true, isLoading: false })
                         return { success: true }
                     }
-
+ 
                     set({ isLoading: false })
                     return { success: false, error: 'Unknown error' }
                 } catch (err: any) {
@@ -100,45 +101,50 @@ export const useAuthStore = create<AuthStore>()(
                     return { success: false, error: err.message }
                 }
             },
-
+ 
             logout: async () => {
-                await supabase.auth.signOut()
+                await localAuth.signOut()
                 set({ user: null, isAuthenticated: false })
             },
-
+ 
             setUser: (user) => {
                 set({ user, isAuthenticated: !!user })
             },
-
+ 
             checkSession: async () => {
                 try {
                     set({ isLoading: true })
-                    const { data: { session } } = await supabase.auth.getSession()
+ 
+                    const { data } = await localAuth.getSession()
+ 
+                    if (data?.session?.user) {
+                        const { data: { session: currentSession } } = await supabase.auth.getSession()
+                        const userId = currentSession?.user?.id || data.session.user.id
 
-                    if (session?.user) {
+                        // Fetch full profile from Supabase (users table)
                         let profile = null
                         try {
                             const { data: profileData } = await supabase
                                 .from('users')
                                 .select('*')
-                                .eq('id', session.user.id)
+                                .eq('id', userId)
                                 .single()
                             profile = profileData
                         } catch {
-                            // User might not exist in public.users yet
+                            // User might not exist in users yet
                         }
-
+ 
                         if (profile && !profile.is_active) {
-                            await supabase.auth.signOut()
+                            await localAuth.signOut()
                             set({ user: null, isAuthenticated: false, isLoading: false })
                             return
                         }
-
+ 
                         set({
                             user: {
-                                id: session.user.id,
-                                email: session.user.email || '',
-                                full_name: profile?.full_name || session.user.email || 'User',
+                                id: userId,
+                                email: data.session.user.email || '',
+                                full_name: profile?.full_name || 'User',
                                 role: (profile?.role as UserRole) || 'viewer',
                                 phone: profile?.phone,
                                 avatar_url: profile?.avatar_url,

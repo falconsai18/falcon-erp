@@ -1,4 +1,4 @@
-# Falcon Super Gold ERP - Agent Documentation
+# Falcon ERP - Agent Documentation
 *Auto-generated on 2026-02-15*
 
 ## 📊 Quick Stats

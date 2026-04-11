@@ -349,12 +349,12 @@ export async function getInvoiceItemsForCN(invoiceId: string): Promise<any[]> {
 export async function getCreditNoteStats() {
     const { data, error } = await supabase.from('credit_notes').select('status, total_amount')
     if (error) throw error
-    const creditNotes = data || []
+    const creditNotes = (data || []) as CreditNote[]
     return {
         total: creditNotes.length,
-        draft: creditNotes.filter(cn => cn.status === 'draft').length,
-        approved: creditNotes.filter(cn => cn.status === 'approved').length,
-        cancelled: creditNotes.filter(cn => cn.status === 'cancelled').length,
-        totalValue: creditNotes.reduce((sum, cn) => sum + (cn.total_amount || 0), 0),
+        draft: creditNotes.filter((cn: CreditNote) => cn.status === 'draft').length,
+        approved: creditNotes.filter((cn: CreditNote) => cn.status === 'approved').length,
+        cancelled: creditNotes.filter((cn: CreditNote) => cn.status === 'cancelled').length,
+        totalValue: creditNotes.reduce((sum: number, cn: CreditNote) => sum + (cn.total_amount || 0), 0),
     }
 }

@@ -1,8 +1,4 @@
 import { supabase } from '@/lib/supabase'
-import {
-    fetchPaginated, createRecord, updateRecord, deleteRecord,
-    type PaginationParams, type PaginatedResult,
-} from './baseService'
 import { UserRole } from '@/config/permissions'
 import { logActivity, AUDIT_ACTIONS } from './auditService'
 
@@ -74,9 +70,9 @@ export async function updateUserProfile(userId: string, data: Partial<User>): Pr
     if (error) throw error
 }
 
-// "Invite" / Add User
-// Note: Since we cannot create Auth users from the client, this function
-// assumes we can insert into public.users (if no strict FK) OR suggests manual creation.
+/**
+ * Invite / Add User profile
+ */
 export async function inviteUser(email: string, role: UserRole, fullName: string, department?: string): Promise<void> {
     // Check if user already exists
     const { data: existing } = await supabase
@@ -89,23 +85,14 @@ export async function inviteUser(email: string, role: UserRole, fullName: string
         throw new Error('User with this email already exists in the system.')
     }
 
-    // Try to insert into public.users
-    // Note: If id is partial/FK to auth.users, this might fail without an auth record.
-    // However, per instructions, we attempt this flow.
-    // We can't generate a valid Auth UUID here easily that matches a future Auth user 
-    // unless we use a trigger or logic on the DB side. 
-
-    // Attempting insert - if it fails, the UI should handle the error (likely FK violation).
-    // Ideally this should be done via an Edge Function or Admin API.
-
-    // For now, we'll try to insert. If public.users.id has a default (gen_random_uuid()), it might work.
+    // Attempting insert into users
     const { error } = await supabase.from('users').insert({
         email,
         full_name: fullName,
         role,
         department: department || null,
-        is_active: true, // Default to active so they can login once Auth is created
-        permissions: {}, // Default empty
+        is_active: true,
+        permissions: {},
     })
 
     if (error) {

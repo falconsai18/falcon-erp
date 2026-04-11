@@ -701,23 +701,31 @@ export async function printInvoicePDF(invoiceId: string) {
         </head>
         <body>
             ${renderInvoice()}
-            <script>
-                window.onload = function() {
-                    setTimeout(() => { window.print(); }, 300);
-                }
-            </script>
         </body>
         </html>
         `
 
-        // 3. Open Window & Print
-        const printWindow = window.open('', '_blank')
-        if (printWindow) {
-            printWindow.document.write(printContent)
-            printWindow.document.close()
-        } else {
-            alert('Please allow popups to print invoices')
+        // 3. Print via invisible iframe (works inside Tauri, no external browser)
+        const iframe = document.createElement('iframe')
+        iframe.style.cssText = 'position:fixed;width:0;height:0;border:none;visibility:hidden;pointer-events:none;'
+        document.body.appendChild(iframe)
+        iframe.contentDocument!.open()
+        iframe.contentDocument!.write(printContent)
+        iframe.contentDocument!.close()
+
+        // Trigger print — onload + timeout fallback for WebView2
+        let printed = false
+        const triggerPrint = () => {
+            if (!printed) {
+                printed = true
+                iframe.contentWindow?.print()
+                setTimeout(() => {
+                    if (iframe.parentNode) iframe.parentNode.removeChild(iframe)
+                }, 1000)
+            }
         }
+        iframe.onload = triggerPrint
+        setTimeout(triggerPrint, 500) // fallback for WebView2
 
     } catch (err: any) {
         console.error('Print Error:', err)
@@ -856,17 +864,28 @@ export async function printPurchaseOrderPDF(poId: string) {
                 </div>
             </div>
 
-            <script>window.onload = () => window.print();</script>
         </body>
         </html>
         `
-        const printWindow = window.open('', '_blank')
-        if (printWindow) {
-            printWindow.document.write(printContent)
-            printWindow.document.close()
-        } else {
-            alert('Please allow popups to print POs')
+        const iframe = document.createElement('iframe')
+        iframe.style.cssText = 'position:fixed;width:0;height:0;border:none;visibility:hidden;pointer-events:none;'
+        document.body.appendChild(iframe)
+        iframe.contentDocument!.open()
+        iframe.contentDocument!.write(printContent)
+        iframe.contentDocument!.close()
+
+        let printed = false
+        const triggerPrint = () => {
+            if (!printed) {
+                printed = true
+                iframe.contentWindow?.print()
+                setTimeout(() => {
+                    if (iframe.parentNode) iframe.parentNode.removeChild(iframe)
+                }, 1000)
+            }
         }
+        iframe.onload = triggerPrint
+        setTimeout(triggerPrint, 500)
     } catch (err: any) {
         console.error(err)
         alert('Error: ' + err.message)

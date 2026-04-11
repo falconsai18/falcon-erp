@@ -45,7 +45,7 @@ export function ReorderButton({ material, onReorder, showDetails = true }: Reord
         .eq('raw_material_id', material.id)
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      const totalConsumed30Days = consumed?.reduce((sum, item) => sum + (item.issued_quantity || 0), 0) || 0
+      const totalConsumed30Days = consumed?.reduce((sum: number, item: { issued_quantity: number }) => sum + (item.issued_quantity || 0), 0) || 0
       const avgDailyConsumption = totalConsumed30Days / 30
       const avgMonthlyConsumption = totalConsumed30Days
 
@@ -208,7 +208,7 @@ export function ReorderButtonCompact({ material }: { material: RawMaterial }) {
         .eq('raw_material_id', material.id)
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      const totalConsumed = consumed?.reduce((sum, item) => sum + (item.issued_quantity || 0), 0) || 0
+      const totalConsumed = consumed?.reduce((sum: number, item: { issued_quantity: number }) => sum + (item.issued_quantity || 0), 0) || 0
       const avgDaily = totalConsumed / 30
 
       let calculatedDaysLeft: number | null = null

@@ -1,0 +1,13 @@
+{
+  "_comment": "Falcon ERP - Configuration File",
+  "_instructions": "1. Rename this file to config.json (remove .example)",
+  "_instructions2": "2. Fill in your Supabase credentials",
+  "_instructions3": "3. Place it next to the .exe (portable) or in the installation directory",
+  "_instructions4": "4. Restart Falcon ERP",
+
+  "VITE_SUPABASE_URL": "https://your-project.supabase.co",
+  "VITE_SUPABASE_ANON_KEY": "your-anon-key-here",
+  "VITE_SELLER_STATE": "Maharashtra",
+  "VITE_GOOGLE_VISION_API_KEY": "your-google-vision-api-key",
+  "VITE_USE_MOCK_VISION": "false"
+}

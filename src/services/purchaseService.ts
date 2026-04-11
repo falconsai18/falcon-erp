@@ -195,14 +195,14 @@ export async function deletePurchaseOrder(id: string): Promise<void> {
 export async function getPOStats() {
     const { data, error } = await supabase.from('purchase_orders').select('status, total_amount')
     if (error) throw error
-    const orders = data || []
+    const orders = (data || []) as any[]
     return {
         total: orders.length,
-        draft: orders.filter(o => o.status === 'draft').length,
-        sent: orders.filter(o => o.status === 'sent').length,
-        confirmed: orders.filter(o => o.status === 'confirmed').length,
-        received: orders.filter(o => o.status === 'received').length,
-        totalValue: orders.reduce((s, o) => s + (o.total_amount || 0), 0),
+        draft: orders.filter((o: any) => o.status === 'draft').length,
+        sent: orders.filter((o: any) => o.status === 'sent').length,
+        confirmed: orders.filter((o: any) => o.status === 'confirmed').length,
+        received: orders.filter((o: any) => o.status === 'received').length,
+        totalValue: orders.reduce((s: number, o: any) => s + (o.total_amount || 0), 0),
     }
 }
 
@@ -274,7 +274,7 @@ export async function createPOFromLowStock(materialId: string, quantity: number,
             .select('total_amount')
             .eq('purchase_order_id', existingPO.id)
 
-        const totalAmount = (poItems || []).reduce((sum, item) => sum + (item.total_amount || 0), 0)
+        const totalAmount = (poItems || []).reduce((sum: number, item: { total_amount: number | null }) => sum + (item.total_amount || 0), 0)
 
         await supabase
             .from('purchase_orders')
