@@ -124,14 +124,24 @@ export const useAuthStore = create<AuthStore>()(
                         // Fetch full profile from Supabase (users table)
                         let profile = null
                         try {
-                            const { data: profileData } = await supabase
+                            if (!userId) throw new Error('No user ID')
+                            const { data: profileData, error: profileError } = await supabase
                                 .from('users')
                                 .select('*')
                                 .eq('id', userId)
                                 .single()
+                            
+                            if (profileError) {
+                                const status = (profileError as any).status || 0
+                                if (profileError.code === 'PGRST116' || status === 406) {
+                                    console.warn('[AuthStore] User profile not found in database for ID:', userId)
+                                } else {
+                                    throw profileError
+                                }
+                            }
                             profile = profileData
-                        } catch {
-                            // User might not exist in users yet
+                        } catch (err) {
+                            console.error('[AuthStore] Session check profile error:', err)
                         }
  
                         if (profile && !profile.is_active) {

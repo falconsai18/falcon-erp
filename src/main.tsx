@@ -45,22 +45,8 @@ const queryClient = new QueryClient({
 
 /**
  * AppWrapper handles Electron initialization before rendering.
- *
- * Flow in Electron:
- *   1. electron-env.ts module loads → auto-detects Electron → calls initElectronEnv()
- *      → sets window.__ELECTRON_CONFIG__ via IPC from main process
- *   2. supabase.ts module loads → IS_ELECTRON = true (window.electron exists from preload)
- *   3. AppWrapper useEffect → calls initSupabase() → reads __ELECTRON_CONFIG__ → creates real Supabase client
- *   4. App renders
- *
- * Flow in Browser (Vercel):
- *   1. electron-env.ts → not Electron → no-op
- *   2. supabase.ts → IS_ELECTRON = false → creates Supabase client from import.meta.env
- *   3. App renders immediately
  */
 function AppWrapper() {
-  // In browser mode, render immediately (Vite handles .env)
-  // In Electron mode, wait for initSupabase() to complete
   const [ready, setReady] = useState(!IS_ELECTRON)
 
   useEffect(() => {
@@ -68,15 +54,20 @@ function AppWrapper() {
 
     async function init() {
       console.log('[main] Initializing Electron environment...')
-      // electron-env.ts auto-ran initElectronEnv() at module load time
-      // Just need to call initSupabase() to activate the Supabase client
+      
+      // 1. Explicitly load config from Electron's main process
+      const success = await initElectronEnv()
+      console.log('[main] Electron config status:', success ? 'LOADED' : 'FAILED')
+      
+      // 2. Activate Supabase with the loaded config
       await initSupabase()
+      
       console.log('[main] Electron initialization complete')
       setReady(true)
     }
+
     init().catch((err) => {
       console.error('[main] Failed to initialize Electron env:', err)
-      // Still render — the app may have fallback behavior
       setReady(true)
     })
   }, [])
@@ -85,12 +76,13 @@ function AppWrapper() {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', fontFamily: 'system-ui', gap: '12px', fontSize: '14px'
+        height: '100vh', fontFamily: 'system-ui', gap: '12px', fontSize: '14px',
+        background: '#0f172a', color: 'white'
       }}>
         <div style={{
-          width: '20px', height: '20px', border: '2px solid #e5e7eb',
+          width: '24px', height: '24px', border: '3px solid rgba(255,255,255,0.1)',
           borderTopColor: '#3b82f6', borderRadius: '50%',
-          animation: 'spin 0.6s linear infinite'
+          animation: 'spin 0.8s linear infinite'
         }} />
         Initializing Falcon ERP...
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
