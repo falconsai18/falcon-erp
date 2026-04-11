@@ -2,12 +2,6 @@
  * Falcon ERP — Unified Database Client
  *
  * This file is the SINGLE source of truth for database access.
- *
- * - In BROWSER mode (Vercel): uses Supabase with build-time env vars
- * - In ELECTRON mode: uses Supabase with runtime config.json OR build-time env vars
- *
- * All 50+ files that `import { supabase } from '@/lib/supabase'`
- * continue to work without ANY changes.
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
@@ -27,7 +21,6 @@ async function resolveCredentials(): Promise<{ url: string; key: string }> {
     const runtimeUrl = (window as any).__ELECTRON_CONFIG__.VITE_SUPABASE_URL
     const runtimeKey = (window as any).__ELECTRON_CONFIG__.VITE_SUPABASE_ANON_KEY
     if (runtimeUrl && runtimeKey) {
-      console.log('[supabase] Using runtime config from config.json')
       return { url: runtimeUrl, key: runtimeKey }
     }
   }
@@ -35,11 +28,10 @@ async function resolveCredentials(): Promise<{ url: string; key: string }> {
   const buildUrl = import.meta.env.VITE_SUPABASE_URL
   const buildKey = import.meta.env.VITE_SUPABASE_ANON_KEY
   if (buildUrl && buildKey) {
-    console.log('[supabase] Using build-time env vars (Vite .env)')
     return { url: buildUrl, key: buildKey }
   }
 
-  throw new Error('Missing Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env (dev) or config.json (Electron).')
+  throw new Error('Missing Supabase credentials.')
 }
 
 // ─── Build the appropriate client ───────────────────────────────────
@@ -47,24 +39,21 @@ async function resolveCredentials(): Promise<{ url: string; key: string }> {
 let supabaseInstance: SupabaseClient | null = null
 
 function buildClient(): SupabaseClient {
-  // Return existing instance if available (SINGLETON PATTERN)
   if (supabaseInstance) return supabaseInstance
 
-  const url = import.meta.env.VITE_SUPABASE_URL
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const url = import.meta.env.VITE_SUPABASE_URL || 'http://placeholder.supabase.co'
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder'
 
-  if (!url || !key) {
-    // If missing env vars, we might be in Electron waiting for initSupabase
-    // Create a placeholder client that won't work until re-init
-    console.warn('[supabase] Warning: Initializing with placeholder credentials')
-    supabaseInstance = createClient('http://placeholder.supabase.co', 'placeholder')
-  } else {
-    supabaseInstance = createClient(url, key)
-    console.log('[supabase] ✅ Created client with URL:', url)
-  }
+  supabaseInstance = createClient(url, key)
 
   if (IS_ELECTRON) {
-    // Add auth shim that matches Supabase auth API shape
+    console.log('[supabase] Electron mode: Applying Auth/Channel shims')
+    
+    // Create a version of localAuth that is initialized with this instance's REAL auth
+    // to avoid infinite recursion.
+    const internalAuth = (supabaseInstance as any).auth
+    localAuth._setInternalClient(supabaseInstance)
+
     const authShim = {
       signInWithPassword: async (creds: { email: string; password: string }) => {
         return localAuth.signIn(creds.email, creds.password)
@@ -81,20 +70,23 @@ function buildClient(): SupabaseClient {
       updateUser: async (updates: any) => {
         return localAuth.updateUser(updates)
       },
-      onAuthStateChange: (_callback: any) => {
-        return { data: { subscription: { unsubscribe: () => {} } } }
+      onAuthStateChange: (callback: any) => {
+        // Just bypass or use internal
+        return internalAuth.onAuthStateChange(callback)
       },
     }
 
     const channelShim = () => ({
-      on: () => channelShim(),
-      subscribe: () => channelShim(),
+      on: function() { return this },
+      subscribe: function() { return this },
       unsubscribe: async () => {},
     })
 
     // Override methods on the instance
     ;(supabaseInstance as any).auth = authShim
     ;(supabaseInstance as any).channel = channelShim
+  } else {
+     console.log('[supabase] Browser mode: Using standard Supabase client')
   }
 
   return supabaseInstance
@@ -108,38 +100,30 @@ export const supabase = buildClient()
 export async function initSupabase() {
   if (!IS_ELECTRON) return
 
-  console.log('[supabase] Starting runtime initialization...')
-  
   try {
     const { url, key } = await resolveCredentials()
     
-    // If the instance already has the correct URL, skip re-init to maintain GoTrue state
     if (supabaseInstance && (supabaseInstance as any).supabaseUrl === url) {
-      console.log('[supabase] Client already correctly configured, skipping re-init')
       return
     }
 
-    // Re-create the instance if URL changed or first time
-    supabaseInstance = createClient(url, key)
+    // Re-create the inner client
+    const newClient = createClient(url, key)
     
-    // Explicitly re-apply shims
-    const current = buildClient()
-    ;(supabaseInstance as any).auth = (current as any).auth
-    ;(supabaseInstance as any).channel = (current as any).channel
+    // Re-initialize localAuth with the NEW real client
+    localAuth._setInternalClient(newClient)
 
-    // Patch the exported 'supabase' object's methods to point to the new instance
+    // Patch the exported 'supabase' proxy
     const target = supabase as any
-    const methods = ['from', 'rpc', 'storage', 'channel', 'removeChannel', 'auth']
     
-    methods.forEach(method => {
-      if (typeof (supabaseInstance as any)[method] === 'function') {
-        target[method] = (supabaseInstance as any)[method].bind(supabaseInstance)
-      } else {
-        target[method] = (supabaseInstance as any)[method]
-      }
-    })
+    // Copy methods from newClient to target, but KEEP the auth shim
+    target.from = newClient.from.bind(newClient)
+    target.rpc = newClient.rpc.bind(newClient)
+    target.storage = newClient.storage
+    ;(target as any).supabaseUrl = url
+    ;(target as any).supabaseKey = key
 
-    console.log('[supabase] ✅ Successfully initialized/patched runtime client')
+    console.log('[supabase] ✅ Runtime client initialized')
   } catch (err) {
     console.error('[supabase] ❌ Failed to initialize runtime client:', err)
   }

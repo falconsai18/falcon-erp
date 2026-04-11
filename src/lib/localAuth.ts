@@ -1,11 +1,9 @@
 /**
  * Falcon ERP — Authentication Adapter
  *
- * In Electron mode: authenticates against Supabase directly.
- * Session is persisted in localStorage for offline-aware apps.
+ * Persists session in localStorage and handles login logic.
+ * Uses an internal "raw" client to avoid recursion with the shimmed singleton.
  */
-
-import { supabase } from './supabase'
 
 const SESSION_KEY = 'falcon-local-session'
 
@@ -17,14 +15,27 @@ interface LocalSession {
   expires_at: string
 }
 
+// We store the internal "real" client here to perform actual network requests
+let _rawClient: any = null
+
 export const localAuth = {
   /**
-   * Sign in with email and password against Supabase
+   * Internal helper to set the real Supabase client
+   * This is called by src/lib/supabase.ts to avoid recursion.
+   */
+  _setInternalClient: (client: any) => {
+    _rawClient = client
+  },
+
+  /**
+   * Sign in with email and password
    */
   signIn: async (email: string, password: string) => {
     try {
-      // Use the shared singleton supabase instance
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (!_rawClient) throw new Error('Auth client not initialized')
+      
+      // Use the RAW client (unshimmed)
+      const { data, error } = await _rawClient.auth.signInWithPassword({ email, password })
 
       if (error) {
         return { data: { user: null, session: null }, error }
@@ -37,7 +48,7 @@ export const localAuth = {
           expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         }
         localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-        console.log('[Auth] Signed in successfully, session persisted')
+        console.log('[Auth] Signed in successfully, session persisted locally')
       }
 
       return { data, error: null }
@@ -56,9 +67,11 @@ export const localAuth = {
     localStorage.removeItem(SESSION_KEY)
     
     try {
-      await supabase.auth.signOut()
+      if (_rawClient) {
+        await _rawClient.auth.signOut()
+      }
     } catch {
-      // Ignore — localStorage is the source of truth
+      // Ignore
     }
 
     return { error: null }
@@ -105,16 +118,18 @@ export const localAuth = {
   },
 
   /**
-   * Update user — delegates to Supabase
+   * Update user
    */
   updateUser: async (updates: { password?: string; email?: string }) => {
     try {
+      if (!_rawClient) throw new Error('Auth client not initialized')
+
       if (updates.password) {
-        const { error } = await supabase.auth.updateUser({ password: updates.password })
+        const { error } = await _rawClient.auth.updateUser({ password: updates.password })
         if (error) return { data: null, error }
       }
       if (updates.email) {
-        const { error } = await supabase.auth.updateUser({ email: updates.email })
+        const { error } = await _rawClient.auth.updateUser({ email: updates.email })
         if (error) return { data: null, error }
       }
 
