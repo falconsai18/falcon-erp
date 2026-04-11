@@ -21,8 +21,8 @@ async function resolveCredentials(): Promise<{ url: string; key: string }> {
   if (IS_ELECTRON && !(window as any).__ELECTRON_CONFIG__) {
     console.log('[supabase] Waiting for Electron config...')
     for (let i = 0; i < 20; i++) {
-      if ((window as any).__ELECTRON_CONFIG__) break
-      await new Promise(r => setTimeout(r, 100))
+        if ((window as any).__ELECTRON_CONFIG__) break
+        await new Promise(r => setTimeout(r, 100))
     }
   }
 
@@ -30,7 +30,6 @@ async function resolveCredentials(): Promise<{ url: string; key: string }> {
     const runtimeUrl = (window as any).__ELECTRON_CONFIG__.VITE_SUPABASE_URL
     const runtimeKey = (window as any).__ELECTRON_CONFIG__.VITE_SUPABASE_ANON_KEY
     if (runtimeUrl && runtimeKey) {
-      console.log('[supabase] Using runtime config')
       return { url: runtimeUrl, key: runtimeKey }
     }
   }
@@ -38,7 +37,6 @@ async function resolveCredentials(): Promise<{ url: string; key: string }> {
   const buildUrl = import.meta.env.VITE_SUPABASE_URL
   const buildKey = import.meta.env.VITE_SUPABASE_ANON_KEY
   if (buildUrl && buildKey) {
-    console.log('[supabase] Using build-time env vars')
     return { url: buildUrl, key: buildKey }
   }
 
@@ -47,41 +45,44 @@ async function resolveCredentials(): Promise<{ url: string; key: string }> {
 
 // ─── Build the appropriate client ───────────────────────────────────
 
-let supabaseInstance: SupabaseClient | null = null
+// The "Real" Supabase client that actually talks to the network
+let rawClient: SupabaseClient | null = null
+
+// The "Exported" client that the app uses (with shims in Electron)
+let exportedClient: any = null
 
 function buildClient(): SupabaseClient {
-  if (supabaseInstance) return supabaseInstance
+  if (exportedClient) return exportedClient
 
-  // Use build-time defaults for initial load
   const url = import.meta.env.VITE_SUPABASE_URL || 'http://placeholder.supabase.co'
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder'
 
-  supabaseInstance = createClient(url, key)
+  // 1. Create the RAW instance
+  rawClient = createClient(url, key)
+  
+  // 2. Wrap it so we can shim methods without mutating the raw instance
+  exportedClient = {
+    ...rawClient, // Copy static props
+    from: rawClient.from.bind(rawClient),
+    rpc: rawClient.rpc.bind(rawClient),
+    storage: rawClient.storage,
+    supabaseUrl: url,
+    supabaseKey: key,
+  }
 
   if (IS_ELECTRON) {
-    // Create a version of localAuth that is initialized with this instance's REAL auth
-    localAuth._setInternalClient(supabaseInstance)
+    console.log('[supabase] Electron mode: Applying Auth/Channel shims')
+    
+    // Initialize localAuth with the CLEAN rawClient
+    localAuth._setInternalClient(rawClient)
 
     const authShim = {
-      signInWithPassword: async (creds: { email: string; password: string }) => {
-        return localAuth.signIn(creds.email, creds.password)
-      },
-      signOut: async () => {
-        return localAuth.signOut()
-      },
-      getSession: async () => {
-        return localAuth.getSession()
-      },
-      getUser: async () => {
-        return localAuth.getUser()
-      },
-      updateUser: async (updates: any) => {
-        return localAuth.updateUser(updates)
-      },
-      onAuthStateChange: (callback: any) => {
-        // Just bypass to let the app listen to auth changes
-        return (supabaseInstance as any).auth.onAuthStateChange(callback)
-      },
+      signInWithPassword: (creds: any) => localAuth.signIn(creds.email, creds.password),
+      signOut: () => localAuth.signOut(),
+      getSession: () => localAuth.getSession(),
+      getUser: () => localAuth.getUser(),
+      updateUser: (updates: any) => localAuth.updateUser(updates),
+      onAuthStateChange: (callback: any) => rawClient!.auth.onAuthStateChange(callback),
     }
 
     const channelShim = () => ({
@@ -90,19 +91,21 @@ function buildClient(): SupabaseClient {
       unsubscribe: async () => {},
     })
 
-    // Override methods on the instance
-    ;(supabaseInstance as any).auth = authShim
-    ;(supabaseInstance as any).channel = channelShim
+    // Apply shims ONLY to the exported wrapper
+    exportedClient.auth = authShim
+    exportedClient.channel = channelShim
+  } else {
+    // In browser, just use the raw client directly but maintain the reference
+    exportedClient = rawClient
   }
 
-  return supabaseInstance
+  return exportedClient as SupabaseClient
 }
 
 export const supabase = buildClient()
 
 /**
  * Initialize Supabase in Electron mode with runtime credentials.
- * This should be awaited in main.tsx before rendering.
  */
 export async function initSupabase() {
   if (!IS_ELECTRON) return
@@ -110,32 +113,28 @@ export async function initSupabase() {
   try {
     const { url, key } = await resolveCredentials()
     
-    // If we're already set up with these credentials, do nothing
-    if (supabaseInstance && (supabaseInstance as any).supabaseUrl === url) {
-      console.log('[supabase] Already configured with correct URL')
+    if (exportedClient && (exportedClient as any).supabaseUrl === url) {
       return
     }
 
-    console.log('[supabase] Re-initializing with URL:', url)
+    console.log('[supabase] Re-initializing with runtime config')
 
-    // Re-create the inner client with correct credentials
-    const newClient = createClient(url, key)
+    // 1. Re-create the RAW instance
+    rawClient = createClient(url, key)
     
-    // Update the instance itself while maintaining the shim wrappers
-    const target = supabase as any
-    
-    // Patch root methods to use the new client
-    target.from = newClient.from.bind(newClient)
-    target.rpc = newClient.rpc.bind(newClient)
-    target.storage = newClient.storage
-    ;(target as any).supabaseUrl = url
-    ;(target as any).supabaseKey = key
+    // 2. Update the singleton wrapper
+    const target = exportedClient as any
+    target.from = rawClient.from.bind(rawClient)
+    target.rpc = rawClient.rpc.bind(rawClient)
+    target.storage = rawClient.storage
+    target.supabaseUrl = url
+    target.supabaseKey = key
 
-    // Re-initialize localAuth with the NEW real client to break recursion
-    localAuth._setInternalClient(newClient)
+    // 3. Update localAuth with the NEW CLEAN rawClient
+    localAuth._setInternalClient(rawClient)
 
-    console.log('[supabase] ✅ Runtime initialization complete')
+    console.log('[supabase] ✅ Runtime client initialized')
   } catch (err) {
-    console.error('[supabase] ❌ Runtime initialization failed:', err)
+    console.error('[supabase] ❌ Failed to initialize runtime client:', err)
   }
 }
